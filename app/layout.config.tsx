@@ -1,3 +1,4 @@
+import { Logo } from '@/components/logo';
 import type { BaseLayoutProps } from 'fumadocs-ui/layouts/shared';
 
 /**
@@ -8,8 +9,12 @@ import type { BaseLayoutProps } from 'fumadocs-ui/layouts/shared';
  * Docs Layout: app/docs/layout.tsx
  */
 export const baseOptions: BaseLayoutProps = {
+  
   nav: {
-    title: 'My App',
+    enableSearch: true,
+    enabled: false,
+    transparentMode: "always",
+    children: <Logo/>
   },
   links: [
     {
@@ -18,4 +23,5 @@ export const baseOptions: BaseLayoutProps = {
       active: 'nested-url',
     },
   ],
+  
 };
