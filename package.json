@@ -1,0 +1,31 @@
+{
+  "name": "dcup",
+  "version": "0.0.0",
+  "private": true,
+  "scripts": {
+    "build": "next build",
+    "dev": "next dev",
+    "start": "next start",
+    "postinstall": "fumadocs-mdx"
+  },
+  "dependencies": {
+    "next": "15.0.3",
+    "fumadocs-ui": "14.4.2",
+    "fumadocs-core": "14.4.2",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "fumadocs-mdx": "11.1.1"
+  },
+  "devDependencies": {
+    "@types/node": "22.9.0",
+    "@types/react": "^18.3.12",
+    "@types/react-dom": "^18.3.1",
+    "typescript": "^5.6.3",
+    "@types/mdx": "^2.0.13",
+    "autoprefixer": "^10.4.20",
+    "postcss": "^8.4.48",
+    "tailwindcss": "^3.4.14",
+    "eslint": "^8",
+    "eslint-config-next": "15.0.3"
+  }
+}
