@@ -9,6 +9,7 @@ import { SearchBox } from "../Search/Search";
 import { Session } from "next-auth";
 import { UserAvatar } from "../Avatar/UserAvatar";
 import { Logo } from "../Logo/logo";
+import { ModeToggle } from "../ModeToggle/ModeToggle";
 
 type NavLinks = {
   name: string,
@@ -29,7 +30,11 @@ export function Navbar({ navLinks, session }: { navLinks: NavLinks[], session?: 
           <SheetContent>
             <SheetHeader>
               <SheetTitle>
-                <Logo href={session ? "/dashboard" : "/"} />
+                {session ? <div className="flex justify-evenly items-center">
+                  <UserAvatar session={session} />
+                  <ModeToggle />
+                </div> : <Logo href={session ? "/dashboard" : "/"} />}
+
               </SheetTitle>
             </SheetHeader>
 
@@ -46,14 +51,19 @@ export function Navbar({ navLinks, session }: { navLinks: NavLinks[], session?: 
                 ))}
               </div>
 
-              <Button
-                variant="default"
-                size='lg'
-                className="bg-gradient-to-r from-pink-600 to-blue-600 text-white hover:from-pink-700 hover:to-blue-700 font-extrabold"
-              >
-                Get Started
-                <ArrowRight className="h-4 w-4" />
-              </Button>
+              {!session &&
+                <Button
+                  variant="default"
+                  size='lg'
+                  className="bg-gradient-to-r from-pink-600 to-blue-600 text-white hover:from-pink-700 hover:to-blue-700 font-extrabold"
+                  asChild
+                >
+                  <Link href={"/login"}>
+                    Get Started
+                    <ArrowRight className="h-4 w-4" />
+                  </Link>
+                </Button>}
+
 
               <SearchBox />
             </div>
@@ -77,7 +87,12 @@ export function Navbar({ navLinks, session }: { navLinks: NavLinks[], session?: 
           <SearchBox />
 
           {/* Login Button */}
-          {session ? <UserAvatar session={session} /> :
+          {session ?
+            <>
+              <UserAvatar session={session} />
+              <ModeToggle />
+            </>
+            :
             <Button
               variant="default"
               size='lg'
