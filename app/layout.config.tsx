@@ -1,4 +1,4 @@
-import { Logo } from '@/components/logo';
+import { Logo } from '@/components/Logo/logo';
 import type { BaseLayoutProps } from 'fumadocs-ui/layouts/shared';
 
 /**
@@ -14,7 +14,7 @@ export const baseOptions: BaseLayoutProps = {
     enableSearch: true,
     enabled: false,
     transparentMode: "always",
-    children: <Logo/>
+    children: <Logo href='/'/>
   },
   links: [
     {

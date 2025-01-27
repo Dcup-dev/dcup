@@ -12,19 +12,17 @@ export default async function Layout({
   children: ReactNode;
 }) {
 
-  const sesstion = await getServerSession(authOptions)
-  if (sesstion) return redirect("/dashboard")
+  const session = await getServerSession(authOptions)
+  if (!session) return redirect("/login")
 
-    const navLinks = [
-    { name: "Pricing", href: "/" },
+  const navLinks = [
     { name: "Docs", href: "/docs" },
-    { name: "Blog", href: "/about" },
+    { name: "intgration", href: "/intgration" },
     { name: "Contact", href: "/contact" },
-    { name: "FAQ", href: "/fgq" },
   ];
 
   return <HomeLayout {...baseOptions}>
-    <Navbar navLinks={navLinks} />
+    <Navbar navLinks={navLinks} session={session} />
     {children}
   </HomeLayout>;
 }

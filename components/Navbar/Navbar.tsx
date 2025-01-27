@@ -2,25 +2,25 @@
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { ArrowRight, Menu } from "lucide-react";
-import { Logo } from "../logo";
 
 import { Sheet, SheetTrigger, SheetContent, SheetHeader, SheetTitle } from "../ui/sheet";
+
 import { SearchBox } from "../Search/Search";
+import { Session } from "next-auth";
+import { UserAvatar } from "../Avatar/UserAvatar";
+import { Logo } from "../Logo/logo";
 
-export function Navbar() {
-  const navLinks = [
-    { name: "Pricing", href: "/" },
-    { name: "Docs", href: "/products" },
-    { name: "Blog", href: "/about" },
-    { name: "Contact", href: "/contact" },
-    { name: "FAQ", href: "/fgq" },
-  ];
+type NavLinks = {
+  name: string,
+  href: string
+}
 
+export function Navbar({ navLinks, session }: { navLinks: NavLinks[], session?: Session }) {
   return (
     <nav className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur">
       <div className="container mx-auto flex h-16 items-center justify-between px-4 md:px-8">
         <div className="flex items-center">
-          <Logo />
+          <Logo href={session ? "/dashboard" : "/"} />
         </div>
         <Sheet>
           <SheetTrigger className="md:hidden">
@@ -29,7 +29,7 @@ export function Navbar() {
           <SheetContent>
             <SheetHeader>
               <SheetTitle>
-                <Logo />
+                <Logo href={session ? "/dashboard" : "/"} />
               </SheetTitle>
             </SheetHeader>
 
@@ -77,14 +77,18 @@ export function Navbar() {
           <SearchBox />
 
           {/* Login Button */}
-          <Button
-            variant="default"
-            size='lg'
-            className="bg-gradient-to-r from-pink-600 to-blue-600 text-white hover:from-pink-700 hover:to-blue-700 font-extrabold"
-          >
-            Get Started
-            <ArrowRight className="h-4 w-4" />
-          </Button>
+          {session ? <UserAvatar session={session} /> :
+            <Button
+              variant="default"
+              size='lg'
+              className="bg-gradient-to-r from-pink-600 to-blue-600 text-white hover:from-pink-700 hover:to-blue-700 font-extrabold"
+              asChild
+            >
+              <Link href={"/login"}>
+                Get Started
+                <ArrowRight className="h-4 w-4" />
+              </Link>
+            </Button>}
         </div>
       </div>
     </nav>);
