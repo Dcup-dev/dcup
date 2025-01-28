@@ -15,29 +15,27 @@ import {
 } from "@/components/ui/tabs"
 import { Label } from "@/components/ui/label"
 import { AlertCircle, Link, UploadCloud, XCircleIcon } from "lucide-react"
-import { ChangeEvent, useRef, useState } from "react"
+import { ChangeEvent, useRef } from "react"
 import { Textarea } from "../ui/textarea"
+import { useFiles } from "@/hooks/use-file"
+import { useLinks } from "@/hooks/use-link"
 
 
 export const DataInput = () => {
-  const [files, setFiles] = useState<File[]>([]);
   const inputFile = useRef<HTMLInputElement>(null);
-  const [links, setLinks] = useState<string[]>([]);
+  const { removeFiles, addFiles, filesProvider } = useFiles()
+  const { addLinks, links } = useLinks()
 
   const handleFileDrop = (e: React.DragEvent) => {
     e.preventDefault();
     const newFiles = Array.from(e.dataTransfer.files);
-    setFiles(prev => [...prev, ...newFiles]);
+    newFiles.map((f, i) => addFiles({ file: f, id: `${f.name}:${i}` }))
+
   };
 
-  const removeFileByIndx = (index: number) => {
-    setFiles(prev => prev.filter((_, i) => i !== index))
-  }
   const addNewFile = (e: ChangeEvent<HTMLInputElement>) => {
-    setFiles(prev => [...prev, ...Array.from(e.target.files || [])])
-  }
-  const addNewLink = (e: ChangeEvent<HTMLTextAreaElement>) => {
-    setLinks(e.target.value.split('\n').filter(l => l))
+    const newFiles = Array.from(e.target.files || []);
+    newFiles.map((f, i) => addFiles({ file: f, id: `${f.name}:${i}` }))
   }
 
   return (
@@ -83,21 +81,21 @@ export const DataInput = () => {
                   </Button>
                 </Label>
 
-                {files.length > 0 && (
+                {filesProvider.length > 0 && (
                   <div className="mt-6 text-left space-y-2">
                     <p className="text-sm font-medium text-gray-700">
                       Selected files:
                     </p>
-                    {files.map((file, i) => (
+                    {filesProvider.map((file) => (
                       <div
-                        key={i}
+                        key={file.id}
                         className="flex items-center gap-2 text-sm text-gray-600"
                       >
                         <XCircleIcon
                           className="h-5 w-5 text-red-500 cursor-pointer"
-                          onClick={() => removeFileByIndx(i)}
+                          onClick={() => removeFiles(file.id)}
                         />
-                        {file.name}
+                        {file.file.name}
                       </div>
                     ))}
                   </div>
@@ -117,7 +115,7 @@ export const DataInput = () => {
               <div className="space-y-4">
                 <Textarea
                   defaultValue={links.join("\n")}
-                  onChange={addNewLink}
+                  onChange={e => addLinks(e.target.value.split('\n').filter(l => l))}
                   placeholder="Enter URLs (one per line)"
                   className="w-full h-80 resize-none"
                 />

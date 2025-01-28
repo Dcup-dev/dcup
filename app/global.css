@@ -64,3 +64,16 @@
     @apply bg-background text-foreground;
   }
 }
+
+/* Add this in your global CSS file */
+.scrollbar-custom {
+  scrollbar-width: thin;
+}
+
+.scrollbar-custom::-webkit-scrollbar {
+  height: 4px; /* Adjust for horizontal scrollbars */
+}
+
+.scrollbar-custom::-webkit-scrollbar-thumb {
+  border-radius: 4px;
+}

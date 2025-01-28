@@ -1,5 +1,7 @@
 import { DataInput } from "@/components/DataInput/DataInput";
 import { JsonEditor } from "@/components/JsonEditor/JsonEditor";
+import { FileProvider } from "@/context/FilesContext";
+import { LinkProvider } from "@/context/LinksContext";
 import { Code } from "lucide-react";
 
 export default function page() {
@@ -12,9 +14,13 @@ export default function page() {
           Data Extraction Studio
         </h1>
       </div>
-     <div className="flex flex-col md:flex-row p-6 gap-6 flex-1">
-        <DataInput />
-        <JsonEditor />
+      <div className="flex flex-col md:flex-row p-6 gap-6 flex-1">
+        <FileProvider >
+          <LinkProvider>
+            <DataInput />
+            <JsonEditor />
+          </LinkProvider>
+        </FileProvider>
       </div>
     </div>
   </div>)
