@@ -15,7 +15,7 @@ import {
 } from "@/components/ui/tabs"
 import { Label } from "@/components/ui/label"
 import { AlertCircle, Link, UploadCloud, XCircleIcon } from "lucide-react"
-import { ChangeEvent, useRef } from "react"
+import { ChangeEvent, useRef, useState } from "react"
 import { Textarea } from "../ui/textarea"
 import { useFiles } from "@/hooks/use-file"
 import { useLinks } from "@/hooks/use-link"
@@ -24,6 +24,7 @@ import { useLinks } from "@/hooks/use-link"
 export const DataInput = () => {
   const inputFile = useRef<HTMLInputElement>(null);
   const { removeFiles, addFiles, filesProvider } = useFiles()
+  const [invalidLinks, setInvalidLinks] = useState<string[]>([]);
   const { addLinks, links } = useLinks()
 
   const handleFileDrop = (e: React.DragEvent) => {
@@ -37,6 +38,31 @@ export const DataInput = () => {
     const newFiles = Array.from(e.target.files || []);
     newFiles.map((f, i) => addFiles({ file: f, id: `${f.name}:${i}` }))
   }
+  // URL validation regex (supports http/https URLs)
+  const URL_REGEX = /^(https?:\/\/)?([\w-]+\.)+[\w-]+(\/[\w- .\/?%&=]*)?$/;
+
+  const validateLinks = (links: string[]) => {
+    const invalid: string[] = [];
+    links.forEach(link => {
+      if (!URL_REGEX.test(link.trim())) {
+        invalid.push(link);
+      }
+    });
+    setInvalidLinks(invalid);
+    return invalid.length === 0;
+  };
+  const addNewLinks = (e: ChangeEvent<HTMLTextAreaElement>) => {
+    const links = e.target.value.split('\n')
+    const trimmedLinks = links
+      .map(link => link.trim())
+      .filter(link => link.length > 0);
+
+    if (validateLinks(trimmedLinks)) {
+      addLinks(trimmedLinks);
+    }else{
+      addLinks([])
+    }
+  };
 
   return (
     <div className="flex-1 flex flex-col h-min-[500px]">
@@ -115,14 +141,26 @@ export const DataInput = () => {
               <div className="space-y-4">
                 <Textarea
                   defaultValue={links.join("\n")}
-                  onChange={e => addLinks(e.target.value.split('\n').filter(l => l))}
+                  onChange={addNewLinks}
                   placeholder="Enter URLs (one per line)"
-                  className="w-full h-80 resize-none"
+                  className={`w-full h-80 resize-none ${invalidLinks.length > 0 ? 'border-2 border-red-500' : ''
+                    }`}
                 />
-                <div className="flex items-center gap-2 text-sm text-gray-500">
-                  <AlertCircle className="h-4 w-4" />
-                  Supports HTTP/HTTPS URLs only
-                </div>
+                {invalidLinks.length > 0 && (
+                  <div className="mt-2 text-red-600 text-sm">
+                    <AlertCircle className="h-4 w-4 inline-block mr-1" />
+                    Invalid URLs found ({invalidLinks.length}):
+                    <ul className="list-disc list-inside mt-1">
+                      {invalidLinks.slice(0, 3).map((link, index) => (
+                        <li key={index} className="truncate">
+                          {link || "Empty line"}
+                        </li>
+                      ))}
+                      {invalidLinks.length > 3 && (
+                        <li>...and {invalidLinks.length - 3} more</li>
+                      )}
+                    </ul>
+                  </div>)}
               </div>
             </CardContent>
           </Card>

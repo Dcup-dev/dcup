@@ -5,6 +5,7 @@ import { Navbar } from '@/components/Navbar/Navbar';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/auth';
 import { redirect } from 'next/navigation'
+import { Toaster } from '@/components/ui/toaster';
 
 export default async function Layout({
   children,
@@ -24,5 +25,6 @@ export default async function Layout({
   return <HomeLayout {...baseOptions}>
     <Navbar navLinks={navLinks} session={session} />
     {children}
+    <Toaster />
   </HomeLayout>;
 }

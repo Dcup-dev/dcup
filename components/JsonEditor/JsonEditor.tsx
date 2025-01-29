@@ -10,7 +10,7 @@ import {
 import { Button } from "../ui/button"
 import { Editor, useMonaco } from "@monaco-editor/react"
 import { useTheme } from "next-themes"
-import { useEffect, useRef, useState } from "react"
+import { useEffect, useRef, useState, useTransition } from "react"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { AlertCircle, CheckCircle, Code, Code2, Copy, X } from "lucide-react"
 import { FaMagic } from "react-icons/fa"
@@ -21,6 +21,9 @@ import {
 } from "react-syntax-highlighter/dist/esm/styles/prism";
 import { useFiles } from "@/hooks/use-file"
 import { useLinks } from "@/hooks/use-link"
+import { useToast } from "@/hooks/use-toast"
+
+
 interface ProcessingTab {
   id: string;
   title: string;
@@ -34,12 +37,17 @@ export const JsonEditor = () => {
   const [tabs, setTabs] = useState<ProcessingTab[]>([]);
   const [activeTab, setActiveTab] = useState<string | null>(null);
   const [tabName, setTabName] = useState("schema")
+  const { filesProvider } = useFiles()
+  const { links } = useLinks()
+  const { toast } = useToast()
+  const [isPending, startTransition] = useTransition();
+
 
   const [schema, setSchema] = useState(`{
-    "data_type": "object",
-    "properties": {
-      "name": { "type": "string" },
-      "price": { "type": "number" }
+    "customer_id": "string",
+    "product": {
+      "id": "number",
+      "title": "string"
     }
   }`);
 
@@ -48,18 +56,79 @@ export const JsonEditor = () => {
     message: "Valid JSON schema",
   });
 
-  const handleProcessData = () => {
+  const handleProcessData = async () => {
+    let resSchema: string = "";
+    const formData = new FormData();
 
-    const tabId = `tab-${Date.now()}`;
-    const newTab = {
-      id: tabId,
-      title: `Result ${tabs.length + 1}`,
-      content: schema, // Replace with actual processed data
-    };
+    formData.append("schema", typeof schema === "string" ? schema : JSON.stringify(schema));
 
-    setTabs([...tabs, newTab]);
-    setActiveTab(tabId);
-    setTabName("data")
+    if (links.length === 0 && filesProvider.length === 0) {
+      return toast({
+        variant: "destructive",
+        title: "No data provided",
+        description: "Please upload a file or enter links to proceed.",
+      });
+    }
+
+    if (links.length > 0 && filesProvider.length > 0) {
+      return toast({
+        variant: "destructive",
+        title: "Cannot process links and files together",
+        description: "Please remove either links or files and try again.",
+      });
+    }
+
+    startTransition(async () => {
+      try {
+        if (links.length > 0) {
+          links.forEach((link) => formData.append("url", link));
+          const baseUrl = `${process.env.NEXT_PUBLIC_DCUPCORE}/v1/clean`;
+          const url = new URL(baseUrl);
+          links.forEach(link => {
+            url.searchParams.append('url', link);
+          });
+
+          const res = await fetch(url, {
+            method: "POST",
+            body: formData,
+          });
+          const resBody = await res.json();
+          console.log({ resBody })
+          if (!res.ok) throw new Error(resBody.error || "Failed to process links");
+          resSchema = JSON.stringify(resBody.schema);
+        } else {
+          filesProvider.forEach((fp) => formData.append("files", fp.file));
+
+          const res = await fetch(`${process.env.NEXT_PUBLIC_DCUPCORE}/v1/clean/file`, {
+            method: "POST",
+            body: formData,
+          });
+
+          const resBody = await res.json();
+          if (!res.ok) throw new Error(resBody.error || "Failed to process files");
+          resSchema = JSON.stringify(resBody.schema);
+        }
+
+        // Add a new tab with the processed result
+        const tabId = `tab-${Date.now()}`;
+        const newTab = {
+          id: tabId,
+          title: `Result ${tabs.length + 1}`,
+          content: resSchema,
+        };
+
+        setTabs([...tabs, newTab]);
+        setActiveTab(tabId);
+        setTabName("data");
+
+      } catch (error: any) {
+        toast({
+          variant: "destructive",
+          title: "Uh oh! Something went wrong.",
+          description: error.message || "An unexpected error occurred.",
+        });
+      }
+    });
   };
 
   const handleCloseTab = (tabId: string) => {
@@ -103,10 +172,35 @@ export const JsonEditor = () => {
     }
   }, [theme, monaco]);
 
-  const { filesProvider } = useFiles()
-  const { links } = useLinks()
-
   return (<div className="flex-1 flex flex-col h-min-[500px]">
+    {isPending && (
+      <div className="fixed inset-0 bg-background/80 backdrop-blur-sm z-50 flex items-center justify-center">
+        <div className="flex flex-col items-center gap-4">
+          <div className="relative">
+            <svg
+              className="h-16 w-16 animate-spin text-primary"
+              viewBox="0 0 24 24"
+            >
+              <circle
+                cx="12"
+                cy="12"
+                r="10"
+                stroke="currentColor"
+                strokeWidth="4"
+                fill="none"
+                strokeDasharray="80"
+                strokeDashoffset="60"
+                strokeLinecap="round"
+              />
+            </svg>
+            <Code2 className="h-8 w-8 absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-primary" />
+          </div>
+          <p className="text-lg font-semibold animate-pulse">
+            Transforming your data...
+          </p>
+        </div>
+      </div>
+    )}
     <Tabs defaultValue="schema" value={tabName} onValueChange={setTabName} className="w-full h-full flex flex-col">
       <TabsList className="grid w-full grid-cols-2">
         <TabsTrigger value="schema" className="gap-2">
@@ -170,7 +264,7 @@ export const JsonEditor = () => {
           <CardFooter className="flex justify-end">
             <Button
               size="lg"
-              disabled={!validation.valid || filesProvider.length === 0 && links.length === 0}
+              disabled={!validation.valid || isPending || filesProvider.length === 0 && links.length === 0}
               onClick={handleProcessData}
               className="px-6 py-3 bg-gradient-to-r from-blue-600 to-purple-600 text-white hover:from-blue-700 hover:to-purple-700"
             >
