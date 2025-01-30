@@ -17,8 +17,9 @@ export default async function Layout({
   if (!session) return redirect("/login")
 
   const navLinks = [
+    { name: "Dashboard", href: "/dashboard" },
+    { name: "Integration", href: "/integration" },
     { name: "Docs", href: "/docs" },
-    { name: "intgration", href: "/intgration" },
     { name: "Contact", href: "/contact" },
   ];
 

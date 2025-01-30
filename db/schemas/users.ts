@@ -1,3 +1,4 @@
+import { apiKeyGenerator, hashApiKey } from "@/lib/api_key"
 import {
   boolean,
   timestamp,
@@ -7,17 +8,21 @@ import {
   integer,
 } from "drizzle-orm/pg-core"
 import { AdapterAccount } from "next-auth/adapters"
- 
+
 export const users = pgTable("user", {
   id: text("id")
     .primaryKey()
     .$defaultFn(() => crypto.randomUUID()),
-  name: text("name"),
-  email: text("email").unique(),
+  apiKey: text("api_key").
+    $defaultFn(() => hashApiKey(apiKeyGenerator()))
+    .notNull()
+    .unique(),
+  name: text("name").notNull(),
+  email: text("email").unique().notNull(),
   emailVerified: timestamp("emailVerified", { mode: "date" }),
   image: text("image"),
 })
- 
+
 export const accounts = pgTable(
   "account",
   {
@@ -43,7 +48,7 @@ export const accounts = pgTable(
     },
   ]
 )
- 
+
 export const sessions = pgTable("session", {
   sessionToken: text("sessionToken").primaryKey(),
   userId: text("userId")
@@ -51,7 +56,7 @@ export const sessions = pgTable("session", {
     .references(() => users.id, { onDelete: "cascade" }),
   expires: timestamp("expires", { mode: "date" }).notNull(),
 })
- 
+
 export const verificationTokens = pgTable(
   "verificationToken",
   {
@@ -67,7 +72,7 @@ export const verificationTokens = pgTable(
     },
   ]
 )
- 
+
 export const authenticators = pgTable(
   "authenticator",
   {
@@ -90,3 +95,12 @@ export const authenticators = pgTable(
     },
   ]
 )
+
+export const apiKeys = pgTable("apiKey", {
+  name: text("name").primaryKey(),
+  userEmail: text("user_email")
+    .references(() => users.email, { onDelete: "cascade" })
+    .notNull(),
+  apiKey: text("api_key").unique().notNull(),
+  generatedTime: timestamp("generated_time").notNull(),
+});

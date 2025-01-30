@@ -30,7 +30,7 @@ interface ProcessingTab {
   content: string;
 }
 
-export const JsonEditor = () => {
+export const JsonEditor = ({ apiKey }: { apiKey: string }) => {
   const { theme } = useTheme();
   const monaco = useMonaco();
   const editorRef = useRef<any | null>(null);
@@ -49,7 +49,7 @@ export const JsonEditor = () => {
       "id": "number",
       "title": "string"
     }
-  }`);
+}`);
 
   const [validation, setValidation] = useState({
     valid: true,
@@ -90,10 +90,12 @@ export const JsonEditor = () => {
 
           const res = await fetch(url, {
             method: "POST",
+            headers: {
+              Authorization: `Bearer ${apiKey}`,
+            },
             body: formData,
           });
           const resBody = await res.json();
-          console.log({ resBody })
           if (!res.ok) throw new Error(resBody.error || "Failed to process links");
           resSchema = JSON.stringify(resBody.schema);
         } else {
@@ -101,6 +103,9 @@ export const JsonEditor = () => {
 
           const res = await fetch(`${process.env.NEXT_PUBLIC_DCUPCORE}/v1/clean/file`, {
             method: "POST",
+            headers: {
+              Authorization: `Bearer ${apiKey}`,
+            },
             body: formData,
           });
 

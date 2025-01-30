@@ -1,10 +1,29 @@
+import { authOptions } from "@/auth";
 import { DataInput } from "@/components/DataInput/DataInput";
 import { JsonEditor } from "@/components/JsonEditor/JsonEditor";
 import { FileProvider } from "@/context/FilesContext";
 import { LinkProvider } from "@/context/LinksContext";
+import { databaseDrizzle } from "@/db";
 import { Code } from "lucide-react";
+import { getServerSession } from "next-auth";
+import { notFound } from "next/navigation";
 
-export default function page() {
+export default async function page() {
+    const session = await getServerSession(authOptions);
+  if (!session?.user?.email) return notFound()
+
+  const user = await databaseDrizzle.query.users.findFirst({
+    where: (a, opt)=> opt.eq(a.email, session.user?.email!),
+    columns:{
+      apiKey: true,
+    }
+  })
+if (!user) {
+    return notFound()
+}
+
+
+  
   return (<div className="w-full sm:p-6">
     <div className="rounded-2xl shadow-2xl overflow-hidden">
       {/* Header */}
@@ -18,7 +37,7 @@ export default function page() {
         <FileProvider >
           <LinkProvider>
             <DataInput />
-            <JsonEditor />
+            <JsonEditor apiKey={user.apiKey}/>
           </LinkProvider>
         </FileProvider>
       </div>

@@ -8,6 +8,20 @@
       "when": 1737885332700,
       "tag": "0000_dashing_lady_bullseye",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1738227972533,
+      "tag": "0001_curvy_leader",
+      "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1738232527913,
+      "tag": "0002_talented_wong",
+      "breakpoints": true
     }
   ]
 }
