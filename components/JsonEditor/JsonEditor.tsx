@@ -22,7 +22,8 @@ import {
 import { useFiles } from "@/hooks/use-file"
 import { useLinks } from "@/hooks/use-link"
 import { useToast } from "@/hooks/use-toast"
-
+import { dcupProxy } from "@/actions/proxy"
+import { EMPTY_FORM_STATE } from "@/lib/zodErrorHandle"
 
 interface ProcessingTab {
   id: string;
@@ -30,7 +31,7 @@ interface ProcessingTab {
   content: string;
 }
 
-export const JsonEditor = ({ apiKey }: { apiKey: string }) => {
+export const JsonEditor = () => {
   const { theme } = useTheme();
   const monaco = useMonaco();
   const editorRef = useRef<any | null>(null);
@@ -41,7 +42,6 @@ export const JsonEditor = ({ apiKey }: { apiKey: string }) => {
   const { links } = useLinks()
   const { toast } = useToast()
   const [isPending, startTransition] = useTransition();
-
 
   const [schema, setSchema] = useState(`{
     "customer_id": "string",
@@ -57,7 +57,6 @@ export const JsonEditor = ({ apiKey }: { apiKey: string }) => {
   });
 
   const handleProcessData = async () => {
-    let resSchema: string = "";
     const formData = new FormData();
 
     formData.append("schema", typeof schema === "string" ? schema : JSON.stringify(schema));
@@ -81,37 +80,14 @@ export const JsonEditor = ({ apiKey }: { apiKey: string }) => {
     startTransition(async () => {
       try {
         if (links.length > 0) {
-          links.forEach((link) => formData.append("url", link));
-          const baseUrl = `${process.env.NEXT_PUBLIC_DCUPCORE}/v1/clean`;
-          const url = new URL(baseUrl);
-          links.forEach(link => {
-            url.searchParams.append('url', link);
-          });
-
-          const res = await fetch(url, {
-            method: "POST",
-            headers: {
-              Authorization: `Bearer ${apiKey}`,
-            },
-            body: formData,
-          });
-          const resBody = await res.json();
-          if (!res.ok) throw new Error(resBody.error || "Failed to process links");
-          resSchema = JSON.stringify(resBody.schema);
+          links.forEach((link) => formData.append("links", link));
         } else {
           filesProvider.forEach((fp) => formData.append("files", fp.file));
+        }
+        const current = await dcupProxy(EMPTY_FORM_STATE, formData)
 
-          const res = await fetch(`${process.env.NEXT_PUBLIC_DCUPCORE}/v1/clean/file`, {
-            method: "POST",
-            headers: {
-              Authorization: `Bearer ${apiKey}`,
-            },
-            body: formData,
-          });
-
-          const resBody = await res.json();
-          if (!res.ok) throw new Error(resBody.error || "Failed to process files");
-          resSchema = JSON.stringify(resBody.schema);
+        if (current.status !== 'SUCCESS') {
+          throw new Error(current.message)
         }
 
         // Add a new tab with the processed result
@@ -119,7 +95,7 @@ export const JsonEditor = ({ apiKey }: { apiKey: string }) => {
         const newTab = {
           id: tabId,
           title: `Result ${tabs.length + 1}`,
-          content: resSchema,
+          content: current.message,
         };
 
         setTabs([...tabs, newTab]);

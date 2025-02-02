@@ -1,4 +1,3 @@
-import { apiKeyGenerator, hashApiKey } from "@/lib/api_key"
 import {
   boolean,
   timestamp,
@@ -13,10 +12,6 @@ export const users = pgTable("user", {
   id: text("id")
     .primaryKey()
     .$defaultFn(() => crypto.randomUUID()),
-  apiKey: text("api_key").
-    $defaultFn(() => hashApiKey(apiKeyGenerator()))
-    .notNull()
-    .unique(),
   name: text("name").notNull(),
   email: text("email").unique().notNull(),
   emailVerified: timestamp("emailVerified", { mode: "date" }),
