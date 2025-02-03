@@ -1,9 +1,58 @@
 ---
-title: Hello World
+title: Introduction
 description: Your first document
 ---
+## What is Dcup?
+Dcup is your data Swiss Army knife. It takes the messy, unstructured world of PDFs, spreadsheets, Word docs, and even web pages—and turns them into clean, structured JSON exactly how you want it. No more wrestling with regex, manual data entry, or clunky converters. Just define your schema, and let Dcup handle the rest.
 
-Welcome to the docs! You can start writing documents in `/content/docs`.
+## Why Does This Exist?
+Let’s face it: 80% of data work is cleaning and formatting. Developers waste hours parsing invoices. AI teams struggle with inconsistent training data. Analysts drown in CSV hell. Existing tools are either too slow, too rigid, or too expensive.
 
-## What is Next?
+Dcup was built to fix that.
 
+## Why Dcup?
+- **Your Rules, Your JSON**: Define exactly what data to extract and how to structure it. Want `customer.name` as a string and `invoice.total` as a number? Done.
+
+- **No File Left Behind**: PDFs, DOCs, PPTs, HTML, CSVs, Markdown—even URLs. If it’s a document, Dcup can parse it.
+
+- **Speed You Can Feel**: Built with Golang and a good Caching Mechanism, we’re 10x faster than Python-based tools. Process 100 docs in the time it takes to brew coffee.
+
+- **Scale Without Tears**: From solo devs to enterprise pipelines, Dcup scales with you. Async processing, auto-retries, and bulletproof error handling included.
+
+## Who’s This For?
+- **Developers tired of writing yet another PDF parser.**
+
+- **Data Engineers building ETL pipelines that don’t break.**
+
+- **AI/ML Teams needing clean, structured training data.**
+
+- **Business Users who just want their spreadsheets to work.**
+
+## How It Works
+1. You Define the Schema: Tell us what data to extract and how to format it.
+#### Example:
+```json
+{  
+  "invoice": {  
+    "customer": { "name": "string", "id": "number" },  
+    "total": "number",  
+    "items": []  
+  }  
+}
+```
+2. You Send the Files/URLs: Drag-and-drop or send via API.
+
+3. We Return Perfect JSON: Every time, exactly as you specified.
+
+## Under the Hood
+- Golang Backend: For raw speed and low memory usage. Your 100MB PDF? Processed before competitors finish loading.
+
+- Caching Mechanism: Frequently used schemas and templates are cached, slashing latency for repeat requests.
+
+- Stateless Architecture: Horizontally scalable. Add more instances in seconds, not hours.
+
+### Privacy Policy
+Your privacy and data security are our top priorities. **We do not store your uploaded files or URLs**. The only data we temporarily retain is the extracted result for caching purposes, which is automatically deleted after **24 hours**.
+___
+
+**Keywords for SEO**: JSON conversion API, document to JSON, PDF parsing, AI data preparation, structured data extraction, customizable schema, Golang API, scalable data processing, invoice automation, AI/ML training data.

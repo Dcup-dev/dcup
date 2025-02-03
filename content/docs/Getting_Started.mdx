@@ -1,0 +1,83 @@
+---
+title: Getting Sarted
+description: Welcome to Dcup Cloud – your one-stop solution for transforming messy documents into clean, structured JSON. Whether you’re a developer integrating via our API or a business user taking advantage of our web app’s drag-and-drop interface, this guide has you covered.
+---
+
+# Choose Your Adventure
+
+## 🛠️ For Developers: API First Steps
+
+### 1. Sign Up and Log In
+Before you can start using Dcup Cloud, you’ll need to create an account and log in [Here](https://dcup.dev/login).
+
+### 2. Generate Your API Key
+After logging in, navigate to the Integrations page in your dashboard. Here, you can generate your unique API key, which is required for all API calls.
+- **Find Your API Key: Your API key will be displayed once generated. Keep it secure and do not share it publicly.**
+
+### 3. Making Your First API Call
+Dcup Cloud’s API is designed to be simple and powerful. Below are examples of how to use your API key in a request.
+
+#### A. Cleaning Files
+If you want to clean up files (like PDFs, DOCs, PPTs, CSVs), include your files in the form data with the key files. For example, using JavaScript’s fetch API:
+```js
+const apiKey = 'YOUR_API_KEY';
+const url = 'https://api.dcup.dev/v1/clean/file';
+const formData = new FormData();
+
+// Append your file(s) to the form data
+formData.append('files', fileInput.files[0]);
+
+await fetch(url, {
+  method: "POST",
+  headers: {
+    Authorization: `Bearer ${apiKey}`,
+  },
+  body: formData,
+})
+  .then(response => response.json())
+  .then(data => console.log(data))
+  .catch(error => console.error('Error:', error));
+
+```
+#### B. Cleaning with Links
+If you want to clean data directly from URLs, simply include the URL(s) as query parameters:
+```js
+const apiKey = 'YOUR_API_KEY';
+const urls = 'https://example.com/document.pdf';
+const url = `https://api.dcupcloud.com/v1/clean?urls=${encodeURIComponent(urls)}`;
+
+await fetch(url, {
+  method: "POST",
+  headers: {
+    Authorization: `Bearer ${apiKey}`,
+  },
+})
+  .then(response => response.json())
+  .then(data => console.log(data))
+  .catch(error => console.error('Error:', error));
+
+```
+
+### 4. Web App Magic for Business Users
+For non-developers or business users who prefer a visual interface, Dcup Cloud offers a powerful web app experience.
+
+#### Step 1: Upload Your File
+- Drag-and-Drop: Simply drag and drop a file (PDF, DOC, PPT, CSV, etc.) into the designated area.
+
+![Image](/Drag-and-Drop.png)
+
+- Enter a URL: Alternatively, paste a URL to the document you want to process.
+
+![Image](/Enter-URL.png)
+
+#### Step 2: Define Your Data Schema
+Use our built-in schema editor to define exactly how you want your data structured.You can easily specify data types (e.g., string, number) and organize the output.
+
+![Image](/Define_Your_Data_Schema.png)
+
+#### Step 3: Process and Retrieve Your Data
+Click “Process Data”: Once your file is uploaded and your schema is ready, click the “Process Data” button.
+View Your Results: Your clean, formatted JSON will appear on the screen.
+
+---
+If you have any questions or need further assistance, feel free to reach out to our support team.

@@ -1,0 +1,117 @@
+---
+title: Urls
+description: API Reference Clean with URLS
+---
+
+## Overview
+The `/v1/clean` endpoint allows users to process documents by providing a URL to a file. Whether it’s a PDF, DOCX, PPTX, CSV, TXT, HTML, Markdown, or JSON file, our API retrieves the document, extracts its content, and returns structured data in JSON format based on your defined schema.
+
+- ✅ Supports Multiple Document Formats: PDF, DOCX, PPTX, CSV, TXT, HTML, Markdown, and JSON
+- ✅ Automatic Data Extraction: Converts unstructured document content into structured JSON
+- ✅ Fast & Scalable: Built on Golang with caching for optimal performance
+- ✅ Secure: No raw files are stored—only the processed JSON is cached for 24 hours
+
+### 1. Endpoint
+```bash
+POST /v1/clean?urls=...
+```
+#### Base URL
+```bash
+https://api.dcup.dev/v1/clean
+```
+
+### 2. Authentication
+All requests require a Bearer Token (API Key) in the header.
+
+Example Header
+```bash
+Authorization: Bearer YOUR_API_KEY
+```
+### 3. Request Format
+#### - Headers
+|Header	Type|	Required|	Description|
+|----|---|---|
+|Authorization|	string|	✅ Yes	API key for authentication (Bearer YOUR_API_KEY)|
+| Content-Type|	multipart/form-data|	✅ Yes	Must be multipart/form-data for file uploads|
+
+### - Query Parameters
+
+|Parameter|	Type	|Required	| Description|
+|---|---|---|
+|url|	string|	✅ Yes| URLs pointing to documents to be processed|
+
+#### - Body Parameters
+|Parameter|	Type|	Required|	Description|
+|----|----|----|
+|schema|	JSON|	✅ Yes| Define the structure of the extracted data|
+
+### 4. Example Request
+#### - JavaScript (Fetch API)
+
+```js
+const apiKey = 'YOUR_API_KEY';
+const url = 'https://api.dcup.dev/v1/clean?url=https://example.com/document.pdf';
+// Create a FormData object
+const formData = new FormData();
+
+// Define a custom schema
+const schema = {
+  customer: { name: "string", id: "number" },
+  total: "number",
+  items: []
+};
+formData.append('schema', JSON.stringify(schema));
+
+fetch(url, {
+  method: "POST",
+  headers: {
+    Authorization: `Bearer ${apiKey}`,
+    // Note: Do not set Content-Type header manually for FormData.
+  },
+  body: formData,
+})
+  .then(response => response.json())
+  .then(data => console.log('Extracted JSON:', data))
+  .catch(error => console.error('Error:', error));
+```
+
+5. Example Response
+Successful Response (200 OK)
+```
+{
+"urls": 1,
+ "message": "url processed successfully",
+  "schema": {
+    "customer": {
+      "name": "John Doe",
+      "id": 12345
+    },
+    "total": 459.99,
+    "items": ["Laptop", "Mouse"]
+  }
+}
+
+```
+
+### 6. Error Handling
+#### Common Errors & Responses
+
+| HTTP Code |	Error Message |	Reason |
+|-----|----|----|
+|400 Bad Request  |"No URLs provided"|	No file was included in the request.|
+|401 Unauthorized |	"Invalid API Key"|	API Key is missing or incorrect.|
+|413 Payload Too Large | "File size exceeds limit"|	The uploaded file exceeds the allowed size.|
+|415 Unsupported Media Type |	"Invalid file format"|	The uploaded file is in an unsupported format.|
+|500 Internal Server Error |	"Unexpected error" |	A server issue occurred; try again later.|
+
+### Example Error Response (400 Bad Request)
+```js
+{
+     "error": "No urls provided. Please provide at least one url."
+}
+```
+
+### 7. Caching & Data Retention
+- **Temporary Caching**: Processed JSON results are stored for 24 hours for fast retrieval.
+- **Security**: Raw document files are NOT stored—only the processed structured data is cached.
+- **Reprocessing**: Users can resend the same URL anytime for fresh extraction.

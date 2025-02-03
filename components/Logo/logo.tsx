@@ -8,7 +8,7 @@ export const Logo = ({href}:{href:string}) => {
         href={href}
         className="flex items-center justify-center gap-3 hover:gap-4 transition-all duration-500 ease-out-expo"
       >
-        <div className="relative transition-transform duration-500 hover:rotate-[15deg] hover:scale-105">
+        <div className="relative transition-transform duration-500 hover:-rotate-[15deg] hover:scale-105">
           {/* Light Mode Logo */}
           <Image
             src="/dcup_light.svg"
