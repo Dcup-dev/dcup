@@ -22,7 +22,7 @@ import {
 import { useFiles } from "@/hooks/use-file"
 import { useLinks } from "@/hooks/use-link"
 import { useToast } from "@/hooks/use-toast"
-import { dcupProxy } from "@/actions/proxy"
+import { processDataProxy } from "@/actions/proxy"
 import { EMPTY_FORM_STATE } from "@/lib/zodErrorHandle"
 
 interface ProcessingTab {
@@ -84,7 +84,7 @@ export const JsonEditor = () => {
         } else {
           filesProvider.forEach((fp) => formData.append("files", fp.file));
         }
-        const current = await dcupProxy(EMPTY_FORM_STATE, formData)
+        const current = await processDataProxy(EMPTY_FORM_STATE, formData)
 
         if (current.status !== 'SUCCESS') {
           throw new Error(current.message)

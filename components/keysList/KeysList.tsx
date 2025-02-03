@@ -1,4 +1,3 @@
-import React from "react";
 import {
   Card,
   CardContent,
@@ -14,16 +13,12 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Button } from "../ui/button";
-import { Trash } from "lucide-react";
 import { notFound } from "next/navigation";
 import { format } from "date-fns";
-import { apiKeys } from "@/db/schemas/users";
-import { eq } from "drizzle-orm";
-import { revalidatePath } from "next/cache";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/auth";
 import { databaseDrizzle } from "@/db";
+import { DeleteKey } from "../deleteKey/DeleteKey";
 
 
 export const KeysList = async () => {
@@ -31,8 +26,8 @@ export const KeysList = async () => {
   if (!sesstion?.user?.email) return notFound();
   const keys = await databaseDrizzle.query.apiKeys.findMany({
     where: (key, opt) => opt.eq(key.userEmail, sesstion.user?.email!),
-
   });
+
   return (
     <Card className="w-full max-w-xl mx-auto mt-8 p-4">
       <CardHeader>
@@ -60,19 +55,7 @@ export const KeysList = async () => {
                   {format(key.generatedTime, "PP")}
                 </TableCell>
                 <TableCell className="text-right">
-                  <form
-                    action={async () => {
-                      "use server";
-                      await databaseDrizzle
-                        .delete(apiKeys)
-                        .where(eq(apiKeys.apiKey, key.apiKey));
-                      revalidatePath("/integrate");
-                    }}
-                  >
-                    <Button size="icon" variant="destructive">
-                      <Trash />
-                    </Button>
-                  </form>
+                  <DeleteKey apikey={key.apiKey} />
                 </TableCell>
               </TableRow>
             ))}
