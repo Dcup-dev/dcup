@@ -9,7 +9,7 @@ import { notFound } from "next/navigation";
 
 export default async function page() {
     const session = await getServerSession(authOptions);
-  if (!session?.user?.email) return notFound()
+  if (!session?.user?.id) return notFound()
 
   return (<div className="w-full sm:p-6">
     <div className="rounded-2xl shadow-2xl overflow-hidden">

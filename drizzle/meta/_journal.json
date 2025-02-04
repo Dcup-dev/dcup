@@ -29,6 +29,20 @@
       "when": 1738503799636,
       "tag": "0003_unknown_darkstar",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1738658952745,
+      "tag": "0004_chilly_shriek",
+      "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1738674343959,
+      "tag": "0005_tough_kang",
+      "breakpoints": true
     }
   ]
 }

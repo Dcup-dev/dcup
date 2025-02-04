@@ -19,7 +19,7 @@ export async function generateApiKey(_: FormState, formData: FormData) {
   const session = await getServerSession(authOptions);
 
   try {
-    if (!session?.user?.email) throw new Error("forbidden");
+    if (!session?.user?.id) throw new Error("forbidden");
     // if (!hasAuthority(plan.toString(), new Date(session.user.createdAt!))) throw new Error("Your free plan has expired. Please subscribe to continue using the app.")
 
     const parse = apiScheme.parse({
@@ -29,7 +29,7 @@ export async function generateApiKey(_: FormState, formData: FormData) {
     const hashedKey = hashApiKey(apiKey);
 
     await databaseDrizzle.insert(apiKeys).values({
-      userEmail: session.user.email,
+      userId: session.user.id,
       name: parse.name,
       generatedTime: new Date(),
       apiKey: hashedKey,

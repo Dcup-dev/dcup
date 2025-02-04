@@ -25,7 +25,7 @@ export const KeysList = async () => {
   const sesstion = await getServerSession(authOptions);
   if (!sesstion?.user?.email) return notFound();
   const keys = await databaseDrizzle.query.apiKeys.findMany({
-    where: (key, opt) => opt.eq(key.userEmail, sesstion.user?.email!),
+    where: (key, opt) => opt.eq(key.userId, sesstion.user?.id!),
   });
 
   return (

@@ -20,7 +20,6 @@ export default async function Layout({
     { name: "Dashboard", href: "/dashboard" },
     { name: "Integration", href: "/integration" },
     { name: "Docs", href: "/docs" },
-    { name: "Contact", href: "/contact" },
   ];
 
   return <HomeLayout {...baseOptions}>

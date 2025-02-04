@@ -5,8 +5,10 @@ import {
   text,
   primaryKey,
   integer,
+  pgEnum,
 } from "drizzle-orm/pg-core"
 import { AdapterAccount } from "next-auth/adapters"
+export const planEnum = pgEnum('plan', ['Free', 'Basic', 'Pro', 'Business', 'Enterprise']);
 
 export const users = pgTable("user", {
   id: text("id")
@@ -16,6 +18,8 @@ export const users = pgTable("user", {
   email: text("email").unique().notNull(),
   emailVerified: timestamp("emailVerified", { mode: "date" }),
   image: text("image"),
+  plan: planEnum("plan").default("Free").notNull(),
+  volume: integer("volume").default(1024 * 1024).notNull(),
 })
 
 export const accounts = pgTable(
@@ -93,8 +97,8 @@ export const authenticators = pgTable(
 
 export const apiKeys = pgTable("apiKey", {
   name: text("name").primaryKey(),
-  userEmail: text("user_email")
-    .references(() => users.email, { onDelete: "cascade" })
+  userId: text("user_id")
+    .references(() => users.id, { onDelete: "cascade" })
     .notNull(),
   apiKey: text("api_key").unique().notNull(),
   generatedTime: timestamp("generated_time").notNull(),

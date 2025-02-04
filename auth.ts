@@ -21,6 +21,32 @@ export const authOptions: NextAuthOptions = {
     sessionsTable: sessions,
     verificationTokensTable: verificationTokens,
   }),
+  callbacks: {
+    session: async ({ session, token }) => {
+      if (session) {
+        session.user.id = token.id as string;
+        session.user.plan = token.plan as "Free" | "Basic" | "Pro" | "Business" | "Enterprise";
+        session.user.volume = token.volume as number;
+      }
+      return session;
+    },
+    jwt: async ({ user, token }) => {
+      if (user) {
+        token.id = user.id;
+        token.plan = user.plan;
+        token.volume = user.volume;
+      } else {
+        const dbUser = await databaseDrizzle.query.users.findFirst({
+          where: (u, opt) => opt.eq(u.id, token.id as string),
+        });
+        if (dbUser) {
+          token.plan = dbUser.plan;
+          token.volume = dbUser.volume;
+        }
+      }
+      return token;
+    },
+  },
   providers: [
     GoogleProvider({
       clientId: env.GOOGLE_CLIENT_ID!,

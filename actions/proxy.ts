@@ -20,13 +20,13 @@ export async function processDataProxy(_: FormState, formData: FormData) {
   let response: Response | null = null
 
   try {
-    if (!session?.user?.email) throw new Error("Unauthorized");
+    if (!session?.user?.id) throw new Error("Unauthorized");
 
     const { links } = dcupScheme.parse({
       links: formData.getAll("links"),
     });
 
-    const jwtKey = sign({ sub: session.user?.email }, process.env.API_ACCESS_SECRET as string, {
+    const jwtKey = sign({ sub: session.user?.id }, process.env.API_ACCESS_SECRET as string, {
       expiresIn: '1m',
     })
 
@@ -74,13 +74,13 @@ export async function deleteApiKeyProxy(_: FormState, formData: FormData) {
   const session = await getServerSession(authOptions);
 
   try {
-    if (!session?.user?.email) throw new Error("Unauthorized");
+    if (!session?.user?.id) throw new Error("Unauthorized");
 
     const { apiKey } = apiKeyScheme.parse({
       apiKey: formData.get("apikey"),
     });
 
-    const jwtKey = sign({ sub: session.user?.email }, process.env.API_ACCESS_SECRET as string, {
+    const jwtKey = sign({ sub: session.user?.id }, process.env.API_ACCESS_SECRET as string, {
       expiresIn: '1m',
     })
 
