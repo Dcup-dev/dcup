@@ -1,19 +1,16 @@
-import Link from 'next/link';
+import { getServerSession } from 'next-auth';
+import { authOptions } from '@/auth';
+import { redirect } from 'next/navigation';
+import HeroHeader from '@/components/HeroHeader/HeroHeader';
 
-export default function HomePage() {
+
+export default async function HomePage() {
+  const sesstion = await getServerSession(authOptions)
+
+  if (sesstion) return redirect("/dashboard")
   return (
-    <main className="flex flex-1 flex-col justify-center text-center">
-      <h1 className="mb-4 text-2xl font-bold">Hello World</h1>
-      <p className="text-fd-muted-foreground">
-        You can open{' '}
-        <Link
-          href="/docs"
-          className="text-fd-foreground font-semibold underline"
-        >
-          /docs
-        </Link>{' '}
-        and see the documentation.
-      </p>
+    <main>
+      <HeroHeader />
     </main>
   );
 }

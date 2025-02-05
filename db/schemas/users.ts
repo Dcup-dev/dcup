@@ -6,6 +6,7 @@ import {
   primaryKey,
   integer,
   pgEnum,
+  bigint
 } from "drizzle-orm/pg-core"
 import { AdapterAccount } from "next-auth/adapters"
 export const planEnum = pgEnum('plan', ['Free', 'Basic', 'Pro', 'Business', 'Enterprise']);
@@ -19,7 +20,8 @@ export const users = pgTable("user", {
   emailVerified: timestamp("emailVerified", { mode: "date" }),
   image: text("image"),
   plan: planEnum("plan").default("Free").notNull(),
-  volume: integer("volume").default(1024 * 1024).notNull(),
+  volume: bigint({ mode: 'number' }).default(1024 * 1024).notNull(),
+  customerId: text("customer_id")
 })
 
 export const accounts = pgTable(

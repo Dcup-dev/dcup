@@ -16,14 +16,8 @@ export default async function Layout({
   const session = await getServerSession(authOptions)
   if (!session) return redirect("/login")
 
-  const navLinks = [
-    { name: "Dashboard", href: "/dashboard" },
-    { name: "Integration", href: "/integration" },
-    { name: "Docs", href: "/docs" },
-  ];
-
   return <HomeLayout {...baseOptions}>
-    <Navbar navLinks={navLinks} session={session} />
+    <Navbar session={session} />
     {children}
     <Toaster />
   </HomeLayout>;

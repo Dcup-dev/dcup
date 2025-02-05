@@ -43,6 +43,20 @@
       "when": 1738674343959,
       "tag": "0005_tough_kang",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1738755602882,
+      "tag": "0006_fancy_jack_power",
+      "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1738756957657,
+      "tag": "0007_unknown_tiger_shark",
+      "breakpoints": true
     }
   ]
 }

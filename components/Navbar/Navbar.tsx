@@ -9,14 +9,13 @@ import { Session } from "next-auth";
 import { UserAvatar } from "../Avatar/UserAvatar";
 import { Logo } from "../Logo/logo";
 import { ModeToggle } from "../ModeToggle/ModeToggle";
+import { vSizes } from "@/lib/constants";
 
-type NavLinks = {
-  name: string,
-  href: string
-}
 
-export function Navbar({ navLinks, session }: { navLinks: NavLinks[], session?: Session }) {
-const volume = getAvaliableVolume(session?.user.plan!, session?.user.volume!)
+
+export function Navbar({ session }: { session?: Session }) {
+  const navLinks = getNavLinks(!!session)
+  const volume = getAvaliableVolume(session?.user.plan!, session?.user.volume!)
   return (
     <nav className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur">
       <div className="container mx-auto flex h-16 items-center justify-between px-4 md:px-8">
@@ -36,10 +35,12 @@ const volume = getAvaliableVolume(session?.user.plan!, session?.user.volume!)
                       <UserAvatar session={session} />
                       <ModeToggle />
                     </div>
-                    <div className="flex flex-col items-center">
-                      <span className="text-sm font-medium">{session.user.plan}</span>
-                      <span className="text-xs text-muted-foreground">{volume} Used</span>
-                    </div>
+                    <Link href={"/pricing"}>
+                      <div className="flex flex-col items-center cursor-pointer">
+                        <span className="text-sm font-medium">{session.user.plan}</span>
+                        <span className="text-xs text-muted-foreground">{volume} Used</span>
+                      </div>
+                    </Link>
                   </div>
                 ) : (
                   <Logo href="/" />
@@ -99,10 +100,12 @@ const volume = getAvaliableVolume(session?.user.plan!, session?.user.volume!)
             <div className="flex items-center gap-4">
               <UserAvatar session={session} />
               <ModeToggle />
-              <div className="flex flex-col items-start">
-                <span className="text-sm font-medium">{session.user.plan}</span>
-                <span className="text-xs text-muted-foreground">{volume} Used</span>
-              </div>
+              <Link href={"/pricing"}>
+                <div className="flex flex-col items-start cursor-pointer">
+                  <span className="text-sm font-medium">{session.user.plan}</span>
+                  <span className="text-xs text-muted-foreground">{volume} Used</span>
+                </div>
+              </Link>
             </div>
           ) : (
             <Button
@@ -123,6 +126,26 @@ const volume = getAvaliableVolume(session?.user.plan!, session?.user.volume!)
   );
 }
 
+type NavLinks = {
+  name: string,
+  href: string
+}
+function getNavLinks(isLogin: boolean): NavLinks[] {
+  if (!isLogin) return [
+    { name: "Pricing", href: "/pricing" },
+    { name: "Docs", href: "/docs" },
+    { name: "Blog", href: "/about" },
+    { name: "Contact", href: "/contact" },
+    { name: "FAQ", href: "/fgq" },
+  ];
+  return [
+    { name: "Dashboard", href: "/dashboard" },
+    { name: "Integration", href: "/integration" },
+    { name: "Docs", href: "/docs" },
+  ];
+
+}
+
 function getAvaliableVolume(
   plan: "Free" | "Basic" | "Pro" | "Business" | "Enterprise",
   volumeAvailable: number // in bytes
@@ -133,28 +156,28 @@ function getAvaliableVolume(
 
   switch (plan) {
     case "Free":
-      totalCapacityBytes = 1024 * 1024; // 1 KB = 1024 bytes 
+      totalCapacityBytes = vSizes.MB_1;
       capacityDisplay = "1 MB";
-      divisor = 1024 * 1024; // converting to KB
+      divisor = 1024 * 1024; // converting to MB
       break;
     case "Basic":
-      totalCapacityBytes = 50 * 1024 * 1024; // 50 MB
+      totalCapacityBytes = vSizes.MB_50; // 50 MB
       capacityDisplay = "50 MB";
       divisor = 1024 * 1024; // converting to MB
       break;
     case "Pro":
-      totalCapacityBytes = 250 * 1024 * 1024; // 250 MB
+      totalCapacityBytes = vSizes.MB_250; // 250 MB
       capacityDisplay = "250 MB";
       divisor = 1024 * 1024; // converting to MB
       break;
     case "Business":
-      totalCapacityBytes = 1024 * 1024 * 1024; // 1 GB
-      capacityDisplay = "1 GB";
+      totalCapacityBytes =vSizes.GB_5; // 5 GB
+      capacityDisplay = "5 GB";
       divisor = 1024 * 1024 * 1024; // converting to GB
       break;
     case "Enterprise":
-      totalCapacityBytes = 5 * 1024 * 1024 * 1024; // 5 GB
-      capacityDisplay = "5 GB";
+      totalCapacityBytes = vSizes.GB_15; // 5 GB
+      capacityDisplay = "15 GB";
       divisor = 1024 * 1024 * 1024; // converting to GB
       break;
     default:

@@ -4,7 +4,7 @@ import { createPreset } from 'fumadocs-ui/tailwind-plugin';
 export default {
   darkMode: ['class'],
   theme: {
-    extend: {
+    extend: { 
       keyframes: {
         'background-shimmer': {
           '0%': {
@@ -15,10 +15,10 @@ export default {
           }
         }
       },
-  
+
       animation: {
         'slow-pulse': 'pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite',
-         'background-shimmer': 'background-shimmer 5s linear infinite',
+        'background-shimmer': 'background-shimmer 5s linear infinite',
       },
       borderRadius: {
         lg: 'var(--radius)',
