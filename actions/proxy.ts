@@ -8,7 +8,7 @@ import { z } from "zod";
 
 
 const dcupScheme = z.object({
-  links: z.array(z.string()).nullable(),
+  links: z.array(z.string()),
 });
 
 type FormState = {
@@ -32,7 +32,7 @@ export async function processDataProxy(_: FormState, formData: FormData) {
 
     const baseUrl = `${process.env.DCUPCORE}/v1/clean`;
 
-    if (links) {
+    if (links.length > 0) {
 
       const url = new URL(baseUrl);
       links.forEach(link => {
