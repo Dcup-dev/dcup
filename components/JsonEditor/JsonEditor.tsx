@@ -12,7 +12,7 @@ import { Editor, useMonaco } from "@monaco-editor/react"
 import { useTheme } from "next-themes"
 import { useEffect, useRef, useState, useTransition } from "react"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { AlertCircle, CheckCircle, Code, Code2, Copy, X } from "lucide-react"
+import { AlertCircle, CheckCircle, Code, Code2, Copy, LockIcon, X } from "lucide-react"
 import { FaMagic } from "react-icons/fa"
 import { Prism as SyntaxHighlighter } from "react-syntax-highlighter";
 import {
@@ -31,7 +31,7 @@ interface ProcessingTab {
   content: string;
 }
 
-export const JsonEditor = () => {
+export const JsonEditor = ({ full }: { full: boolean }) => {
   const { theme } = useTheme();
   const monaco = useMonaco();
   const editorRef = useRef<any | null>(null);
@@ -188,9 +188,10 @@ export const JsonEditor = () => {
           <Code2 className="h-5 w-5" />
           Schema
         </TabsTrigger>
-        <TabsTrigger value="data" className="gap-2">
+        <TabsTrigger value="data" className="gap-2" disabled={!full}>
           <FaMagic className="h-5 w-5" />
           Extracted Data
+          {!full && <LockIcon className="h-5 w-5" />}
         </TabsTrigger>
       </TabsList>
       {/* File Upload Section */}

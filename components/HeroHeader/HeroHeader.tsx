@@ -1,11 +1,8 @@
 'use client';
-
-import { FileProvider } from '@/context/FilesContext';
-import { LinkProvider } from '@/context/LinksContext';
+import Link from "next/link";
 import { motion } from 'framer-motion';
 import { CodeIcon, SparklesIcon, LightbulbIcon } from 'lucide-react';
-import { DataInput } from '../DataInput/DataInput';
-import { JsonEditor } from '../JsonEditor/JsonEditor';
+import { HeroImage } from '../HeroImage/HeroImage';
 
 const HeroHeader = () => {
   const fadeUp = {
@@ -31,11 +28,18 @@ const HeroHeader = () => {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.8 }}
-            className="mb-8"
+            className="mb-8 flex items-center justify-center gap-2"
           >
-            <span className="bg-gradient-to-r from-blue-400 to-purple-500 bg-clip-text text-transparent text-lg font-semibold">
+            <motion.span
+              animate={{ y: [-5, 5, -5] }}
+              transition={{ repeat: Infinity, duration: 2.5 }}
+            >
+              <SparklesIcon className="h-8 w-8 text-yellow-400" />
+            </motion.span>
+
+            <div className="bg-gradient-to-r from-blue-400 to-purple-500 bg-clip-text text-transparent text-lg font-semibold">
               Dcup
-            </span>
+            </div>
           </motion.div>
 
           {/* Main Title */}
@@ -46,7 +50,7 @@ const HeroHeader = () => {
               visible: { transition: { staggerChildren: 0.1 } },
               hidden: {}
             }}
-            className="text-5xl md:text-7xl font-bold text-white mb-8"
+            className="text-5xl md:text-7xl font-bold text-primary mb-8"
           >
             {['Transform Documents', 'Into Perfect JSON'].map((text, i) => (
               <motion.span
@@ -64,7 +68,7 @@ const HeroHeader = () => {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.4 }}
-            className="text-xl text-gray-300 mb-12 max-w-3xl mx-auto"
+            className="text-xl text-fd-muted-foreground mb-12 max-w-3xl mx-auto"
           >
             Instantly convert PDFs, Docs, Sheets, and more to structured JSON with AI-powered precision.
             Define your schema, get perfect results - every time.
@@ -78,10 +82,16 @@ const HeroHeader = () => {
             className="relative"
           >
             <div className="flex justify-center space-x-6 items-center">
-              <button className="bg-gradient-to-r from-blue-500 to-purple-600 text-white px-8 py-4 rounded-lg font-semibold text-lg hover:scale-105 transition-transform shadow-xl">
-                Get Started Free
-              </button>
+              <Link href={"/login"} className="bg-gradient-to-r from-blue-500 to-purple-600 text-white px-8 py-4 rounded-lg font-semibold text-lg hover:scale-105 transition-transform shadow-xl flex gap-2" >
 
+                Get Started
+                <motion.div
+                  animate={{ scale: [1, 1.2, 1] }}
+                  transition={{ repeat: Infinity, duration: 3 }}
+                >
+                  <LightbulbIcon className="h-8 w-8 text-yellow-500" />
+                </motion.div>
+              </Link>
               <div className="flex space-x-4">
                 <motion.div
                   animate={{ rotate: [0, 15, -15, 0] }}
@@ -89,18 +99,8 @@ const HeroHeader = () => {
                 >
                   <CodeIcon className="h-8 w-8 text-blue-400" />
                 </motion.div>
-                <motion.div
-                  animate={{ scale: [1, 1.2, 1] }}
-                  transition={{ repeat: Infinity, duration: 3 }}
-                >
-                  <LightbulbIcon className="h-8 w-8 text-purple-400" />
-                </motion.div>
-                <motion.div
-                  animate={{ y: [-5, 5, -5] }}
-                  transition={{ repeat: Infinity, duration: 2.5 }}
-                >
-                  <SparklesIcon className="h-8 w-8 text-yellow-400" />
-                </motion.div>
+
+
               </div>
             </div>
           </motion.div>
@@ -112,13 +112,7 @@ const HeroHeader = () => {
             transition={{ delay: 0.8 }}
             className="flex flex-col md:flex-row p-6 gap-6 flex-1"
           >
-            <FileProvider >
-              <LinkProvider>
-                <DataInput />
-                <JsonEditor />
-              </LinkProvider>
-            </FileProvider>
-
+            <HeroImage />
           </motion.div>
         </div>
       </div>

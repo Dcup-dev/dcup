@@ -24,7 +24,7 @@ export default async function page() {
         <FileProvider >
           <LinkProvider>
             <DataInput />
-            <JsonEditor/>
+            <JsonEditor full={true}/>
           </LinkProvider>
         </FileProvider>
       </div>
