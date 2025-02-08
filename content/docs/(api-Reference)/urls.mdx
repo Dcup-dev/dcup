@@ -13,7 +13,7 @@ The `/v1/clean` endpoint allows users to process documents by providing a URL to
 
 ### 1. Endpoint
 ```bash
-POST /v1/clean?urls=...
+POST /v1/clean?url=https://example.com/file.pdf&url=...
 ```
 #### Base URL
 ```bash
@@ -29,21 +29,21 @@ Authorization: Bearer YOUR_API_KEY
 ```
 ### 3. Request Format
 #### - Headers
-|Header	Type|	Required|	Description|
-|----|---|---|
-|Authorization|	string|	✅ Yes	API key for authentication (Bearer YOUR_API_KEY)|
-| Content-Type|	multipart/form-data|	✅ Yes	Must be multipart/form-data for file uploads|
+|Header|Type|	Required|	Description|
+|----|---|---|---|
+|Authorization|	string|	✅ Yes | API key for authentication (Bearer YOUR_API_KEY)|
+| Content-Type|	multipart/form-data|	✅ Yes | Must be multipart/form-data for file uploads|
 
 ### - Query Parameters
 
 |Parameter|	Type	|Required	| Description|
-|---|---|---|
+|---|---|---|---|
 |url|	string|	✅ Yes| URLs pointing to documents to be processed|
 
 #### - Body Parameters
 |Parameter|	Type|	Required|	Description|
-|----|----|----|
-|schema|	JSON|	✅ Yes| Define the structure of the extracted data|
+|----|----|----|----|
+|schema| JSON|	✅ Yes| Define the structure of the extracted data|
 
 ### 4. Example Request
 #### - JavaScript (Fetch API)
@@ -77,7 +77,7 @@ fetch(url, {
 
 5. Example Response
 Successful Response (200 OK)
-```
+```json
 {
 "urls": 1,
  "message": "url processed successfully",
@@ -99,15 +99,18 @@ Successful Response (200 OK)
 | HTTP Code |	Error Message |	Reason |
 |-----|----|----|
 |400 Bad Request  |"No URLs provided"|	No file was included in the request.|
+|400 Bad Request |"Schema is required"| No schema was included in the request.|
+|400 Bad Request |"Invalid schema format"| Provided schema was Invalid.|
+|400 Bad Request |"Invalid or inaccessible URL"| URLs provided are Invalid .|
 |401 Unauthorized |	"Invalid API Key"|	API Key is missing or incorrect.|
-|413 Payload Too Large | "File size exceeds limit"|	The uploaded file exceeds the allowed size.|
-|415 Unsupported Media Type |	"Invalid file format"|	The uploaded file is in an unsupported format.|
-|500 Internal Server Error |	"Unexpected error" |	A server issue occurred; try again later.|
+|402 Payment Required | "your current subscription does not allow processing that amount of data"| Please consider upgrading your plan |
+|415 Unsupported Media Type |	"Unsupported file type"|	The uploaded file is in an unsupported format.|
+|500 Internal Server Error |"Unexpected error"|	A server issue occurred; try again later.|
 
 ### Example Error Response (400 Bad Request)
 ```js
 {
-     "error": "No urls provided. Please provide at least one url."
+  "error": "No urls provided. Please provide at least one url."
 }
 ```
 

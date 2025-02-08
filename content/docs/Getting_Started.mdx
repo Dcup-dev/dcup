@@ -24,8 +24,9 @@ const apiKey = 'YOUR_API_KEY';
 const url = 'https://api.dcup.dev/v1/clean/file';
 const formData = new FormData();
 
-// Append your file(s) to the form data
-formData.append('files', fileInput.files[0]);
+// Append your file(s) and schema to the form data
+formData.append('files', fileInput);
+formData.append('schema', requiredSchema);
 
 await fetch(url, {
   method: "POST",
@@ -43,14 +44,18 @@ await fetch(url, {
 If you want to clean data directly from URLs, simply include the URL(s) as query parameters:
 ```js
 const apiKey = 'YOUR_API_KEY';
-const urls = 'https://example.com/document.pdf';
-const url = `https://api.dcupcloud.com/v1/clean?urls=${encodeURIComponent(urls)}`;
+const urlDoc = 'https://example.com/document.pdf';
+const url = `https://api.dcup.dev/v1/clean?url=${urlDoc}`;
+
+// Append your schema to the form data
+formData.append('schema', requiredSchema);
 
 await fetch(url, {
   method: "POST",
   headers: {
     Authorization: `Bearer ${apiKey}`,
   },
+  body: formData,
 })
   .then(response => response.json())
   .then(data => console.log(data))

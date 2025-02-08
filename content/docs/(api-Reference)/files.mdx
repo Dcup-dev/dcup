@@ -31,13 +31,13 @@ Authorization: Bearer YOUR_API_KEY
 ### 3. Request Format
 #### - Headers
 |Header|	Type|	Required|	Description|
-|----|---|---|
+|----|---|---|---|
 |Authorization|	string|	✅ Yes|	API key for authentication (Bearer YOUR_API_KEY)|
 | Content-Type|	multipart/form-data|	✅ Yes|	Must be multipart/form-data for file uploads|
 
 #### - Body Parameters
 |Parameter|	Type|	Required|	Description|
-|----|----|----|
+|----|----|----|----|
 |files|	file|	✅ Yes|	The document(s) to be processed. Multiple files can be uploaded.|
 |schema|	JSON|	✅ Yes| Define the structure of the extracted data|
 
@@ -50,9 +50,9 @@ const url = 'https://api.dcup.dev/v1/clean/file';
 const formData = new FormData();
 
 // Append a file (replace `fileInput` with an actual file input element)
-formData.append('files', fileInput.files[0]);
+formData.append('files', fileInput);
 
-// Optional: Define a custom schema
+// Define a custom schema
 const schema = {
     customer: { name: "string", id: "number" },
     total: "number",
@@ -95,16 +95,19 @@ Successful Response (200 OK)
 
 | HTTP Code |	Error Message |	Reason |
 |-----|----|----|
-|400 Bad Request  |	"No file uploaded"|	No file was included in the request.|
+|400 Bad Request |"No files provided"|	No file was included in the request.|
+|400 Bad Request |"Schema is required"| No schema was included in the request.|
+|400 Bad Request |"Invalid schema format"| Provided schema was Invalid.|
 |401 Unauthorized |	"Invalid API Key"|	API Key is missing or incorrect.|
+|402 Payment Required | "your current subscription does not allow processing that amount of data"| Please consider upgrading your plan |
 |413 Payload Too Large |	"File size exceeds limit"|	The uploaded file exceeds the allowed size.|
-|415 Unsupported Media Type |	"Invalid file format"|	The uploaded file is in an unsupported format.|
+|415 Unsupported Media Type |	"Unsupported file type"|	The uploaded file is in an unsupported format.|
 |500 Internal Server Error |"Unexpected error"|	A server issue occurred; try again later.|
 
 ### Example Error Response (400 Bad Request)
 ```js
 {
-    "error": "No files provided. Please upload at least one file."
+  "error": "No files provided. Please upload at least one file."
 }
 ```
 
