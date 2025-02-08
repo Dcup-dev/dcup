@@ -70,7 +70,7 @@ const HeroHeader = () => {
             transition={{ delay: 0.4 }}
             className="text-xl text-fd-muted-foreground mb-12 max-w-3xl mx-auto"
           >
-            Instantly convert PDFs, Docs, Sheets, and more to structured JSON with AI-powered precision.
+            Instantly convert PDFs, Docs, Sheets,PowerPoint,CSV,Web pages, Raw HTML and Markdown to structured JSON with AI-powered precision.
             Define your schema, get perfect results - every time.
           </motion.p>
 
