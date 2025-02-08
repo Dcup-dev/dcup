@@ -134,9 +134,7 @@ function getNavLinks(isLogin: boolean): NavLinks[] {
   if (!isLogin) return [
     { name: "Pricing", href: "/pricing" },
     { name: "Docs", href: "/docs" },
-    { name: "Blog", href: "/about" },
     { name: "Contact", href: "/contact" },
-    { name: "FAQ", href: "/fgq" },
   ];
   return [
     { name: "Dashboard", href: "/dashboard" },

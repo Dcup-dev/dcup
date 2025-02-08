@@ -38,6 +38,11 @@ export const UserAvatar = ({ session }: { session: Session }) => {
             Buy credits
           </Link>
         </DropdownMenuItem>
+        <DropdownMenuItem>
+          <Link href='/contact'>
+            Support
+          </Link>
+        </DropdownMenuItem>
         <Logout />
       </DropdownMenuContent>
     </DropdownMenu>

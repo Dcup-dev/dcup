@@ -27,11 +27,6 @@ const Footer = () => {
                 </Link>
               </li>
               <li>
-                <a href="#faq" className="hover:underline">
-                  FAQs
-                </a>
-              </li>
-              <li>
                 <Link href="/terms_of_service_and_privacy_policy" className="hover:underline">
                   Terms of Service & Privacy Policy
                 </Link>

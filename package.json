@@ -12,6 +12,7 @@
   },
   "dependencies": {
     "@auth/drizzle-adapter": "^1.7.4",
+    "@emailjs/browser": "^4.4.1",
     "@heroicons/react": "^2.2.0",
     "@monaco-editor/react": "^4.6.0",
     "@radix-ui/react-avatar": "^1.1.2",
@@ -27,6 +28,7 @@
     "date-fns": "^4.1.0",
     "dotenv": "^16.4.7",
     "drizzle-orm": "^0.38.4",
+    "emailjs": "^4.0.3",
     "framer-motion": "^12.2.0",
     "fumadocs-core": "14.4.2",
     "fumadocs-mdx": "11.1.1",
