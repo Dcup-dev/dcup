@@ -58,7 +58,7 @@ const plans = [
   },
 ];
 
-export function Pricing() {
+export function Pricing({isAuth}:{isAuth:boolean}) {
 
   return (
     <PricingContainer>
@@ -118,7 +118,7 @@ export function Pricing() {
                   }`}
                 asChild
               >
-                <Link href={plan.link}>
+                <Link href={isAuth? plan.link : "/login"}>
                   {plan.name === 'Enterprise' ? 'Contact Sales' : 'Get Started'}
                 </Link>
               </Button>

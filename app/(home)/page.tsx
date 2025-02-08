@@ -6,6 +6,7 @@ import HowItWorks from '@/components/HowItWorks/HowItWorks';
 import { Pricing } from '@/components/Pricing/Pricing';
 import DashboardSection from '@/components/DashboardSection/DashboardSection';
 import Footer from '@/components/Footer/Footer';
+import ApiShowcase from '@/components/ApiShowcase/ApiShowcase';
 
 
 export default async function HomePage() {
@@ -16,11 +17,12 @@ export default async function HomePage() {
     <main>
       <HeroHeader />
       <HowItWorks />
-      <div className='p-10'/>
+      <div className='p-10' />
       <DashboardSection />
       {/* api and how to use it, todo  */}
-      <Pricing />
-      <Footer/>
+      <Pricing isAuth={!!sesstion} />
+      <ApiShowcase />
+      <Footer />
     </main>
   );
 }

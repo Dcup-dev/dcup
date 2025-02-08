@@ -1,8 +1,8 @@
 'use client';
-
+import Link from "next/link";
 import { motion } from 'framer-motion';
 import { Card, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { PlayCircle, SparklesIcon } from "lucide-react";
+import { SparklesIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 const HowItWorks = () => {
@@ -75,29 +75,21 @@ const HowItWorks = () => {
 
           {/* Video Container */}
           <motion.div
-            initial={{ opacity: 0, scale: 0.95 }}
+            initial={{ opacity: 1, scale: 1 }}
             whileInView={{ opacity: 1, scale: 1 }}
             viewport={{ once: true, margin: "-100px" }}
             className="relative group"
           >
             <div className="relative aspect-video bg-gray-800 rounded-xl overflow-hidden border-2 border-gray-700 hover:border-blue-500 transition-all shadow-2xl">
-              {/* Video Iframe - Replace with your actual video embed code */}
+              {/* Video Iframe */}
               <iframe
                 className="w-full h-full"
-                src="https://www.youtube.com/embed/your-video-id"
+                src="https://www.youtube.com/embed/DCO51Nd9q8o"
                 title="Dcup Demo"
                 allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
                 allowFullScreen
               ></iframe>
-
-              {/* Play Button Overlay */}
-              <div className="absolute inset-0 flex items-center justify-center bg-black/30 group-hover:bg-black/10 transition-colors">
-                <PlayCircle className="h-16 w-16 text-white opacity-90 group-hover:opacity-100 group-hover:scale-110 transition-transform" />
-              </div>
             </div>
-
-            {/* Animated Border Effect */}
-            <div className="absolute inset-0 rounded-xl border-2 border-blue-500/30 pointer-events-none -z-10 group-hover:animate-glow transition-all" />
           </motion.div>
         </div>
 
@@ -108,9 +100,11 @@ const HowItWorks = () => {
           viewport={{ once: true, margin: "-100px" }}
           className="text-center mt-16"
         >
-          <Button className="text-lg h-14 px-8 rounded-xl gap-2">
-            Start Free Trial
-            <SparklesIcon className="h-5 w-5" />
+          <Button className="text-lg h-14 px-8 rounded-xl gap-2" asChild >
+            <Link href="/login">
+              Start Free Trial
+              <SparklesIcon className="h-5 w-5" />
+            </Link>
           </Button>
           <p className="text-gray-400 mt-4">
             No credit card needed •

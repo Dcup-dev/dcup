@@ -12,7 +12,7 @@ import { Editor, useMonaco } from "@monaco-editor/react"
 import { useTheme } from "next-themes"
 import { useEffect, useRef, useState, useTransition } from "react"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { AlertCircle, CheckCircle, Code, Code2, Copy, LockIcon, X } from "lucide-react"
+import { AlertCircle, AlertCircleIcon, CheckCircle, Code, Code2, Copy, LockIcon, X } from "lucide-react"
 import { FaMagic } from "react-icons/fa"
 import { Prism as SyntaxHighlighter } from "react-syntax-highlighter";
 import {
@@ -24,6 +24,7 @@ import { useLinks } from "@/hooks/use-link"
 import { useToast } from "@/hooks/use-toast"
 import { processDataProxy } from "@/actions/proxy"
 import { EMPTY_FORM_STATE } from "@/lib/zodErrorHandle"
+import { Alert, AlertDescription, AlertTitle } from "../ui/alert"
 
 interface ProcessingTab {
   id: string;
@@ -42,6 +43,7 @@ export const JsonEditor = ({ full }: { full: boolean }) => {
   const { links } = useLinks()
   const { toast } = useToast()
   const [isPending, startTransition] = useTransition();
+  const [errMess, setErrMess] = useState<null | string>(null)
 
   const [schema, setSchema] = useState(`{
     "customer_id": "string",
@@ -103,6 +105,11 @@ export const JsonEditor = ({ full }: { full: boolean }) => {
         setTabName("data");
 
       } catch (error: any) {
+        if (error.message === "Unauthorized") {
+          setErrMess("Please log in to start processing your files.");
+          return;
+        }
+
         toast({
           variant: "destructive",
           title: "Uh oh! Something went wrong.",
@@ -197,6 +204,13 @@ export const JsonEditor = ({ full }: { full: boolean }) => {
       {/* File Upload Section */}
       <TabsContent value="schema" className="flex-1">
         <Card className="h-full flex flex-col">
+          {errMess && (
+            <Alert variant="destructive">
+              <AlertCircleIcon className="h-4 w-4" />
+              <AlertTitle>Access Denied</AlertTitle>
+              <AlertDescription>{errMess}</AlertDescription>
+            </Alert>
+          )}
           <CardHeader>
             <CardTitle>Define Your Data Schema</CardTitle>
             <CardDescription>
