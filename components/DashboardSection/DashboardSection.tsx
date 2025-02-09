@@ -1,10 +1,14 @@
 "use client"
 import { motion } from 'framer-motion';
 import { DataInput } from "@/components/DataInput/DataInput";
-import { JsonEditor } from "@/components/JsonEditor/JsonEditor";
 import { FileProvider } from "@/context/FilesContext";
 import { LinkProvider } from "@/context/LinksContext";
+import dynamic from 'next/dynamic';
+import { Loader2 } from 'lucide-react';
 
+const JsonEditor = dynamic(() => import('@/components/JsonEditor/JsonEditor'), {
+  loading: () => <Loader2 className="animate-spin" />
+})
 
 const DashboardSection = () => {
   return (
