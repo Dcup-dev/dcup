@@ -1,12 +1,5 @@
 'use client'
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card"
+import { Card,CardContent,CardDescription,CardFooter,CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "../ui/button"
 import { Editor, useMonaco } from "@monaco-editor/react"
 import { useTheme } from "next-themes"
@@ -15,10 +8,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { AlertCircle, AlertCircleIcon, CheckCircle, Code, Code2, Copy, LockIcon, X } from "lucide-react"
 import { FaMagic } from "react-icons/fa"
 import { Prism as SyntaxHighlighter } from "react-syntax-highlighter";
-import {
-  materialDark,
-  materialLight,
-} from "react-syntax-highlighter/dist/esm/styles/prism";
+import { materialDark, materialLight } from "react-syntax-highlighter/dist/esm/styles/prism";
 import { useFiles } from "@/hooks/use-file"
 import { useLinks } from "@/hooks/use-link"
 import { useToast } from "@/hooks/use-toast"
@@ -32,7 +22,7 @@ interface ProcessingTab {
   content: string;
 }
 
-export const JsonEditor = ({ full }: { full: boolean }) => {
+const JsonEditor = ({ full }: { full: boolean }) => {
   const { theme } = useTheme();
   const monaco = useMonaco();
   const editorRef = useRef<any | null>(null);
@@ -363,3 +353,5 @@ export const JsonEditor = ({ full }: { full: boolean }) => {
     </Tabs>
   </div>)
 };
+
+export default JsonEditor

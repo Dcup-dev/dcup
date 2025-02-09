@@ -19,8 +19,8 @@ export default async function HomePage() {
       <HowItWorks />
       <div className='p-10' />
       <DashboardSection />
-      {/* api and how to use it, todo  */}
-      <Pricing isAuth={!!sesstion} />
+      <Pricing />
+      <div className='p-10' />
       <ApiShowcase />
       <Footer />
     </main>

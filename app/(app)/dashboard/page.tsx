@@ -1,14 +1,18 @@
 import { authOptions } from "@/auth";
 import { DataInput } from "@/components/DataInput/DataInput";
-import { JsonEditor } from "@/components/JsonEditor/JsonEditor";
 import { FileProvider } from "@/context/FilesContext";
 import { LinkProvider } from "@/context/LinksContext";
-import { Code } from "lucide-react";
+import { Code, Loader2 } from "lucide-react";
 import { getServerSession } from "next-auth";
 import { notFound } from "next/navigation";
+import dynamic from 'next/dynamic'
+
+const JsonEditor = dynamic(() => import('@/components/JsonEditor/JsonEditor'), {
+  loading: () => <Loader2 className="animate-spin" />
+})
 
 export default async function page() {
-    const session = await getServerSession(authOptions);
+  const session = await getServerSession(authOptions);
   if (!session?.user?.id) return notFound()
 
   return (<div className="w-full sm:p-6">
@@ -24,7 +28,7 @@ export default async function page() {
         <FileProvider >
           <LinkProvider>
             <DataInput />
-            <JsonEditor full={true}/>
+            <JsonEditor full={true} />
           </LinkProvider>
         </FileProvider>
       </div>

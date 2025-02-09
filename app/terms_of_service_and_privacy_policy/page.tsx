@@ -1,5 +1,8 @@
 import React from 'react';
 import { Check, X, Lock, Mail, Globe } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import Link from "next/link";
+
 
 const TermsPage: React.FC = () => {
   return (
@@ -161,6 +164,21 @@ const TermsPage: React.FC = () => {
           </div>
         </section>
 
+        <section className="mb-8">
+          <h2 className="mb-4 text-2xl font-semibold text-gray-700 flex items-center">
+            5. Refund Policy
+          </h2>
+          <p className="text-gray-600">
+            Due to the nature of our cloud-based services, all purchases and subscriptions are <strong>non-refundable</strong>.
+            Since our platform provides instant access to API-based processing and document transformation, we cannot offer refunds
+            once a subscription or transaction is completed.
+          </p>
+          <p className="mt-3 text-gray-600">
+            If you experience any technical issues or need assistance, please contact our support team, and we will be happy to help resolve
+            any concerns.
+          </p>
+        </section>
+
         {/* 4. Changes to This Policy */}
         <section className="mb-8">
           <h2 className="mb-4 text-2xl font-semibold text-gray-700">4. Changes to This Policy</h2>
@@ -180,6 +198,9 @@ const TermsPage: React.FC = () => {
             <Globe className="mr-2 h-5 w-5 text-indigo-500" /> <strong>Website: </strong> <a href="https://www.dcup.dev" target="_blank" rel="noopener noreferrer" className="underline text-indigo-600 hover:text-indigo-800">dcup.dev</a>
           </p>
         </section>
+        <Button asChild variant='secondary' className="mt-6" size='lg'>
+          <Link href="/">Go Back to Dashboard</Link>
+        </Button>
       </div>
     </main>
   );

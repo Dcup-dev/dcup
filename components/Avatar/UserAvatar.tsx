@@ -29,7 +29,7 @@ export const UserAvatar = ({ session }: { session: Session }) => {
         <DropdownMenuLabel>My Account</DropdownMenuLabel>
         <DropdownMenuSeparator />
         <DropdownMenuItem >
-          <Link href={process.env.NEXT_PUBLIC_STRIPE_CUSTOMER_PORTAL_URL!}>
+          <Link href={process.env.NEXT_PUBLIC_PADDLE_CUSTOMER_PORTAL_URL!}>
             Billing
           </Link>
         </DropdownMenuItem>
