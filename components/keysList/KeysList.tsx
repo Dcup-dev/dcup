@@ -23,9 +23,10 @@ import { DeleteKey } from "../deleteKey/DeleteKey";
 
 export const KeysList = async () => {
   const sesstion = await getServerSession(authOptions);
-  if (!sesstion?.user?.email) return notFound();
+  if (!sesstion?.user.id) return notFound();
+  
   const keys = await databaseDrizzle.query.apiKeys.findMany({
-    where: (key, opt) => opt.eq(key.userId, sesstion.user?.id!),
+    where: (key, opt) => opt.eq(key.userId, sesstion.user.id!),
   });
 
   return (

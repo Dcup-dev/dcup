@@ -35,7 +35,7 @@ export default function ContactUs() {
           toast({ title: "Message sent successfully!" });
           form.current?.reset();
         },
-        (_) => {
+        () => {
           toast({
             title: "Failed to send message. Please try again!",
             variant: "destructive",

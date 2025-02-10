@@ -21,7 +21,7 @@ export const UserAvatar = ({ session }: { session: Session }) => {
     <DropdownMenu>
       <DropdownMenuTrigger>
         <Avatar>
-          <AvatarImage src={session.user?.image!} alt="@shadcn" />
+          <AvatarImage src={session.user?.image ?? ""} alt="@shadcn" />
           <AvatarFallback>{session.user?.name?.charAt(0)}</AvatarFallback>
         </Avatar>
       </DropdownMenuTrigger>
