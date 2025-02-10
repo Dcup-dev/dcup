@@ -10,12 +10,15 @@ import { UserAvatar } from "../Avatar/UserAvatar";
 import { Logo } from "../Logo/logo";
 import { ModeToggle } from "../ModeToggle/ModeToggle";
 import { vSizes } from "@/lib/constants";
+import { notFound } from "next/navigation";
 
 
 
 export function Navbar({ session }: { session?: Session }) {
   const navLinks = getNavLinks(!!session)
-  const volume = getAvaliableVolume(session?.user.plan!, session?.user.volume!)
+  if(!session?.user.plan || !session.user.volume) return notFound()
+
+  const volume = getAvaliableVolume(session?.user.plan, session?.user.volume)
   return (
     <nav className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur">
       <div className="container mx-auto flex h-16 items-center justify-between px-4 md:px-8">

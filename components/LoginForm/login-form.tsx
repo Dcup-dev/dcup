@@ -39,7 +39,7 @@ export function LoginForm({
           } else if (res?.ok) {
             router.push("/dashboard");
           }
-        } catch (error: any) {
+        } catch {
           router.push(
             `/login?error=${encodeURIComponent("An unexpected error occurred")}`,
           );
