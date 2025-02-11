@@ -18,7 +18,7 @@ export default function Error({
           <AlertTriangle className="h-12 w-12" />
         </div>
         <h1 className="text-2xl font-semibold">Uh-oh! Something went terribly wrong.</h1>
-        <p className="mt-2 text-muted-foreground pb-5">
+        <p className="mt-2 text-muted-foreground pb-5 px-10">
           {error.message || 'Don’t worry, it’s not your fault. Our app just had a little hiccup.'}
         </p>
         <Button

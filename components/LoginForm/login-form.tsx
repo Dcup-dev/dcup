@@ -5,12 +5,13 @@ import {
   Card,
   CardContent,
   CardDescription,
+  CardFooter,
   CardHeader,
   CardTitle
 } from "@/components/ui/card";
 import { Loader } from "@/components/Loader/Loader";
 import { signIn } from "next-auth/react";
-import { FaFacebook, FaGithub, FaGoogle } from "react-icons/fa";
+import { FaGithub, FaGoogle } from "react-icons/fa";
 import { useTransition } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useSignInErrorMessage } from "@/lib/errors/auth_hook";
@@ -64,10 +65,10 @@ export function LoginForm({
             <AlertDescription>{errorMessage}</AlertDescription>
           </Alert>
         )}
-        <CardHeader>
-          <CardTitle className="text-2xl">Login</CardTitle>
+        <CardHeader className="text-center">
+          <CardTitle className="text-3xl font-bold">Login</CardTitle>
           <CardDescription>
-            Welcone to Dcup
+            Welcome to Dcup
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -80,12 +81,13 @@ export function LoginForm({
               <FaGithub size={32} />
               Login with github
             </Button>
-            <Button className="w-full" onClick={() => loginWith("facebook")}>
-              <FaFacebook size={32} />
-              Login with Facebook
-            </Button>
           </div>
         </CardContent>
+        <CardFooter className="text-center">
+          <p className="text-xs text-gray-500">
+            By continuing, you agree to our Terms of Service and Privacy Policy.
+          </p>
+        </CardFooter>
       </Card>
     </div>
   )
