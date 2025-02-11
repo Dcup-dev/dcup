@@ -1,4 +1,3 @@
-"use client"
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { ArrowRight, Menu } from "lucide-react";
@@ -10,15 +9,13 @@ import { UserAvatar } from "../Avatar/UserAvatar";
 import { Logo } from "../Logo/logo";
 import { ModeToggle } from "../ModeToggle/ModeToggle";
 import { vSizes } from "@/lib/constants";
-import { notFound } from "next/navigation";
-
 
 
 export function Navbar({ session }: { session?: Session }) {
   const navLinks = getNavLinks(!!session)
-  if(!session?.user.plan || !session.user.volume) return notFound()
 
   const volume = getAvaliableVolume(session?.user.plan, session?.user.volume)
+ 
   return (
     <nav className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur">
       <div className="container mx-auto flex h-16 items-center justify-between px-4 md:px-8">
@@ -40,8 +37,8 @@ export function Navbar({ session }: { session?: Session }) {
                     </div>
                     <Link href={"/pricing"}>
                       <div className="flex flex-col items-center cursor-pointer">
-                        <span className="text-sm font-medium">{session.user.plan}</span>
-                        <span className="text-xs text-muted-foreground">{volume} Used</span>
+                        <span className="text-sm font-medium">{session.user.plan!}</span>
+                        <span className="text-xs text-muted-foreground">{volume || "0/0"} Used</span>
                       </div>
                     </Link>
                   </div>
@@ -105,8 +102,8 @@ export function Navbar({ session }: { session?: Session }) {
               <ModeToggle />
               <Link href={"/pricing"}>
                 <div className="flex flex-col items-start cursor-pointer">
-                  <span className="text-sm font-medium">{session.user.plan}</span>
-                  <span className="text-xs text-muted-foreground">{volume} Used</span>
+                  <span className="text-sm font-medium">{session.user.plan!}</span>
+                  <span className="text-xs text-muted-foreground">{volume || "0/0"} Used</span>
                 </div>
               </Link>
             </div>
@@ -148,9 +145,10 @@ function getNavLinks(isLogin: boolean): NavLinks[] {
 }
 
 function getAvaliableVolume(
-  plan: "Free" | "Basic" | "Pro" | "Business" | "Enterprise",
-  volumeAvailable: number // in bytes
-): string {
+  plan?: "Free" | "Basic" | "Pro" | "Business" | "Enterprise",
+  volumeAvailable?: number // in bytes
+): string | null {
+  if (!plan || !volumeAvailable) return null
   let totalCapacityBytes: number;
   let capacityDisplay: string;
   let divisor: number; // used for converting bytes to the appropriate unit
@@ -172,7 +170,7 @@ function getAvaliableVolume(
       divisor = 1024 * 1024; // converting to MB
       break;
     case "Business":
-      totalCapacityBytes =vSizes.GB_5; // 5 GB
+      totalCapacityBytes = vSizes.GB_5; // 5 GB
       capacityDisplay = "5 GB";
       divisor = 1024 * 1024 * 1024; // converting to GB
       break;

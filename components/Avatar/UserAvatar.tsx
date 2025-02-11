@@ -13,7 +13,6 @@ import {
 } from "@/components/ui/avatar"
 import { Session } from "next-auth"
 import Link from "next/link";
-import { signOut } from "next-auth/react";
 
 
 export const UserAvatar = ({ session }: { session: Session }) => {
@@ -43,17 +42,12 @@ export const UserAvatar = ({ session }: { session: Session }) => {
             Support
           </Link>
         </DropdownMenuItem>
-        <Logout />
+        <DropdownMenuItem>
+          <Link href='/api/auth/signout'>
+            Logout
+          </Link>
+        </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>
-  )
-}
-
-export const Logout = () => {
-  'use client'
-  return (
-    <DropdownMenuItem onClick={() => signOut({ callbackUrl: '/', redirect: true })} className="cursor-pointer">
-      Logout
-    </DropdownMenuItem>
   )
 }
