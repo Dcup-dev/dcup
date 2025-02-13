@@ -6,6 +6,7 @@
     "build": "next build",
     "dev": "next dev",
     "start": "next start",
+    "test": "echo \"No tests yet\" && exit 0",
     "postinstall": "fumadocs-mdx",
     "generate": "drizzle-kit generate",
     "pushdb": "drizzle-kit push"
@@ -37,6 +38,7 @@
     "fumadocs-ui": "14.4.2",
     "jsonwebtoken": "^9.0.2",
     "lucide-react": "^0.474.0",
+    "motion": "^12.4.2",
     "next": "15.0.3",
     "next-auth": "^4.24.11",
     "pg": "^8.13.1",
