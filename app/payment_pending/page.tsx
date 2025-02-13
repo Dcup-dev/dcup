@@ -6,6 +6,7 @@ import { notFound } from "next/navigation";
 
 export default function page() {
   if (process.env.NEXT_PUBLIC_PAYMENT!) return notFound();
+ 
   return (
     <div className="flex h-screen items-center justify-center p-6">
       <Card className="max-w-lg w-full text-center shadow-lg border bg-primary-foreground">
