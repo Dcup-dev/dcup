@@ -20,7 +20,21 @@ jobs:
 
       - name: Install Dependencies
         run: npm install
-
+        
+      - name: Generate Env File
+        run: |
+         cat <<EOF > .env
+         NEXT_PUBLIC_PADDLE_BASIC_PRICE_ID=${{ secrets.NEXT_PUBLIC_PADDLE_BASIC_PRICE_ID }}
+         NEXT_PUBLIC_PADDLE_BUSINESS_PRICE_ID=${{ secrets.NEXT_PUBLIC_PADDLE_BUSINESS_PRICE_ID }}
+         NEXT_PUBLIC_PADDLE_CLIENT_TOKEN=${{ secrets.NEXT_PUBLIC_PADDLE_CLIENT_TOKEN }}
+         NEXT_PUBLIC_PADDLE_CUSTOMER_PORTAL_URL=${{ secrets.NEXT_PUBLIC_PADDLE_CUSTOMER_PORTAL_URL }}
+         NEXT_PUBLIC_PADDLE_ENTERPRISE_PRICE_ID=${{ secrets.NEXT_PUBLIC_PADDLE_ENTERPRISE_PRICE_ID }}
+         NEXT_PUBLIC_PADDLE_ENV=${{ secrets.NEXT_PUBLIC_PADDLE_ENV }}
+         NEXT_PUBLIC_PADDLE_PRO_PRICE_ID=${{ secrets.NEXT_PUBLIC_PADDLE_PRO_PRICE_ID }}
+         NEXT_PUBLIC_PADDLE_SUCCESSURL=${{ secrets.NEXT_PUBLIC_PADDLE_SUCCESSURL }}
+         NEXT_PUBLIC_PAYMENT=${{ secrets.NEXT_PUBLIC_PAYMENT }}
+         EOF
+   
       - name: Run Tests
         run: npm test
 
