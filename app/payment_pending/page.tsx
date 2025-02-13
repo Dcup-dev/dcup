@@ -1,10 +1,11 @@
-
 import { AlertTriangle, Clock } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
+import { notFound } from "next/navigation";
 
 export default function page() {
+  if (process.env.NEXT_PUBLIC_PAYMENT_STATUS === 'YES') return notFound();
   return (
     <div className="flex h-screen items-center justify-center p-6">
       <Card className="max-w-lg w-full text-center shadow-lg border bg-primary-foreground">

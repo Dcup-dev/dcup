@@ -1,8 +1,7 @@
-'use client';
 import Link from "next/link";
-import { motion } from 'framer-motion';
 import { CodeIcon, SparklesIcon, LightbulbIcon } from 'lucide-react';
 import { HeroImage } from '../HeroImage/HeroImage';
+import * as motion from 'motion/react-client'
 
 const HeroHeader = () => {
   const fadeUp = {
