@@ -6,8 +6,7 @@ import { CheckCircle2, Zap, Rocket, Server, Settings2 } from "lucide-react"
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
 import { usePay } from "@/hooks/use-pay";
 import { PLAN } from "@/@types/plan";
-import { PaymentProvider } from "@/context/PaymentContext"
-import { SessionProvider, useSession } from "next-auth/react"
+import { useSession } from "next-auth/react"
 import { useRouter } from "next/navigation"
 
 
@@ -65,23 +64,16 @@ const plans: Plan[] = [
   },
 ];
 
-export function Pricing() {
-  return (<SessionProvider>
-    <PaymentProvider>
-      <PricingDetails />
-    </PaymentProvider>
-  </SessionProvider>)
-}
 
 
-const PricingDetails = () => {
+export const PricingDetails = () => {
   const { paddlePay } = usePay()
   const route = useRouter()
   const { status } = useSession()
 
   const handlePayment = (plan: PLAN) => {
     if (status !== 'authenticated') return route.push("/login")
-    if (process.env.NEXT_PUBLIC_PAYMENT_STATUS !== 'YES') return route.push("/payment_pending")
+    if (!process.env.NEXT_PUBLIC_PAYMENT) return route.push("/payment_pending")
 
     return paddlePay(plan)
   }

@@ -1,0 +1,56 @@
+name: Deploy Dcup-web v1.0.1
+
+on:
+  push:
+    branches:
+      - "v1.0.1"
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '20'
+
+      - name: Install Dependencies
+        run: npm install
+
+      - name: Generate Env File
+        run: |
+         cat <<EOF > .env
+         NEXT_PUBLIC_PADDLE_BASIC_PRICE_ID=${{ secrets.NEXT_PUBLIC_PADDLE_BASIC_PRICE_ID }}
+         NEXT_PUBLIC_PADDLE_BUSINESS_PRICE_ID=${{ secrets.NEXT_PUBLIC_PADDLE_BUSINESS_PRICE_ID }}
+         NEXT_PUBLIC_PADDLE_CLIENT_TOKEN=${{ secrets.NEXT_PUBLIC_PADDLE_CLIENT_TOKEN }}
+         NEXT_PUBLIC_PADDLE_CUSTOMER_PORTAL_URL=${{ secrets.NEXT_PUBLIC_PADDLE_CUSTOMER_PORTAL_URL }}
+         NEXT_PUBLIC_PADDLE_ENTERPRISE_PRICE_ID=${{ secrets.NEXT_PUBLIC_PADDLE_ENTERPRISE_PRICE_ID }}
+         NEXT_PUBLIC_PADDLE_ENV=${{ secrets.NEXT_PUBLIC_PADDLE_ENV }}
+         NEXT_PUBLIC_PADDLE_PRO_PRICE_ID=${{ secrets.NEXT_PUBLIC_PADDLE_PRO_PRICE_ID }}
+         NEXT_PUBLIC_PADDLE_SUCCESSURL=${{ secrets.NEXT_PUBLIC_PADDLE_SUCCESSURL }}
+         NEXT_PUBLIC_PAYMENT=${{ secrets.NEXT_PUBLIC_PAYMENT }}
+         EOF
+   
+      - name: Run Tests
+        run: npm test
+
+      - name: Build Next.js App
+        run: npm run build
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
+
+      - name: Build and Push Docker Image
+        run: |
+          docker build -t ${{ secrets.DOCKER_USERNAME }}/dcup:1.0.1 -f Dockerfile .
+          docker push ${{ secrets.DOCKER_USERNAME }}/dcup:1.0.1

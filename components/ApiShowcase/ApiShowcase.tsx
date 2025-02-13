@@ -1,11 +1,9 @@
-'use client';
-
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { motion } from "framer-motion";
 import { Card } from "@/components/ui/card";
 import { TerminalIcon, LinkIcon, FileIcon } from "lucide-react";
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
 import { vscDarkPlus } from 'react-syntax-highlighter/dist/cjs/styles/prism';
+import * as motion from 'motion/react-client'
 
 const ApiShowcase = () => {
   const fileExample = `const apiKey = 'YOUR_API_KEY';

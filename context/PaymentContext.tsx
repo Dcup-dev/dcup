@@ -3,6 +3,7 @@ import { motion } from "framer-motion"
 import { Environments, initializePaddle, Paddle } from "@paddle/paddle-js";
 import { ReactNode, createContext, useEffect, useMemo, useState } from "react";
 import { PLAN } from "@/@types/plan";
+import { SessionProvider } from "next-auth/react";
 
 
 
@@ -138,9 +139,11 @@ export const PaymentProvider = ({ children }: { children: ReactNode }) => {
             Start small, scale effortlessly. Transparent costs with no hidden fees.
           </motion.p>
         </motion.div>
-        <PaymentContext.Provider value={contextValue}>
-          {children}
-        </PaymentContext.Provider>
+        <SessionProvider>
+          <PaymentContext.Provider value={contextValue}>
+            {children}
+          </PaymentContext.Provider>
+        </SessionProvider>
         <motion.p
           variants={fadeUp}
           className="text-center text-sm text-fd-muted-foreground mt-12"

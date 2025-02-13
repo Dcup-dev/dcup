@@ -3,10 +3,11 @@ import { authOptions } from '@/auth';
 import { redirect } from 'next/navigation';
 import HeroHeader from '@/components/HeroHeader/HeroHeader';
 import HowItWorks from '@/components/HowItWorks/HowItWorks';
-import { Pricing } from '@/components/Pricing/Pricing';
 import DashboardSection from '@/components/DashboardSection/DashboardSection';
 import Footer from '@/components/Footer/Footer';
 import ApiShowcase from '@/components/ApiShowcase/ApiShowcase';
+import { PaymentProvider } from '@/context/PaymentContext';
+import { PricingDetails } from '@/components/Pricing/Pricing';
 
 
 export default async function HomePage() {
@@ -19,7 +20,9 @@ export default async function HomePage() {
       <HowItWorks />
       <div className='p-10' />
       <DashboardSection />
-      <Pricing />
+      <PaymentProvider>
+        <PricingDetails />
+      </PaymentProvider>
       <div className='p-10' />
       <ApiShowcase />
       <Footer />
