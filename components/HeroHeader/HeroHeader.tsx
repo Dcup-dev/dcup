@@ -2,7 +2,6 @@ import Link from "next/link";
 import { CodeIcon, SparklesIcon, LightbulbIcon } from 'lucide-react';
 import { HeroImage } from '../HeroImage/HeroImage';
 import * as motion from 'motion/react-client'
-import { Producthunt } from "@/app/Producthunt";
 
 const HeroHeader = () => {
   const fadeUp = {
@@ -38,7 +37,7 @@ const HeroHeader = () => {
             </motion.span>
 
             <div className="bg-gradient-to-r from-blue-400 to-purple-500 bg-clip-text text-transparent text-lg font-semibold">
-              <Producthunt/>
+              Dcup
             </div>
           </motion.div>
 
