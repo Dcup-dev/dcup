@@ -61,7 +61,7 @@ const Footer = () => {
               </a>
 
               <a
-                href="https://github.com/aliamerj"
+                href="https://github.com/Dcup-dev/Dcup-lib"
                 target="_blank"
                 className="transition-colors duration-300 hover:text-primary"
               >
