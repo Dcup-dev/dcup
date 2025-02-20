@@ -1,7 +1,8 @@
 import Link from "next/link";
-import { CodeIcon, SparklesIcon, LightbulbIcon } from 'lucide-react';
+import { CodeIcon, LightbulbIcon } from 'lucide-react';
 import { HeroImage } from '../HeroImage/HeroImage';
 import * as motion from 'motion/react-client'
+import { FaGithub } from "react-icons/fa";
 
 const HeroHeader = () => {
   const fadeUp = {
@@ -33,11 +34,11 @@ const HeroHeader = () => {
               animate={{ y: [-5, 5, -5] }}
               transition={{ repeat: Infinity, duration: 2.5 }}
             >
-              <SparklesIcon className="h-8 w-8 text-yellow-400" />
+              <FaGithub className="h-8 w-8" />
             </motion.span>
 
             <div className="bg-gradient-to-r from-blue-400 to-purple-500 bg-clip-text text-transparent text-lg font-semibold">
-              Dcup
+              Fast Open-Source Document Conversion
             </div>
           </motion.div>
 
@@ -51,7 +52,7 @@ const HeroHeader = () => {
             }}
             className="text-5xl md:text-7xl font-bold text-primary mb-8"
           >
-            {['Transform Documents', 'Into Perfect JSON'].map((text, i) => (
+            {['Transform Any Document Into', 'Structured JSON'].map((text, i) => (
               <motion.span
                 key={i}
                 variants={fadeUp}
@@ -69,8 +70,8 @@ const HeroHeader = () => {
             transition={{ delay: 0.4 }}
             className="text-xl text-fd-muted-foreground mb-12 max-w-3xl mx-auto"
           >
-            Instantly convert PDFs, Docs, Sheets,PowerPoint,CSV,Web pages, Raw HTML and Markdown to structured JSON.
-            Define your schema, get perfect results - every time.
+            Instantly convert PDFs, Docs, Sheets,PowerPoint,CSV,Web pages, Raw HTML and Markdown to clean JSON with full control over your schema.
+            Define your own schema, extract data how you need it, and seamlessly integrate the output into your workflow.
           </motion.p>
 
           {/* CTA and Animated Icons */}
