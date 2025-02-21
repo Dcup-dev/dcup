@@ -1,4 +1,5 @@
 import Link from "next/link";
+import Image from "next/image"
 import * as motion from 'motion/react-client'
 import { Card, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { SparklesIcon } from "lucide-react";
@@ -79,16 +80,13 @@ const HowItWorks = () => {
             viewport={{ once: true, margin: "-100px" }}
             className="relative group"
           >
-            <div className="relative aspect-video bg-gray-800 rounded-xl overflow-hidden border-2 border-gray-700 hover:border-blue-500 transition-all shadow-2xl">
-              {/* Video Iframe */}
-              <iframe
-                className="w-full h-full"
-                src="https://www.youtube.com/embed/DCO51Nd9q8o"
-                title="Dcup Demo"
-                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                allowFullScreen
-              ></iframe>
-            </div>
+            <Image
+              src={"/dcup_how.gif"}
+              alt="dcup"
+              width={700}
+              height={700}
+              className="rounded-xl border-2 border-gray-700 hover:border-blue-500 transition-all shadow-2xl"
+            />
           </motion.div>
         </div>
 
