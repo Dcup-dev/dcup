@@ -1,5 +1,3 @@
-import { createPreset } from 'fumadocs-ui/tailwind-plugin';
-
 /** @type {import('tailwindcss').Config} */
 export default {
   darkMode: ['class'],
@@ -76,6 +74,5 @@ export default {
     './mdx-components.{ts,tsx}',
     './node_modules/fumadocs-ui/dist/**/*.js',
   ],
-  presets: [createPreset()],
   plugins: [require("tailwindcss-animate")]
 };

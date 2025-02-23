@@ -3,7 +3,6 @@ import { Button } from "@/components/ui/button";
 import { ArrowRight, Menu } from "lucide-react";
 
 import { Sheet, SheetTrigger, SheetContent, SheetHeader, SheetTitle } from "../ui/sheet";
-import { SearchBox } from "../Search/Search";
 import { Session } from "next-auth";
 import { UserAvatar } from "../Avatar/UserAvatar";
 import { Logo } from "../Logo/logo";
@@ -85,7 +84,6 @@ export function Navbar({ session }: { session?: Session }) {
 
               )}
 
-              <SearchBox btnClass="hidden" boxClass="relative" />
             </div>
           </SheetContent>
         </Sheet>
@@ -104,7 +102,6 @@ export function Navbar({ session }: { session?: Session }) {
         </div>
 
         <div className="hidden md:flex items-center gap-4">
-          <SearchBox btnClass="block lg:hidden" boxClass="relative hidden lg:block" />
 
           {session ? (
             <div className="flex items-center gap-4">
