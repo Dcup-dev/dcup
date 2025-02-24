@@ -4,11 +4,17 @@ import { Inter } from 'next/font/google';
 import type { ReactNode } from 'react';
 import { GoogleAnalyticsScript } from './GoogleAnalyticsScript';
 import type { Metadata } from "next";
+import { AppSidebar } from "@/components/app-sidebar"
+import { Separator } from "@/components/ui/separator"
+import { SidebarInset,SidebarProvider,SidebarTrigger} from "@/components/ui/sidebar"
+import { Toaster } from '@/components/ui/toaster';
+import { getServerSession } from 'next-auth';
+import { authOptions } from '@/auth';
+import { Navbar } from '@/components/Navbar/Navbar';
+
 const inter = Inter({
   subsets: ['latin'],
 });
-
-
 
 export const metadata: Metadata = {
   title: "Transform Documents Into Perfect JSON with Dcup",
@@ -45,7 +51,25 @@ export const metadata: Metadata = {
 };
 
 
-export default function Layout({ children }: { children: ReactNode }) {
+export default async function Layout({ children }: { children: ReactNode }) {
+  const session = await getServerSession(authOptions)
+  if (!session) return (
+    <html lang="en" className={inter.className} suppressHydrationWarning>
+      <GoogleAnalyticsScript />
+      <body className="flex flex-col min-h-screen">
+        <ThemeProvider
+          attribute="class"
+          defaultTheme="dark"
+          enableSystem
+          disableTransitionOnChange
+        >
+          <Navbar />
+          {children}
+        </ThemeProvider>
+      </body>
+    </html>
+  )
+
   return (
     <html lang="en" className={inter.className} suppressHydrationWarning>
       <GoogleAnalyticsScript />
@@ -56,7 +80,21 @@ export default function Layout({ children }: { children: ReactNode }) {
           enableSystem
           disableTransitionOnChange
         >
-          {children}
+          <SidebarProvider>
+              <AppSidebar />
+            <SidebarInset>
+              <header className="flex h-16 shrink-0 items-center gap-2">
+                <div className="flex items-center gap-2 px-4">
+                  <SidebarTrigger className="-ml-1" />
+                  <Separator orientation="vertical" className="mr-2 h-4" />
+                </div>
+              </header>
+              <div className="flex flex-1 flex-col gap-4 p-4 pt-0">
+                {children}
+                <Toaster />
+              </div>
+            </SidebarInset>
+          </SidebarProvider>
         </ThemeProvider>
       </body>
     </html>

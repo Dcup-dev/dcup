@@ -1,7 +1,7 @@
 import Image from "next/image";
 import Link from "next/link";
 
-export const Logo = ({href}:{href:string}) => {
+export const Logo = ({ href }: { href: string }) => {
   return (
     <div className="group/logo">
       <Link
@@ -13,8 +13,8 @@ export const Logo = ({href}:{href:string}) => {
           <Image
             src="/dcup_light.svg"
             alt="D-Cup Logo Light"
-            width={60}
-            height={60}
+            width={45}
+            height={45}
             className="hidden dark:inline transition-transform duration-500 ease-in-out group-hover/logo:scale-110 group-hover/logo:drop-shadow-xl"
           />
 
@@ -22,8 +22,8 @@ export const Logo = ({href}:{href:string}) => {
           <Image
             src="/dcup_dark.svg"
             alt="D-Cup Logo Dark"
-            width={60}
-            height={60}
+            width={45}
+            height={45}
             className="inline dark:hidden transition-transform duration-500 ease-in-out group-hover/logo:scale-110 group-hover/logo:drop-shadow-xl"
           />
           <div className="absolute inset-0 rounded-2xl border-2 border-white/30 dark:border-black/20 transition-colors duration-300" />
