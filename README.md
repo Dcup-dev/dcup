@@ -4,13 +4,9 @@
 
 Dcup is a fully open-source, self-hostable data pipeline designed to revolutionize how you process and retrieve information from unstructured documents. Our mission is to empower developers, data engineers, and AI teams with a powerful tool that transforms raw data into structured, actionable insights.
 
----
-
 ## Overview
 
 Dcup leverages advanced Retrieval-Augmented Generation (RAG) techniques to convert PDFs, Docs, Sheets, HTML, Markdown, and more into perfectly structured JSON. By combining an intuitive, flexible ingestion process with intelligent text chunking and indexing, Dcup makes it easy to query your data with precision and efficiency.
-
----
 
 ## Key Features
 
@@ -32,7 +28,6 @@ Dcup leverages advanced Retrieval-Augmented Generation (RAG) techniques to conve
 - **Fully Open Source:**  
   With our MIT-licensed platform, you have the freedom to modify, contribute, and deploy Dcup exactly as you need—open source, now and forever.
 
----
 
 ## How It Works
 
@@ -45,7 +40,6 @@ Dcup leverages advanced Retrieval-Augmented Generation (RAG) techniques to conve
 3. **Retrieve:**  
    Query your data using our powerful API. Whether you need semantic search or precise keyword matching, Dcup delivers accurate, context-aware results every time.
 
----
 
 ## Getting Started
 
@@ -53,18 +47,8 @@ Dcup leverages advanced Retrieval-Augmented Generation (RAG) techniques to conve
 - **Configuration:** Customize your data pipeline with straightforward YAML/JSON configuration files.
 - **Documentation:** Explore our comprehensive docs and API reference to integrate Dcup into your applications with ease.
 
----
 
 ## Contributing
 
 We welcome contributions from the community! Check out our contributing guidelines to learn how you can help make Dcup even better.
 
----
-
-## License
-
-Dcup is licensed under the [MIT License](LICENSE).
-
----
-
-Join us in redefining data pipelines—harness the power of open-source RAG and unlock the full potential of your data.
