@@ -1,3 +1,4 @@
+import { relations } from "drizzle-orm";
 import {
   boolean,
   timestamp,
@@ -9,8 +10,10 @@ import {
   bigint
 } from "drizzle-orm/pg-core"
 import { AdapterAccount } from "next-auth/adapters"
-export const planEnum = pgEnum('plan', ['Free', 'Basic', 'Pro', 'Business', 'Enterprise']);
+import { connections } from "./connections";
 
+
+export const planEnum = pgEnum('plan', ['Free', 'Basic', 'Pro', 'Business', 'Enterprise']);
 export const users = pgTable("user", {
   id: text("id")
     .primaryKey()
@@ -105,3 +108,7 @@ export const apiKeys = pgTable("apiKey", {
   apiKey: text("api_key").unique().notNull(),
   generatedTime: timestamp("generated_time").notNull(),
 });
+
+export const connectionsRelations = relations(users, ({ many }) => ({
+  connections: many(connections),
+}));

@@ -57,6 +57,34 @@
       "when": 1738756957657,
       "tag": "0007_unknown_tiger_shark",
       "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "7",
+      "when": 1740842324110,
+      "tag": "0008_robust_wendigo",
+      "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "7",
+      "when": 1740842495824,
+      "tag": "0009_narrow_miracleman",
+      "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "7",
+      "when": 1740842566445,
+      "tag": "0010_classy_senator_kelly",
+      "breakpoints": true
+    },
+    {
+      "idx": 11,
+      "version": "7",
+      "when": 1740843490030,
+      "tag": "0011_secret_norman_osborn",
+      "breakpoints": true
     }
   ]
 }
