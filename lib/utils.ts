@@ -61,3 +61,28 @@ export function getAvaliableVolume(
   return `${formattedUsed} / ${capacityDisplay}`;
 }
 
+export function timeAgo(dateInput: Date) {
+  const date = new Date(dateInput);
+  const now = new Date();
+  
+  let diff = now.getTime() - date.getTime();
+  if (diff < 0) {
+    return "just now";
+  }
+
+  const seconds = Math.floor(diff / 1000);
+  const minutes = Math.floor(diff / (1000 * 60));
+  const hours = Math.floor(diff / (1000 * 60 * 60));
+  const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+
+  if (days > 0) {
+    return `${days} day${days > 1 ? 's' : ''} ago`;
+  } else if (hours > 0) {
+    return `${hours} hour${hours > 1 ? 's' : ''} ago`;
+  } else if (minutes > 0) {
+    return `${minutes} minute${minutes > 1 ? 's' : ''} ago`;
+  } else {
+    return `${seconds} second${seconds !== 1 ? 's' : ''} ago`;
+  }
+}
+

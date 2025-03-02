@@ -1,12 +1,12 @@
 import { authOptions } from "@/auth";
 import { getServerSession } from "next-auth";
 import { notFound } from "next/navigation";
-import { drive } from '@googleapis/drive'
+import { drive  } from '@googleapis/drive'
 import { auth } from '@googleapis/oauth2'
 import { databaseDrizzle } from "@/db";
 
 const oauth2Client = new auth.OAuth2(
-  process.env.GOOGLE_CLIENT_ID,
+  process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID,
   process.env.GOOGLE_CLIENT_SECRET,
   process.env.NEXTAUTH_URL + '/api/connections/google-drive/callback'
 );

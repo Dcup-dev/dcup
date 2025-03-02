@@ -49,7 +49,7 @@ export const authOptions: NextAuthOptions = {
   },
   providers: [
     GoogleProvider({
-      clientId: env.GOOGLE_CLIENT_ID!,
+      clientId: env.NEXT_PUBLIC_GOOGLE_CLIENT_ID!,
       clientSecret: env.GOOGLE_CLIENT_SECRET!,
       profile(profile: GoogleProfile) {
         return {
