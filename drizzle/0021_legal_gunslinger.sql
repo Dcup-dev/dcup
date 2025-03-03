@@ -1,0 +1,1 @@
+ALTER TABLE "connection" DROP COLUMN "date_added";

@@ -1,14 +1,20 @@
 import { z } from "zod";
 
 export const connectionConfigSchema = z.object({
-  folderName: z.string().min(1),
-  directory: z.string().min(2),
+  id: z.string().min(2),
+  folderName: z.string().transform((str): string | null => {
+    if (str) return str
+    return "*"
+  }),
+  directory:z.string(), 
   importMode: z.enum(["Fast", "Hi-res"]).default("Fast"),
   partition: z.string().default("default"),
   metadata: z.string()
     .transform((str, ctx): string => {
       try {
-        if (str) return JSON.parse(str)
+        if (str) {
+          JSON.parse(str)
+        }
         return "{}"
       } catch (e) {
         ctx.addIssue({ code: 'custom', message: 'Invalid JSON' })
@@ -34,3 +40,7 @@ export const connectionConfigSchema = z.object({
     }
   }),
 })
+
+export const deleteConnectionConfigSchema = z.object({
+  id: z.string().min(2),
+});

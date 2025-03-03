@@ -8,18 +8,17 @@ import { Select, SelectTrigger, SelectContent, SelectItem } from '@/components/u
 import { SelectGroup, SelectValue } from '@radix-ui/react-select';
 import useDrivePicker from '@/packages/GoogleDrive';
 import { DialogClose } from '@radix-ui/react-dialog';
-import { X } from 'lucide-react';
+import { Settings2, X } from 'lucide-react';
 import { EMPTY_FORM_STATE } from '@/lib/zodErrorHandle';
 import { setConnectionConfig } from '@/actions/connections/config';
 import { ConnectionTable } from '@/db/schemas/connections';
+import { toast } from '@/hooks/use-toast';
 
 export default function SourceConfiguration({ accessToken, currentConnection }: { accessToken: string | null | undefined, currentConnection: typeof ConnectionTable }) {
   const [directory, setDirectory] = useState<{ name: string, url: string }>();
   const [open, setOpen] = useState(false)
-  const [isConfigSet, setIsConfigSet] = useState(!!currentConnection.directory)
-
+  const [isConfigSet, setIsConfigSet] = useState(currentConnection.isConfigSet)
   const [openPicker] = useDrivePicker()
-
   const [state, formAction] = useActionState(setConnectionConfig, EMPTY_FORM_STATE);
 
 
@@ -28,6 +27,9 @@ export default function SourceConfiguration({ accessToken, currentConnection }: 
       setOpen(false)
       setIsConfigSet(true)
     }
+    toast({
+      title: state.message,
+    });
   }, [state])
 
 
@@ -55,7 +57,10 @@ export default function SourceConfiguration({ accessToken, currentConnection }: 
 
   return (<Dialog open={open} onOpenChange={o => setOpen(o)} >
     <DialogTrigger asChild>
-      <Button size="sm" variant={isConfigSet ? 'link' : 'default'} onClick={() => setOpen(true)} >Configure</Button>
+      <Button size='sm' variant={isConfigSet ? 'ghost' : 'default'} onClick={() => setOpen(true)} >
+        <Settings2 />
+        Configure
+      </Button>
     </DialogTrigger>
     <DialogContent className="sm:max-w-[425px]">
       <DialogClose onClick={() => setOpen(false)} className="absolute right-4 top-4 rounded-sm opacity-70 ring-offset-background transition-opacity hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:pointer-events-none data-[state=open]:bg-accent data-[state=open]:text-muted-foreground">
@@ -69,11 +74,13 @@ export default function SourceConfiguration({ accessToken, currentConnection }: 
         </DialogDescription>
       </DialogHeader>
       <form action={(data) => {
+        data.set("id", currentConnection.id)
         data.set("folderName", directory?.name || "*")
         data.set("directory", directory?.url || "")
         formAction(data)
       }}>
         <div className="grid gap-4 py-4">
+
           <div>
             <label className="block text-sm font-medium">Folder</label>
             <div className="flex items-center gap-2">
@@ -88,6 +95,7 @@ export default function SourceConfiguration({ accessToken, currentConnection }: 
               </Button>
             </div>
           </div>
+
           <div>
             <label className="block text-sm font-medium">Partition</label>
             <Input
@@ -95,9 +103,9 @@ export default function SourceConfiguration({ accessToken, currentConnection }: 
               name='partition'
               placeholder="default"
               defaultValue={currentConnection.partition}
-
             />
           </div>
+
           <div>
             <label className="block text-sm font-medium">Import Mode</label>
             <Select name='importMode' defaultValue={currentConnection.importMode} >
@@ -150,6 +158,7 @@ export default function SourceConfiguration({ accessToken, currentConnection }: 
               Limit the number of documents processed. The connection will pause once the limit is reached.
             </p>
           </div>
+
         </div>
         <DialogFooter>
           <Button type="submit">{isConfigSet ? "Save changes" : "Set Configuration"}</Button>

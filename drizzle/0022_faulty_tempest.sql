@@ -1,0 +1,1 @@
+ALTER TABLE "connection" ADD COLUMN "is_config_set" boolean DEFAULT false NOT NULL;

@@ -134,6 +134,34 @@
       "when": 1740987274213,
       "tag": "0018_tricky_kang",
       "breakpoints": true
+    },
+    {
+      "idx": 19,
+      "version": "7",
+      "when": 1741032453020,
+      "tag": "0019_modern_roland_deschain",
+      "breakpoints": true
+    },
+    {
+      "idx": 20,
+      "version": "7",
+      "when": 1741033729430,
+      "tag": "0020_silly_whistler",
+      "breakpoints": true
+    },
+    {
+      "idx": 21,
+      "version": "7",
+      "when": 1741038914270,
+      "tag": "0021_legal_gunslinger",
+      "breakpoints": true
+    },
+    {
+      "idx": 22,
+      "version": "7",
+      "when": 1741039436975,
+      "tag": "0022_faulty_tempest",
+      "breakpoints": true
     }
   ]
 }
