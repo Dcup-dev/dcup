@@ -117,7 +117,7 @@ async function CurrentConnections({ connections }: { connections: typeof Connect
                     {connection.email}
                   </p>
                 </TableCell>
-                <TableCell>{connection.directory || 'Untitled'}</TableCell>
+                <TableCell>{connection.folderName || 'Untitled'}</TableCell>
                 <TableCell>{connection.partition || 'default'}</TableCell>
                 <TableCell>{connection.documentsCount}</TableCell>
                 <TableCell>{connection.pagesCount}</TableCell>
@@ -149,6 +149,6 @@ async function Source({ connection }: { connection: typeof ConnectionTable }) {
     expiryDate: Number(connection.expiryDate),
   })
   return (
-    <SourceConfiguration accessToken={token} />
+    <SourceConfiguration accessToken={token} currentConnection={connection} />
   );
 }

@@ -8,6 +8,7 @@ import {
 import { users } from "./users"
 
 export const connectionEnum = pgEnum('connectors', ['GOOGLE_DRIVE', 'AWS', 'NOTION', 'SLACK', 'GMAIL', 'CONFLUENCE',]);
+export const importMode = pgEnum("importMode", ["Fast", "Hi-res"])
 
 export const connections = pgTable("connection", {
   userId: text("user_id")
@@ -19,8 +20,10 @@ export const connections = pgTable("connection", {
   refreshToken: text("refresh_token").notNull(),
   expiryDate: text("expiry_date").notNull(),
   directory: text("directory"),
+  folderName: text("folder_name"),
   partition: text("partition").default("default").notNull(),
   metadata: text("metadata"),
+  importMode: importMode("import_mode").default("Fast").notNull(),
   documentsCount: integer("documents_count").default(0).notNull(),
   pagesCount: integer("pages_count").default(0).notNull(),
   dateAdded: timestamp("date_added", { withTimezone: true }),

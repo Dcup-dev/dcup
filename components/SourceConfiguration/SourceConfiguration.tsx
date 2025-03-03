@@ -1,5 +1,5 @@
 'use client'
-import { useState } from 'react';
+import { useActionState, useEffect, useState } from 'react';
 import { Dialog, DialogTrigger, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -9,18 +9,26 @@ import { SelectGroup, SelectValue } from '@radix-ui/react-select';
 import useDrivePicker from '@/packages/GoogleDrive';
 import { DialogClose } from '@radix-ui/react-dialog';
 import { X } from 'lucide-react';
-export default function SourceConfiguration({ accessToken }: { accessToken: string | null | undefined }) {
+import { EMPTY_FORM_STATE } from '@/lib/zodErrorHandle';
+import { setConnectionConfig } from '@/actions/connections/config';
+import { ConnectionTable } from '@/db/schemas/connections';
 
-  const [folder, _] = useState<string>('');
-  const [partition, setPartition] = useState<string>('default');
-  const [importMode, setImportMode] = useState<string>('Fast');
-  const [metadata, setMetadata] = useState<string>('{}');
-  const [pageLimit, setPageLimit] = useState<number>(0);
-  const [documentLimit, setDocumentLimit] = useState<number>(0);
+export default function SourceConfiguration({ accessToken, currentConnection }: { accessToken: string | null | undefined, currentConnection: typeof ConnectionTable }) {
+  const [directory, setDirectory] = useState<{ name: string, url: string }>();
   const [open, setOpen] = useState(false)
-
+  const [isConfigSet, setIsConfigSet] = useState(!!currentConnection.directory)
 
   const [openPicker] = useDrivePicker()
+
+  const [state, formAction] = useActionState(setConnectionConfig, EMPTY_FORM_STATE);
+
+
+  useEffect(() => {
+    if (state.status === 'SUCCESS') {
+      setOpen(false)
+      setIsConfigSet(true)
+    }
+  }, [state])
 
 
   const showPicker = () => {
@@ -31,30 +39,23 @@ export default function SourceConfiguration({ accessToken }: { accessToken: stri
       setIncludeFolders: true,
       setSelectFolderEnabled: true,
       token: accessToken ?? undefined,
-      showUploadView: false,
-      showUploadFolders: false,
       supportDrives: true,
-      multiselect: true,
       callbackFunction: (data) => {
-        if (data.action === 'cancel') {
-          console.log('User clicked cancel/close button')
+        if (data.action === 'picked') {
+          setDirectory({
+            name: data.docs[0].name,
+            url: data.docs[0].url
+          })
         }
-        console.log(data)
         setOpen(true)
       },
     })
   };
 
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-
-    console.log({ folder, partition, importMode, metadata, pageLimit, documentLimit });
-  };
-
   return (<Dialog open={open} onOpenChange={o => setOpen(o)} >
     <DialogTrigger asChild>
-      <Button size="sm" onClick={() => setOpen(true)} >Configure</Button>
+      <Button size="sm" variant={isConfigSet ? 'link' : 'default'} onClick={() => setOpen(true)} >Configure</Button>
     </DialogTrigger>
     <DialogContent className="sm:max-w-[425px]">
       <DialogClose onClick={() => setOpen(false)} className="absolute right-4 top-4 rounded-sm opacity-70 ring-offset-background transition-opacity hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:pointer-events-none data-[state=open]:bg-accent data-[state=open]:text-muted-foreground">
@@ -67,14 +68,19 @@ export default function SourceConfiguration({ accessToken }: { accessToken: stri
           Configure your connection settings.
         </DialogDescription>
       </DialogHeader>
-      <form onSubmit={handleSubmit}>
+      <form action={(data) => {
+        data.set("folderName", directory?.name || "*")
+        data.set("directory", directory?.url || "")
+        formAction(data)
+      }}>
         <div className="grid gap-4 py-4">
           <div>
             <label className="block text-sm font-medium">Folder</label>
             <div className="flex items-center gap-2">
               <Input
-                value={folder}
+                value={directory?.name || currentConnection.folderName || ""}
                 placeholder="No folder selected"
+                onClick={showPicker} type='button'
                 readOnly
               />
               <Button onClick={showPicker} type="button">
@@ -85,14 +91,16 @@ export default function SourceConfiguration({ accessToken }: { accessToken: stri
           <div>
             <label className="block text-sm font-medium">Partition</label>
             <Input
-              value={partition}
-              onChange={(e) => setPartition(e.target.value)}
+              id='partition'
+              name='partition'
               placeholder="default"
+              defaultValue={currentConnection.partition}
+
             />
           </div>
           <div>
             <label className="block text-sm font-medium">Import Mode</label>
-            <Select onValueChange={setImportMode}>
+            <Select name='importMode' defaultValue={currentConnection.importMode} >
               <SelectTrigger className="w-full">
                 <SelectValue placeholder="Modes" />
               </SelectTrigger>
@@ -108,9 +116,10 @@ export default function SourceConfiguration({ accessToken }: { accessToken: stri
           <div>
             <label className="block text-sm font-medium">Metadata (JSON)</label>
             <Textarea
-              value={metadata}
-              onChange={(e) => setMetadata(e.target.value)}
+              id='metadata'
+              name='metadata'
               placeholder='{"company": "dcup"}'
+              defaultValue={currentConnection.metadata || "{}"}
             />
           </div>
 
@@ -118,8 +127,9 @@ export default function SourceConfiguration({ accessToken }: { accessToken: stri
             <label className="block text-sm font-medium">Page Limit</label>
             <Input
               type="number"
-              value={pageLimit || ""}
-              onChange={(e) => setPageLimit(Number(e.target.value))}
+              name='pageLimit'
+              id='pageLimit'
+              defaultValue={currentConnection.pagesCount !== 0 ? currentConnection.pagesCount : undefined}
               placeholder="Enter page limit"
             />
             <p className="text-xs text-muted-foreground">
@@ -130,9 +140,10 @@ export default function SourceConfiguration({ accessToken }: { accessToken: stri
           <div>
             <label className="block text-sm font-medium">Document Limit</label>
             <Input
+              name='documentLimit'
+              id='documentLimit'
               type="number"
-              value={documentLimit || ""}
-              onChange={(e) => setDocumentLimit(Number(e.target.value))}
+              defaultValue={currentConnection.documentsCount !== 0 ? currentConnection.documentsCount : undefined}
               placeholder="Enter document limit"
             />
             <p className="text-xs text-muted-foreground">
@@ -141,7 +152,7 @@ export default function SourceConfiguration({ accessToken }: { accessToken: stri
           </div>
         </div>
         <DialogFooter>
-          <Button type="submit">Save changes</Button>
+          <Button type="submit">{isConfigSet ? "Save changes" : "Set Configuration"}</Button>
         </DialogFooter>
       </form>
     </DialogContent>
