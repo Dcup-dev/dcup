@@ -1,0 +1,6 @@
+services:
+  redis_bp:
+    image: redis:7.2.4
+    restart: unless-stopped
+    ports:
+      - "${REDIS_DB_PORT}:6379"

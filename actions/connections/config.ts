@@ -3,6 +3,7 @@
 import { authOptions } from "@/auth";
 import { databaseDrizzle } from "@/db";
 import { connections } from "@/db/schemas/connections";
+import { addToProcessFilesQueue } from "@/lib/workers/queues/jobs/processFiles.job";
 import { fromErrorToFormState, toFormState } from "@/lib/zodErrorHandle";
 import { connectionConfigSchema, deleteConnectionConfigSchema } from "@/validations/connectionConfigSchema";
 import { eq } from "drizzle-orm";
@@ -41,7 +42,7 @@ export async function setConnectionConfig(_: FormState, formData: FormData) {
       isConfigSet: true,
     }).where(eq(connections.id, config.id))
 
-    // call the processing job using BullQM: TODO
+    await addToProcessFilesQueue({connectionId: config.id})
 
     revalidatePath("/connections");
     return toFormState("SUCCESS", "start processing");
