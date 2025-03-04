@@ -15,12 +15,14 @@ import { ConnectionTable } from '@/db/schemas/connections';
 import { toast } from '@/hooks/use-toast';
 
 export default function SourceConfiguration({ accessToken, currentConnection }: { accessToken: string | null | undefined, currentConnection: typeof ConnectionTable }) {
-  const [directory, setDirectory] = useState<{ name: string, url: string }>();
   const [open, setOpen] = useState(false)
   const [isConfigSet, setIsConfigSet] = useState(currentConnection.isConfigSet)
   const [openPicker] = useDrivePicker()
   const [state, formAction] = useActionState(setConnectionConfig, EMPTY_FORM_STATE);
-
+  const [directory, setDirectory] = useState<{ name: string, url: string }>({
+    name: currentConnection.folderName || "*",
+    url: currentConnection.directory || "root"
+  });
 
   useEffect(() => {
     if (state.status === 'SUCCESS') {
@@ -75,8 +77,8 @@ export default function SourceConfiguration({ accessToken, currentConnection }: 
       </DialogHeader>
       <form action={(data) => {
         data.set("id", currentConnection.id)
-        data.set("folderName", directory?.name || "*")
-        data.set("directory", directory?.url || "")
+        data.set("folderName", directory?.name)
+        data.set("directory", directory?.url)
         formAction(data)
       }}>
         <div className="grid gap-4 py-4">

@@ -10,9 +10,9 @@ import { ConnectionTable } from "@/db/schemas/connections";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { timeAgo } from "@/lib/utils";
 import SourceConfiguration from "@/components/SourceConfiguration/SourceConfiguration";
-import { getValidAccessToken } from "@/lib/connectors/googleDrive";
 import { DeleteConnection } from "@/components/DeleteConnection/DeleteConnection";
 import { SyncConnection } from "@/components/SyncConnection/SyncConnection";
+import { getOAuth2Client } from "@/lib/connectors/googleDrive";
 
 
 
@@ -138,16 +138,17 @@ async function CurrentConnections({ connections }: { connections: typeof Connect
 }
 
 async function Source({ connection }: { connection: typeof ConnectionTable }) {
-  const token = await getValidAccessToken({
+  const { token } = await getOAuth2Client({
     accessToken: connection.accessToken,
     refreshToken: connection.refreshToken,
     expiryDate: Number(connection.expiryDate),
-  })
+  }).getAccessToken()
+
   if (connection.isConfigSet) {
     return <>
       <SyncConnection />
       <SourceConfiguration accessToken={token} currentConnection={connection} />
-      <DeleteConnection connectionId={connection.id}/>
+      <DeleteConnection connectionId={connection.id} />
     </>
   }
   return (

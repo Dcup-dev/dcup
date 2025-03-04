@@ -2,6 +2,7 @@ import { Queue, Worker } from "bullmq";
 import { redisConnection } from "../../redis";
 import { defaultQueueConfig } from "../config";
 import { databaseDrizzle } from "@/db";
+import { processGoogleDriveFiles } from "@/lib/processors/storages/googleDrive";
 
 
 const queueName = 'processFiles';
@@ -32,9 +33,26 @@ new Worker(queueName, async (job) => {
 });
 
 const processFiles = async (connectionId: string) => {
-  const connection = await databaseDrizzle.query.connections.findFirst({
-    where: (c, ops) => ops.eq(c.id, connectionId)
-  })
-  // todo
-  console.log({ connection })
+  console.log("start processing FIles")
+  try {
+    const connection = await databaseDrizzle.query.connections.findFirst({
+      where: (c, ops) => ops.eq(c.id, connectionId)
+    })
+    if (!connection) {
+      console.error("Connection not found");
+      return;
+    }
+    switch (connection.service) {
+      case 'GOOGLE_DRIVE':
+        console.log("we found google drive")
+        await processGoogleDriveFiles(connection)
+        break;
+
+      default:
+        console.error("todo")
+        break;
+    }
+  } catch (error) {
+    console.log({ error })
+  }
 }

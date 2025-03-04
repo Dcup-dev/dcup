@@ -19,7 +19,7 @@ export const authGoogleDrive = () => {
   return authUrl
 }
 
-export async function getValidAccessToken(storedTokens: {
+export function getOAuth2Client(storedTokens: {
   accessToken: string;
   refreshToken: string;
   expiryDate: number
@@ -35,10 +35,5 @@ export async function getValidAccessToken(storedTokens: {
     refresh_token: storedTokens.refreshToken,
     expiry_date: storedTokens.expiryDate
   });
-
-  // This call will refresh the token if needed.
-  const res = await oauth2Client.getAccessToken()
-
-  // If a new access token was fetched, update your database with res.token and res.res?.expiry_date
-  return res.token;
+  return oauth2Client
 }
