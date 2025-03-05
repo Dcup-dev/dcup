@@ -19,11 +19,9 @@ export const processGoogleDriveFiles = async (connection: typeof ConnectionTable
     do {
       const response = await storage.files.list({
         q: `'${folderId}' in parents and trashed = false`,
-        fields: 'nextPageToken, files(name, fileExtension, webContentLink)',
+        fields: 'nextPageToken, files',
         pageSize: 1000,
         pageToken,
-        includeItemsFromAllDrives: false,
-        supportsAllDrives: false
       });
       if (response.data.files) {
         allFiles.push(...response.data.files);
@@ -31,21 +29,25 @@ export const processGoogleDriveFiles = async (connection: typeof ConnectionTable
       pageToken = response.data.nextPageToken;
     } while (pageToken);
 
+    let text = "";
+    let tables: unknown[] = []
+
     allFiles.map(async (f) => {
       switch (f.fileExtension) {
         case "pdf":
-          await processPdf(f.webContentLink!)
+          // stream the file
+          const pdf = await processPdf(f.webContentLink!) // to fix
+          console.log(`found: ${pdf}`)
+          text = pdf.text;
+          tables = pdf.tables;
           break;
-
         default:
           break;
       }
     })
-    // chunk content 
   } catch (error) {
     console.error('Error fetching files:', error);
   }
-
 }
 
 export function extractFolderId(folderUrl: string): string | null {

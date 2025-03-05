@@ -3,7 +3,7 @@
   "version": "0.0.0",
   "private": true,
   "scripts": {
-    "postinstall": "scripts/venv/bin/pip install -r scripts/requirements.txt",
+    "postinstall": "python3 -m venv scripts/venv && scripts/venv/bin/pip install -r scripts/requirements.txt",
     "build": "next build",
     "dev": "next dev",
     "start": "next start",
@@ -34,6 +34,7 @@
     "@radix-ui/react-tooltip": "^1.1.8",
     "@types/google.picker": "^0.0.49",
     "bullmq": "^5.41.7",
+    "child_process": "^1.0.2",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "date-fns": "^4.1.0",
