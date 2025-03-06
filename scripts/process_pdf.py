@@ -4,6 +4,7 @@ import pdfplumber
 import requests
 import argparse
 import json
+import sys
 
 
 def download_pdf(url: str) -> bytes:
@@ -37,14 +38,25 @@ def extract_text_from_pdf(pdf_bytes: bytes):
 
 def main():
     parser = argparse.ArgumentParser(description="Extract text from PDF URL")
-    parser.add_argument("url", type=str, help="URL of the PDF file")
+    parser.add_argument("input", nargs="?", type=str, help="URL of the PDF file")
     args = parser.parse_args()
     try:
-        pdf_content = download_pdf(args.url)
-        result = extract_text_from_pdf(pdf_content)
+        if args.input and (
+            args.input.startswith("http://") or args.input.startswith("https://")
+        ):
+            pdf_content = download_pdf(args.input)
+        else:
+            if not sys.stdin.isatty():
+                pdf_content = sys.stdin.buffer.read()
+                if not pdf_content:
+                    raise ValueError("No PDF data provided via STDIN.")
+            else:
+                raise ValueError("No valid URL provided and no PDF data piped.")
 
+        result = extract_text_from_pdf(pdf_content)
     except Exception as e:
         result = {"error": str(e)}
+
     print(json.dumps(result))
 
 
