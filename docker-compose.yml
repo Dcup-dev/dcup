@@ -4,3 +4,15 @@ services:
     restart: unless-stopped
     ports:
       - "${REDIS_DB_PORT}:6379"
+  
+  chroma:
+    image: ghcr.io/chroma-core/chroma:0.6.4.dev297
+    container_name: chroma
+    restart: unless-stopped
+    ports:
+      - "8080:8080" 
+    volumes:
+      - chroma_data:/data
+
+volumes:
+  chroma_data:

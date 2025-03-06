@@ -21,17 +21,17 @@ def download_pdf(url: str) -> bytes:
 
 
 def extract_text_from_pdf(pdf_bytes: bytes):
-    result = {"text": "", "tables": []}
+    pages_data = []
     try:
         with pdfplumber.open(io.BytesIO(pdf_bytes)) as pdf:
             for page in pdf.pages:
-                page_text = page.extract_text()
-                if page_text:
-                    result["text"] += page_text + "\n"
-                tables = page.extract_tables()
-                if tables:
-                    result["tables"].extend(tables)
-            return result
+                page_text = page.extract_text() or ""
+                tables = page.extract_tables() or []
+                pages_data.append({
+                    "text": page_text.strip(),
+                    "tables": tables,
+                })
+        return pages_data
     except Exception as e:
         raise ValueError(f"Error processing PDF: {e}")
 

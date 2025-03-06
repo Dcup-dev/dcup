@@ -1,20 +1,22 @@
 import { ConnectionTable } from '@/db/schemas/connections'
 import { getOAuth2Client } from '@/lib/connectors/googleDrive';
-import { drive } from '@googleapis/drive'
+import { drive, drive_v3 } from '@googleapis/drive'
 import { Readable } from 'stream';
 import { processPdf } from '../Files/pdf';
+import { FileContent } from '@/lib/workers/queues/jobs/processFiles.job';
 
-export const processGoogleDriveFiles = async (connection: typeof ConnectionTable) => {
-  const folderId = connection.directory && extractFolderId(connection.directory) || "root";
+
+export const processGoogleDriveFiles = async (connection: typeof ConnectionTable): Promise<FileContent[]> => {
+  const folderId = connection.directory ? extractFolderId(connection.directory) : "root";
   const oauth = getOAuth2Client({
     accessToken: connection.accessToken,
     refreshToken: connection.refreshToken,
     expiryDate: Number(connection.expiryDate),
-  })
-  const storage = drive({ version: 'v3', auth: oauth })
+  });
+  const storage = drive({ version: 'v3', auth: oauth });
 
-  const allFiles = [];
-  let pageToken: any;
+  const allFiles: drive_v3.Schema$File[] = [];
+  let pageToken: string | undefined;
 
   try {
     do {
@@ -27,32 +29,40 @@ export const processGoogleDriveFiles = async (connection: typeof ConnectionTable
       if (response.data.files) {
         allFiles.push(...response.data.files);
       }
-      pageToken = response.data.nextPageToken;
+      pageToken = response.data.nextPageToken || undefined;
     } while (pageToken);
 
-    allFiles.map(async (f) => {
-      switch (f.fileExtension) {
-        case "pdf":
-          // stream the file
+    // Process PDF files concurrently.
+    const pdfFileProcessingPromises = allFiles.map(async (file) => {
+      if (file.fileExtension === 'pdf' && file.id) {
+        try {
           const res = await storage.files.get({
-            fileId: f.id!,
+            fileId: file.id,
             alt: "media",
-          },
-            { responseType: 'stream' }
-          );
+          }, { responseType: 'stream' });
           const buf = await streamToBuffer(res.data);
-          const pdfResult = await processPdf(buf);
-          // todo: process pdf contact
-          console.log(`Processed PDF result:`, pdfResult);
-          break;
-        default:
-          break;
+          const content = await processPdf(buf);
+          return content;
+        } catch (err) {
+          // todo: send notification
+          console.error(`Error processing file ${file.name}:`, err);
+          return []; // Skip this file on error.
+        }
+      } else {
+        return []; // Non-PDF files are skipped.
       }
-    })
+    });
+
+    // Wait for all processing to complete and flatten the results.
+    const filesContentArrays = await Promise.all(pdfFileProcessingPromises);
+    const filesContent = filesContentArrays.flat();
+    return filesContent;
   } catch (error) {
+    // todo: send notification
     console.error('Error fetching files:', error);
+    return [];
   }
-}
+};
 
 export function extractFolderId(folderUrl: string): string | null {
   const regex = /\/folders\/([^/?]+)/;

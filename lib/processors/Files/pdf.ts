@@ -1,12 +1,10 @@
+import { FileContent } from "@/lib/workers/queues/jobs/processFiles.job";
 import { spawn } from "child_process"
 import path from "path"
 
-export interface PdfProcessResult {
-  text: string;
-  tables: unknown[]; // You can refine this type if needed.
-}
 
-export const processPdf = async (fileContent: Buffer): Promise<PdfProcessResult> => {
+
+export const processPdf = async (fileContent: Buffer): Promise<FileContent[]> => {
   return new Promise((resolve, reject) => {
     const python = path.join(process.cwd(), "scripts", "venv", "bin", "python3");
     const script = path.join(process.cwd(), "scripts", "process_pdf.py");
@@ -33,11 +31,7 @@ export const processPdf = async (fileContent: Buffer): Promise<PdfProcessResult>
         if (result.error) {
           return reject(new Error(result.error));
         }
-        const processedResult: PdfProcessResult = {
-          text: result.text || "",
-          tables: result.tables || [],
-        };
-        resolve(processedResult);
+        resolve(result);
       } catch (err) {
         reject(err);
       }
