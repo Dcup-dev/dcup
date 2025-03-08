@@ -4,6 +4,10 @@ import { defaultQueueConfig } from "../config";
 import { databaseDrizzle } from "@/db";
 import { processGoogleDriveFiles } from "@/lib/processors/storages/googleDrive";
 import { RecursiveCharacterTextSplitter } from "@langchain/textsplitters";
+import { v4 as uuidv4 } from 'uuid';
+import crypto from "crypto";
+
+
 import OpenAI from "openai";
 
 import { QdrantClient } from '@qdrant/js-client-rest';
@@ -73,9 +77,11 @@ const processFiles = async (connectionId: string) => {
     }
 
     const splitter = new RecursiveCharacterTextSplitter({
-      chunkSize: 512,
-      chunkOverlap: 100
-    })
+      chunkSize: 4096,
+      chunkOverlap: Math.floor(4096 * 0.15),
+      keepSeparator: true,
+      separators: ["\n\n## ", "\n\n# ", "\n\n", "\n", ". ", "! ", "? ", " "],
+    });
 
     const token = process.env.OPENAI_KEY!;
     const endpoint = process.env.OPENAI_ENDPOINT!;
@@ -93,75 +99,114 @@ const processFiles = async (connectionId: string) => {
 
     // Process all content first
     const allPoints = [];
-
+    // todo:fix: update the metadata 
     for (const file of filesContent) {
+      const baseMetadata = {
+        _document_id: file.name,
+        _source: connection.service,
+        _chunk_id: 1,
+        _metadata: {
+          ...file.metadata,
+          ...JSON.parse(connection.metadata || "{}"),
+        },
+      };
       for (const [pageIndex, page] of file.pages.entries()) {
-        // Process tables
-        for (const [tableIndex, table] of page.tables.entries()) {
-          const tableContent = JSON.stringify(table);
-          const metadata = {
-            _document_id: file.name,
-            _page_number: pageIndex + 1,
-            _type: "table",
-            _content: tableContent,
-            _chunk_id: tableIndex + 1,
-            _metadata: {
-              ...file.metadata,
-              ...JSON.parse(connection.metadata || "{}"),
-            },
-          };
+        const chunks = await splitter.splitText(page.text)
 
-          const tableVectors = await vectorizeChunks(openAiClient, tableContent);
-          allPoints.push({
-            id: `${metadata._document_id}_page_${metadata._page_number}_type_${metadata._type}_chunk_${metadata._chunk_id}`,
-            vector: tableVectors[0].embedding, // Use first (and only) vector
-            payload: metadata,
-          });
-        }
-
-        // Process text chunks
-        const textChunks = await splitter.splitText(page.text);
-        for (const [chunkIndex, chunk] of textChunks.entries()) {
-          const metadata = {
-            _document_id: file.name,
+        for (const [chunkIdx, chunk] of chunks.entries()) {
+          const textHash = generateHash(chunk);
+          const textMetadata = {
+            ...baseMetadata,
+            _chunk_id: chunkIdx + 1,
             _page_number: pageIndex + 1,
             _type: "text",
             _content: chunk,
-            _chunk_id: chunkIndex + 1,
-            _metadata: {
-              ...file.metadata,
-              ...JSON.parse(connection.metadata || "{}"),
-            },
+            _hash: textHash
           };
 
-          const textVectors = await vectorizeChunks(openAiClient, chunk);
-          allPoints.push({
-            id: `${metadata._document_id}_page_${metadata._page_number}_type_${metadata._type}_chunk_${metadata._chunk_id}`,
-            vector: textVectors[0].embedding, // Use first (and only) vector
-            payload: metadata,
+          const pointCached = await redisConnection.get(textHash)
+          if (!pointCached) {
+            const textVectors = await vectorizeChunks(openAiClient, chunk);
+            const existingPoints = await qdrant.search(documents, {
+              vector: textVectors,
+              filter: {
+                must: [{ key: "_hash", match: { value: textHash } }]
+              },
+              limit: 1,
+            });
+
+            if (existingPoints.length === 0) {
+              allPoints.push({
+                id: uuidv4(),
+                vector: textVectors,
+                payload: textMetadata,
+              });
+            }
+          }
+        }
+
+        const pageTables = page.tables.map(t => JSON.stringify(t)).join("\n-------------\n")
+        const tableHash = generateHash(pageTables);
+        const tableMetadata = {
+          ...baseMetadata,
+          _page_number: pageIndex + 1,
+          _type: "table",
+          _content: pageTables,
+          _hash: tableHash,
+        };
+
+        const pointCached = await redisConnection.get(tableHash)
+        if (!pointCached) {
+          const tableVectors = await vectorizeChunks(openAiClient, pageTables);
+          const existingPoints = await qdrant.search(documents, {
+            vector: tableVectors,
+            filter: {
+              must: [{ key: "_hash", match: { value: tableHash } }]
+            },
+            limit: 1,
           });
+
+
+          if (existingPoints.length === 0) {
+            allPoints.push({
+              id: uuidv4(),
+              vector: tableVectors,
+              payload: tableMetadata,
+            });
+          }
         }
       }
     }
-    
-    // todo : save vector database 
-    console.log({ allvectors: allPoints.map(x => x.vector) });
-    const doc = await qdrant.upsert(documents, {
-      points: allPoints
-    })
-    console.log({ doc })
 
+    if (allPoints.length > 0) {
+      const doc = await qdrant.upsert(documents, {
+        points: allPoints,
+        wait: true
+      })
 
-  } catch (error) {
-    console.error('Full error details:', error); // Log complete error
+      if (doc.status === 'completed') {
+        allPoints.forEach(async point => {
+          await redisConnection.set(point.payload._hash, point.id, "EX", 3600 * 5) // Cache for 5 hours
+        })
+      }
+      //  todo:send notifcation to the server 
+      console.log({ doc })
+    }
+
+  } catch (error: any) {
+    console.error('Full error details:', error.data); // Log complete error
   }
 }
 
-const vectorizeChunks = async (openAiClient: OpenAI, chunk: string) => {
+const vectorizeChunks = async (openAiClient: OpenAI, chunks: string) => {
   const modelName = process.env.OPENAI_MODEL_NAME!
   const response = await openAiClient.embeddings.create({
-    input: chunk,
+    input: chunks,
     model: modelName
   });
-  return response.data;
+  return response.data[0].embedding;
+}
+
+function generateHash(content: string): string {
+  return crypto.createHash("sha256").update(content).digest("hex");
 }
