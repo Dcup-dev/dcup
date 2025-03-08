@@ -6,11 +6,20 @@ import { processGoogleDriveFiles } from "@/lib/processors/storages/googleDrive";
 import { RecursiveCharacterTextSplitter } from "@langchain/textsplitters";
 import OpenAI from "openai";
 
+import { QdrantClient } from '@qdrant/js-client-rest';
+
 
 const queueName = 'processFiles';
 
 export type FileContent = {
-  text: string;
+  name: string,
+  pages: PageContent[],
+  metadata: {},
+}
+
+export type PageContent = {
+  title: string,
+  text: string,
   tables: unknown[]
 }
 
@@ -68,35 +77,91 @@ const processFiles = async (connectionId: string) => {
       chunkOverlap: 100
     })
 
-    const combinedText = filesContent.map(page => page.text.trim()).join("\n")
-    const prepareTables = filesContent.map(page => page.tables.map(table => JSON.stringify(table)).join("\n"))
-    const chunks = await splitter.splitText(combinedText)
-    await textEmbedding(chunks);
-    await textEmbedding(prepareTables)
+    const token = process.env.OPENAI_KEY!;
+    const endpoint = process.env.OPENAI_ENDPOINT!;
+    const openAiClient = new OpenAI({ baseURL: endpoint, apiKey: token });
+    const qdrant = new QdrantClient({ url: 'http://127.0.0.1:6333' });
+    const documents = "document";
+    const { collections } = await qdrant.getCollections();
+
+    // Create collection if needed
+    if (!collections.find(col => col.name === documents)) {
+      await qdrant.createCollection(documents, {
+        vectors: { size: 1536, distance: 'Cosine' },
+      });
+    }
+
+    // Process all content first
+    const allPoints = [];
+
+    for (const file of filesContent) {
+      for (const [pageIndex, page] of file.pages.entries()) {
+        // Process tables
+        for (const [tableIndex, table] of page.tables.entries()) {
+          const tableContent = JSON.stringify(table);
+          const metadata = {
+            _document_id: file.name,
+            _page_number: pageIndex + 1,
+            _type: "table",
+            _content: tableContent,
+            _chunk_id: tableIndex + 1,
+            _metadata: {
+              ...file.metadata,
+              ...JSON.parse(connection.metadata || "{}"),
+            },
+          };
+
+          const tableVectors = await vectorizeChunks(openAiClient, tableContent);
+          allPoints.push({
+            id: `${metadata._document_id}_page_${metadata._page_number}_type_${metadata._type}_chunk_${metadata._chunk_id}`,
+            vector: tableVectors[0].embedding, // Use first (and only) vector
+            payload: metadata,
+          });
+        }
+
+        // Process text chunks
+        const textChunks = await splitter.splitText(page.text);
+        for (const [chunkIndex, chunk] of textChunks.entries()) {
+          const metadata = {
+            _document_id: file.name,
+            _page_number: pageIndex + 1,
+            _type: "text",
+            _content: chunk,
+            _chunk_id: chunkIndex + 1,
+            _metadata: {
+              ...file.metadata,
+              ...JSON.parse(connection.metadata || "{}"),
+            },
+          };
+
+          const textVectors = await vectorizeChunks(openAiClient, chunk);
+          allPoints.push({
+            id: `${metadata._document_id}_page_${metadata._page_number}_type_${metadata._type}_chunk_${metadata._chunk_id}`,
+            vector: textVectors[0].embedding, // Use first (and only) vector
+            payload: metadata,
+          });
+        }
+      }
+    }
+    
+    // todo : save vector database 
+    console.log({ allvectors: allPoints.map(x => x.vector) });
+    const doc = await qdrant.upsert(documents, {
+      points: allPoints
+    })
+    console.log({ doc })
+
 
   } catch (error) {
-    console.log({ error })
+    console.error('Full error details:', error); // Log complete error
   }
 }
 
-const textEmbedding = async (chunks: string[]) => {
-  const token = process.env.OPENAI_KEY!;
-  const endpoint = process.env.OPENAI_ENDPOINT!
+const vectorizeChunks = async (openAiClient: OpenAI, chunk: string) => {
   const modelName = process.env.OPENAI_MODEL_NAME!
-
-  const client = new OpenAI({ baseURL: endpoint, apiKey: token });
-
-  const response = await client.embeddings.create({
-    input: chunks,
+  const response = await openAiClient.embeddings.create({
+    input: chunk,
     model: modelName
   });
-
-  for (const item of response.data) {
-    let length = item.embedding.length;
-    console.log(
-      `data[${item.index}]: length=${length}, ` +
-      `[${item.embedding[0]}, ${item.embedding[1]}, ` +
-      `..., ${item.embedding[length - 2]}, ${item.embedding[length - 1]}]`);
-  }
-  console.log(response.usage);
+  return response.data;
 }

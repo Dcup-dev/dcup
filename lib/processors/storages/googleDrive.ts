@@ -5,7 +5,6 @@ import { Readable } from 'stream';
 import { processPdf } from '../Files/pdf';
 import { FileContent } from '@/lib/workers/queues/jobs/processFiles.job';
 
-
 export const processGoogleDriveFiles = async (connection: typeof ConnectionTable): Promise<FileContent[]> => {
   const folderId = connection.directory ? extractFolderId(connection.directory) : "root";
   const oauth = getOAuth2Client({
@@ -22,7 +21,7 @@ export const processGoogleDriveFiles = async (connection: typeof ConnectionTable
     do {
       const response = await storage.files.list({
         q: `'${folderId}' in parents and trashed = false`,
-        fields: 'nextPageToken, files(id, name, fileExtension)',
+        fields: 'nextPageToken, files(id, name, fileExtension, linkShareMetadata, videoMediaMetadata, imageMediaMetadata)',
         pageSize: 1000,
         pageToken,
       });
@@ -32,31 +31,31 @@ export const processGoogleDriveFiles = async (connection: typeof ConnectionTable
       pageToken = response.data.nextPageToken || undefined;
     } while (pageToken);
 
-    // Process PDF files concurrently.
-    const pdfFileProcessingPromises = allFiles.map(async (file) => {
-      if (file.fileExtension === 'pdf' && file.id) {
-        try {
-          const res = await storage.files.get({
-            fileId: file.id,
-            alt: "media",
-          }, { responseType: 'stream' });
-          const buf = await streamToBuffer(res.data);
-          const content = await processPdf(buf);
-          return content;
-        } catch (err) {
-          // todo: send notification
-          console.error(`Error processing file ${file.name}:`, err);
-          return []; // Skip this file on error.
-        }
-      } else {
-        return []; // Non-PDF files are skipped.
-      }
-    });
+    const pdfFileProcessing: FileContent[] = []
 
-    // Wait for all processing to complete and flatten the results.
-    const filesContentArrays = await Promise.all(pdfFileProcessingPromises);
-    const filesContent = filesContentArrays.flat();
-    return filesContent;
+    // Process PDF files concurrently.
+    for (let file of allFiles) {
+      if (file.fileExtension === 'pdf' && file.id) {
+        const res = await storage.files.get({
+          fileId: file.id,
+          alt: "media",
+        }, { responseType: 'stream' });
+        const buf = await streamToBuffer(res.data);
+        const content = await processPdf(buf);
+        const fileContent: FileContent = {
+          name: file.name || "",
+          pages: content,
+          metadata: {
+            ...file.imageMediaMetadata,
+            ...file.videoMediaMetadata,
+            ...file.linkShareMetadata,
+          }
+        }
+        pdfFileProcessing.push(fileContent)
+      }
+    }
+    return pdfFileProcessing
+
   } catch (error) {
     // todo: send notification
     console.error('Error fetching files:', error);

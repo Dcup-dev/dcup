@@ -6,7 +6,7 @@ export const connectionConfigSchema = z.object({
     if (str) return str
     return "*"
   }),
-  directory:z.string(), 
+  directory: z.string(),
   importMode: z.enum(["Fast", "Hi-res"]).default("Fast"),
   partition: z.string().default("default"),
   metadata: z.string()
@@ -14,6 +14,7 @@ export const connectionConfigSchema = z.object({
       try {
         if (str) {
           JSON.parse(str)
+          return str
         }
         return "{}"
       } catch (e) {

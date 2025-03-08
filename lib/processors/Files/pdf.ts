@@ -1,10 +1,10 @@
-import { FileContent } from "@/lib/workers/queues/jobs/processFiles.job";
+import { PageContent } from "@/lib/workers/queues/jobs/processFiles.job";
 import { spawn } from "child_process"
 import path from "path"
 
 
 
-export const processPdf = async (fileContent: Buffer): Promise<FileContent[]> => {
+export const processPdf = async (fileContent: Buffer): Promise<PageContent[]> => {
   return new Promise((resolve, reject) => {
     const python = path.join(process.cwd(), "scripts", "venv", "bin", "python3");
     const script = path.join(process.cwd(), "scripts", "process_pdf.py");
