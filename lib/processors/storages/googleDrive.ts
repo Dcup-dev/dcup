@@ -48,7 +48,6 @@ export const processGoogleDriveFiles = async (connection: typeof ConnectionTable
           metadata: {
             ...file.imageMediaMetadata,
             ...file.videoMediaMetadata,
-            ...file.linkShareMetadata,
           }
         }
         pdfFileProcessing.push(fileContent)

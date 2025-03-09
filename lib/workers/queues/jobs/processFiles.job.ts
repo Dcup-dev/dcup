@@ -6,12 +6,8 @@ import { processGoogleDriveFiles } from "@/lib/processors/storages/googleDrive";
 import { RecursiveCharacterTextSplitter } from "@langchain/textsplitters";
 import { v4 as uuidv4 } from 'uuid';
 import crypto from "crypto";
-
-
 import OpenAI from "openai";
-
 import { QdrantClient } from '@qdrant/js-client-rest';
-
 
 const queueName = 'processFiles';
 
@@ -35,7 +31,6 @@ export const addToProcessFilesQueue = (data: TQueue) => {
   return processfilesQueue.add(queueName, data)
 };
 
-
 const processfilesQueue = new Queue(queueName, {
   connection: redisConnection,
   defaultJobOptions: {
@@ -47,19 +42,16 @@ const processfilesQueue = new Queue(queueName, {
 new Worker(queueName, async (job) => {
   const { connectionId }: TQueue = job.data;
   await processFiles(connectionId)
-
 }, {
   connection: redisConnection
 });
 
 const processFiles = async (connectionId: string) => {
-  console.log("start processing FIles")
   try {
     const connection = await databaseDrizzle.query.connections.findFirst({
       where: (c, ops) => ops.eq(c.id, connectionId)
     })
     if (!connection) {
-      console.error("Connection not found");
       return;
     }
 
@@ -67,7 +59,6 @@ const processFiles = async (connectionId: string) => {
 
     switch (connection.service) {
       case 'GOOGLE_DRIVE':
-        console.log("we found google drive")
         filesContent = await processGoogleDriveFiles(connection)
         break;
 
@@ -86,7 +77,7 @@ const processFiles = async (connectionId: string) => {
     const token = process.env.OPENAI_KEY!;
     const endpoint = process.env.OPENAI_ENDPOINT!;
     const openAiClient = new OpenAI({ baseURL: endpoint, apiKey: token });
-    const qdrant = new QdrantClient({ url: 'http://127.0.0.1:6333' });
+    const qdrant = new QdrantClient({ url: process.env.QDRANT_DB_URL! });
     const documents = "document";
     const { collections } = await qdrant.getCollections();
 
@@ -104,7 +95,6 @@ const processFiles = async (connectionId: string) => {
       const baseMetadata = {
         _document_id: file.name,
         _source: connection.service,
-        _chunk_id: 1,
         _metadata: {
           ...file.metadata,
           ...JSON.parse(connection.metadata || "{}"),
@@ -121,7 +111,7 @@ const processFiles = async (connectionId: string) => {
             _page_number: pageIndex + 1,
             _type: "text",
             _content: chunk,
-            _hash: textHash
+            _hash: textHash,
           };
 
           const pointCached = await redisConnection.get(textHash)
@@ -136,10 +126,16 @@ const processFiles = async (connectionId: string) => {
             });
 
             if (existingPoints.length === 0) {
+              const { title, summary } = await getTitleAndSummary(openAiClient, chunk, JSON.stringify(textMetadata))
+              const metadata = {
+                ...textMetadata,
+                _title: title,
+                _summary: summary
+              }
               allPoints.push({
                 id: uuidv4(),
                 vector: textVectors,
-                payload: textMetadata,
+                payload: metadata,
               });
             }
           }
@@ -168,10 +164,16 @@ const processFiles = async (connectionId: string) => {
 
 
           if (existingPoints.length === 0) {
+            const { title, summary } = await getTitleAndSummary(openAiClient, pageTables, JSON.stringify(tableMetadata))
+            const metadata = {
+              ...tableMetadata,
+              _title: title,
+              _summary: summary
+            }
             allPoints.push({
               id: uuidv4(),
               vector: tableVectors,
-              payload: tableMetadata,
+              payload: metadata,
             });
           }
         }
@@ -199,12 +201,36 @@ const processFiles = async (connectionId: string) => {
 }
 
 const vectorizeChunks = async (openAiClient: OpenAI, chunks: string) => {
-  const modelName = process.env.OPENAI_MODEL_NAME!
+  const modelName = process.env.OPENAI_EMBEDDINGS_MODEL!
   const response = await openAiClient.embeddings.create({
     input: chunks,
     model: modelName
   });
   return response.data[0].embedding;
+}
+
+const getTitleAndSummary = async (openAiClient: OpenAI, chunk: string, metadata: string) => {
+  const modelName = process.env.OPENAI_AGENT_MODEL!
+  const response = await openAiClient.chat.completions.create({
+    model: modelName,
+    messages: [
+      {
+        role: 'system',
+        content: `You are an AI that extracts titles and summaries from documentation chunks.
+    Return a JSON object with 'title' and 'summary' keys.
+    For the title: If this seems like the start of a document, extract its title. If it's a middle chunk, derive a descriptive title.
+    For the summary: Create a concise summary of the main points in this chunk.
+    Keep both title and summary concise but informative.`
+      },
+      {
+        role: "user",
+        content: `Metadata: ${metadata}\n\nContent:\n${chunk.substring(0, 1000)}...`
+      }
+    ],
+    response_format: { type: 'json_object' }
+  })
+
+  return JSON.parse(response.choices[0].message.content || `{"title": "Error processing title", "summary": "Error processing summary"}`)
 }
 
 function generateHash(content: string): string {
