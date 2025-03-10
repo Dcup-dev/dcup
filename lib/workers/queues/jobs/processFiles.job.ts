@@ -6,8 +6,8 @@ import { processGoogleDriveFiles } from "@/lib/processors/storages/googleDrive";
 import { RecursiveCharacterTextSplitter } from "@langchain/textsplitters";
 import { v4 as uuidv4 } from 'uuid';
 import crypto from "crypto";
-import OpenAI from "openai";
-import { QdrantClient } from '@qdrant/js-client-rest';
+import { getTitleAndSummary, vectorizeText } from "@/openAi";
+import { qdrant_collection_name, qdrantCLient } from "@/qdrant";
 
 const queueName = 'processFiles';
 
@@ -74,20 +74,13 @@ const processFiles = async (connectionId: string) => {
       separators: ["\n\n## ", "\n\n# ", "\n\n", "\n", ". ", "! ", "? ", " "],
     });
 
-    const token = process.env.OPENAI_KEY!;
-    const endpoint = process.env.OPENAI_ENDPOINT!;
-    const openAiClient = new OpenAI({ baseURL: endpoint, apiKey: token });
-    const qdrant = new QdrantClient({ url: process.env.QDRANT_DB_URL! });
-    const documents = "document";
-    const { collections } = await qdrant.getCollections();
-
+    const { collections } = await qdrantCLient.getCollections();
     // Create collection if needed
-    if (!collections.find(col => col.name === documents)) {
-      await qdrant.createCollection(documents, {
+    if (!collections.find(col => col.name === qdrant_collection_name)) {
+      await qdrantCLient.createCollection(qdrant_collection_name, {
         vectors: { size: 1536, distance: 'Cosine' },
       });
     }
-
     // Process all content first
     const allPoints = [];
     // todo:fix: update the metadata 
@@ -116,8 +109,8 @@ const processFiles = async (connectionId: string) => {
 
           const pointCached = await redisConnection.get(textHash)
           if (!pointCached) {
-            const textVectors = await vectorizeChunks(openAiClient, chunk);
-            const existingPoints = await qdrant.search(documents, {
+            const textVectors = await vectorizeText(chunk);
+            const existingPoints = await qdrantCLient.search(qdrant_collection_name, {
               vector: textVectors,
               filter: {
                 must: [{ key: "_hash", match: { value: textHash } }]
@@ -126,7 +119,7 @@ const processFiles = async (connectionId: string) => {
             });
 
             if (existingPoints.length === 0) {
-              const { title, summary } = await getTitleAndSummary(openAiClient, chunk, JSON.stringify(textMetadata))
+              const { title, summary } = await getTitleAndSummary(chunk, JSON.stringify(textMetadata))
               const metadata = {
                 ...textMetadata,
                 _title: title,
@@ -153,8 +146,8 @@ const processFiles = async (connectionId: string) => {
 
         const pointCached = await redisConnection.get(tableHash)
         if (!pointCached) {
-          const tableVectors = await vectorizeChunks(openAiClient, pageTables);
-          const existingPoints = await qdrant.search(documents, {
+          const tableVectors = await vectorizeText(pageTables);
+          const existingPoints = await qdrantCLient.search(qdrant_collection_name, {
             vector: tableVectors,
             filter: {
               must: [{ key: "_hash", match: { value: tableHash } }]
@@ -162,9 +155,8 @@ const processFiles = async (connectionId: string) => {
             limit: 1,
           });
 
-
           if (existingPoints.length === 0) {
-            const { title, summary } = await getTitleAndSummary(openAiClient, pageTables, JSON.stringify(tableMetadata))
+            const { title, summary } = await getTitleAndSummary(pageTables, JSON.stringify(tableMetadata))
             const metadata = {
               ...tableMetadata,
               _title: title,
@@ -181,7 +173,7 @@ const processFiles = async (connectionId: string) => {
     }
 
     if (allPoints.length > 0) {
-      const doc = await qdrant.upsert(documents, {
+      const doc = await qdrantCLient.upsert(qdrant_collection_name, {
         points: allPoints,
         wait: true
       })
@@ -198,39 +190,6 @@ const processFiles = async (connectionId: string) => {
   } catch (error: any) {
     console.error('Full error details:', error.data); // Log complete error
   }
-}
-
-const vectorizeChunks = async (openAiClient: OpenAI, chunks: string) => {
-  const modelName = process.env.OPENAI_EMBEDDINGS_MODEL!
-  const response = await openAiClient.embeddings.create({
-    input: chunks,
-    model: modelName
-  });
-  return response.data[0].embedding;
-}
-
-const getTitleAndSummary = async (openAiClient: OpenAI, chunk: string, metadata: string) => {
-  const modelName = process.env.OPENAI_AGENT_MODEL!
-  const response = await openAiClient.chat.completions.create({
-    model: modelName,
-    messages: [
-      {
-        role: 'system',
-        content: `You are an AI that extracts titles and summaries from documentation chunks.
-    Return a JSON object with 'title' and 'summary' keys.
-    For the title: If this seems like the start of a document, extract its title. If it's a middle chunk, derive a descriptive title.
-    For the summary: Create a concise summary of the main points in this chunk.
-    Keep both title and summary concise but informative.`
-      },
-      {
-        role: "user",
-        content: `Metadata: ${metadata}\n\nContent:\n${chunk.substring(0, 1000)}...`
-      }
-    ],
-    response_format: { type: 'json_object' }
-  })
-
-  return JSON.parse(response.choices[0].message.content || `{"title": "Error processing title", "summary": "Error processing summary"}`)
 }
 
 function generateHash(content: string): string {
