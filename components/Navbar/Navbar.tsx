@@ -8,8 +8,7 @@ import { FaGithub } from "react-icons/fa";
 
 export function Navbar() {
   const navLinks = [
-    { name: "Pricing", href: "/pricing" },
-    { name: "Docs", href: "/docs" },
+    { name: "Docs", href: process.env.DCUP_DOC_URL! },
     { name: "Contact", href: "/contact" },
   ]
 

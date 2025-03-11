@@ -8,7 +8,7 @@ import { Label } from "../ui/label";
 import { Alert, AlertDescription, AlertTitle } from "../ui/alert";
 import { useActionState, useRef } from "react";
 import { EMPTY_FORM_STATE } from "@/lib/zodErrorHandle";
-import { generateApiKey } from "@/actions/generateApiKey";
+import { generateApiKey } from "@/actions/apiKeys";
 
 export const GenerateKeyForm = () => {
   const ref = useRef<HTMLFormElement>(null);

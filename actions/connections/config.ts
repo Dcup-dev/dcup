@@ -3,9 +3,9 @@
 import { authOptions } from "@/auth";
 import { databaseDrizzle } from "@/db";
 import { connections } from "@/db/schemas/connections";
-import { addToProcessFilesQueue } from "@/lib/workers/queues/jobs/processFiles.job";
 import { fromErrorToFormState, toFormState } from "@/lib/zodErrorHandle";
 import { connectionConfigSchema, deleteConnectionConfigSchema } from "@/validations/connectionConfigSchema";
+import { addToProcessFilesQueue } from "@/workers/queues/jobs/processFiles.job";
 import { eq } from "drizzle-orm";
 import { getServerSession } from "next-auth";
 import { revalidatePath } from "next/cache";
