@@ -6,7 +6,8 @@ import { getTitleAndSummary, vectorizeText } from "@/openAi";
 import { qdrant_collection_name, qdrantCLient } from "@/qdrant";
 import { processGoogleDriveFiles } from "./processors/storages/googleDrive";
 import { redisConnection } from "@/workers/redis";
-import { FailedFile, publishProgress } from "@/events";
+import { publishProgress } from "@/events";
+import { connections, processedFiles } from "@/db/schemas/connections";
 
 export type FileContent = {
   name: string,
@@ -21,11 +22,12 @@ export type PageContent = {
 }
 
 export const processFiles = async (connectionId: string) => {
-  let processedPage = 0;
+  const completedFiles: typeof processedFiles.$inferInsert[] = []
   let filesContent: FileContent[] = []
   const allPoints = [];
-  const fileProcessed = [];
-  const errorMessages: FailedFile[] = []
+  let processedPage = 0;
+  let processedAllPages = 0
+  const now = new Date()
 
   const splitter = new RecursiveCharacterTextSplitter({
     chunkSize: 4096,
@@ -48,7 +50,7 @@ export const processFiles = async (connectionId: string) => {
     }
 
     // todo: fix(bugs): update the metadata 
-    for (const file of filesContent) {
+    for (const [fileIndex, file] of filesContent.entries()) {
       const baseMetadata = {
         _document_id: file.name,
         _source: connection.service,
@@ -64,8 +66,17 @@ export const processFiles = async (connectionId: string) => {
           const tablesPoints = await processingTablePage(page.tables, pageIndex, baseMetadata)
           if (tablesPoints) allPoints.push(tablesPoints)
 
+          processedAllPages += 1;
           processedPage += 1;
-          fileProcessed.push(file.name)
+
+
+          await publishProgress({
+            connectionId,
+            fileName: file.name,
+            processedPage: processedAllPages,
+            processedFile: fileIndex + 1,
+            lastAsync: now
+          })
 
         } catch (error: any) {
           let errorMessage = "";
@@ -74,12 +85,23 @@ export const processFiles = async (connectionId: string) => {
           } else {
             errorMessage = String(error);
           }
-          errorMessages.push({
-            errorMessage,
+          await publishProgress({
+            connectionId: connectionId,
             fileName: file.name,
-          });
+            processedFile: fileIndex + 1,
+            processedPage: processedAllPages,
+            errorMessage: errorMessage,
+            lastAsync: now
+          })
         }
       }
+
+      completedFiles.push({
+        connectionId: connectionId,
+        name: file.name,
+        totalPages: processedPage,
+      })
+      processedPage = 0
     }
 
     if (allPoints.length > 0) {
@@ -88,24 +110,31 @@ export const processFiles = async (connectionId: string) => {
         wait: true
       })
 
+      completedFiles.map(async (file) =>
+        await databaseDrizzle
+          .insert(processedFiles)
+          .values(file).onConflictDoUpdate({
+            target: processedFiles.name,
+            set: file
+          })
+      )
+
+      await databaseDrizzle
+        .update(connections)
+        .set({ lastSynced: now })
+
       allPoints.forEach(async point => {
         await redisConnection.set(point.payload._hash, point.id, "EX", 3600 * 5) // Cache for 5 hours
-      })
-
-      await publishProgress({
-        processedPage: processedPage,
-        filesCompleted: fileProcessed,
-        filesFailed: errorMessages,
       })
     }
   } catch (error: any) {
     await publishProgress({
+      connectionId: connectionId,
+      fileName: "",
+      processedFile: 0,
       processedPage: 0,
-      filesCompleted: [],
-      filesFailed: [{
-        fileName: "",
-        errorMessage: error.data
-      }],
+      errorMessage: error.data,
+      lastAsync: now
     })
   }
 }

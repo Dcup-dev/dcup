@@ -4,25 +4,41 @@ import Link from "next/link"
 import { databaseDrizzle } from "@/db";
 import { getServerSession } from "next-auth";
 import { redirect } from 'next/navigation';
-import { FiCloud, FiDatabase } from "react-icons/fi";
-import { SiNotion, SiAwslambda, SiGmail, SiSlack, SiConfluence, SiGoogledrive } from "react-icons/si";
+import { FiDatabase } from "react-icons/fi";
 import { connections, ConnectionTable } from "@/db/schemas/connections";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { timeAgo } from "@/lib/utils";
+import { Table, TableBody, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import SourceConfiguration from "@/components/SourceConfiguration/SourceConfiguration";
 import { DeleteConnection } from "@/components/DeleteConnection/DeleteConnection";
 import { SyncConnection } from "@/components/SyncConnection/SyncConnection";
 import { eq } from "drizzle-orm";
 import { AlertCircle } from "lucide-react";
 import { getOAuth2Client } from "@/fileProcessors/connectors/googleDrive";
+import dynamic from 'next/dynamic'
+ 
+const ConnectionDetails  = dynamic(() => import('@/components/ConnectionDetails/ConnectionDetails'), {
+  ssr:true
+})
 
+type ConnectionSelection = typeof ConnectionTable;
+export interface ConnectionQuery extends ConnectionSelection {
+  files: {
+    totalPages: number
+  }[]
+}
 
 export default async function ConnectionsPage() {
   const session = await getServerSession(authOptions)
   if (!session?.user.id) return redirect("/login")
 
-  const connections = await databaseDrizzle.query.connections.findMany({
-    where: (c, ops) => ops.eq(c.userId, session.user.id!)
+  const connections: ConnectionQuery[] = await databaseDrizzle.query.connections.findMany({
+    where: (c, ops) => ops.eq(c.userId, session.user.id!),
+    with: {
+      files: {
+        columns: {
+          totalPages: true
+        }
+      }
+    }
   })
 
   return (
@@ -42,10 +58,8 @@ export default async function ConnectionsPage() {
           </Link>
         </Button>
       </div>
-
-      {connections.length === 0 ? (
-        <EmptyState />
-      ) : (<CurrentConnections connections={connections} />)}
+      {connections.length === 0 ? (<EmptyState />)
+        : (<CurrentConnections connections={connections} />)}
     </div>
   );
 }
@@ -64,25 +78,7 @@ function EmptyState() {
   );
 }
 
-async function CurrentConnections({ connections }: { connections: typeof ConnectionTable[] }) {
-  const getServiceIcon = (service: string) => {
-    switch (service) {
-      case 'GOOGLE_DRIVE':
-        return <SiGoogledrive className="w-5 h-5" />;
-      case 'AWS':
-        return <SiAwslambda className="w-5 h-5" />;
-      case 'NOTION':
-        return <SiNotion className="w-5 h-5" />;
-      case 'SLACK':
-        return <SiSlack className="w-5 h-5" />;
-      case 'GMAIL':
-        return <SiGmail className="w-5 h-5" />;
-      case 'CONFLUENCE':
-        return < SiConfluence className="w-5 h-5" />;
-      default:
-        return <FiCloud className="w-5 h-5" />;
-    }
-  };
+async function CurrentConnections({ connections }: { connections: ConnectionQuery[] }) {
 
   return (
     <div className="mb-12">
@@ -101,36 +97,9 @@ async function CurrentConnections({ connections }: { connections: typeof Connect
             </TableRow>
           </TableHeader>
           <TableBody>
-            {connections.map((connection, idx) => (
-              <TableRow key={idx}>
-                <TableCell className="flex flex-col gap-2">
-                  <div className="flex items-center gap-2">
-                    {getServiceIcon(connection.service)}
-                    <span className="capitalize">
-                      {connection.service.toLowerCase().replace('_', ' ')}
-                    </span>
-                  </div>
-                  <p className="text-muted-foreground">
-                    {connection.email}
-                  </p>
-                </TableCell>
-                <TableCell>{connection.folderName || 'Untitled'}</TableCell>
-                <TableCell>{connection.partition || 'default'}</TableCell>
-                <TableCell>{connection.documentsCount}</TableCell>
-                <TableCell>{connection.pagesCount}</TableCell>
-                <TableCell>
-                  {timeAgo(connection.createdAt)}
-                </TableCell>
-                <TableCell>
-                  {connection.lastSynced
-                    ? timeAgo(connection.lastSynced)
-                    : <span className="text-muted-foreground">Never</span>}
-                </TableCell>
-                <TableCell>
-                  <Source connection={connection} />
-                </TableCell>
-              </TableRow>
-            ))}
+            {connections.map((connection, idx) => (<ConnectionDetails connection={connection} key={idx}>
+              <Source connection={connection} />
+            </ConnectionDetails>))}
           </TableBody>
         </Table>
       </div>

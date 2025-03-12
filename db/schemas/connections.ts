@@ -5,9 +5,11 @@ import {
   timestamp,
   integer,
   unique,
+
   boolean
 } from "drizzle-orm/pg-core"
 import { users } from "./users"
+import { relations } from "drizzle-orm";
 
 export const connectionEnum = pgEnum('connectors', ['GOOGLE_DRIVE', 'AWS', 'NOTION', 'SLACK', 'GMAIL', 'CONFLUENCE',]);
 export const importMode = pgEnum("importMode", ["Fast", "Hi-res"])
@@ -29,11 +31,29 @@ export const connections = pgTable("connection", {
   partition: text("partition").default("default").notNull(),
   metadata: text("metadata"),
   importMode: importMode("import_mode").default("Fast").notNull(),
-  documentsCount: integer("documents_count").default(0).notNull(),
-  pagesCount: integer("pages_count").default(0).notNull(),
   lastSynced: timestamp("last_synced", { withTimezone: true }),
-  isConfigSet:boolean("is_config_set").default(false).notNull(),
+  isConfigSet: boolean("is_config_set").default(false).notNull(),
   createdAt: timestamp("createdAt", { withTimezone: true }).notNull().defaultNow(),
 }, (t) => [unique().on(t.email, t.service)])
 
+export const processedFiles = pgTable("pocessed_file", {
+  name: text("name").primaryKey().unique(),
+  connectionId: text("connection_id")
+    .notNull()
+    .references(() => connections.id, { onDelete: "cascade" }),
+  totalPages: integer("total_pages").default(0).notNull(),
+})
+
+export const connectionRelations = relations(connections, ({ many }) => ({
+  files: many(processedFiles)
+}))
+
+export const processedFilesRelations = relations(processedFiles, ({one})=>({
+  connection: one(connections, {
+    fields: [processedFiles.connectionId],
+    references:[connections.id]
+  })
+}))
+
+export const ProcessedFilesTable = processedFiles.$inferSelect
 export const ConnectionTable = connections.$inferSelect

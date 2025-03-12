@@ -162,6 +162,27 @@
       "when": 1741039436975,
       "tag": "0022_faulty_tempest",
       "breakpoints": true
+    },
+    {
+      "idx": 23,
+      "version": "7",
+      "when": 1741785364965,
+      "tag": "0023_tearful_talisman",
+      "breakpoints": true
+    },
+    {
+      "idx": 24,
+      "version": "7",
+      "when": 1741785708485,
+      "tag": "0024_brave_omega_red",
+      "breakpoints": true
+    },
+    {
+      "idx": 25,
+      "version": "7",
+      "when": 1741792820955,
+      "tag": "0025_even_luminals",
+      "breakpoints": true
     }
   ]
 }

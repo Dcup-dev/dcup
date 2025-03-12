@@ -1,9 +1,8 @@
 import { Card } from '../ui/card'
 import { Button } from '../ui/button'
-import { SiNotion, SiAwslambda, SiGmail, SiSlack, SiConfluence } from "react-icons/si";
 import { FaGoogleDrive } from "react-icons/fa";
 import Link from "next/link"
-import { authGoogleDrive } from '@/lib/connectors/googleDrive';
+import { authGoogleDrive } from '@/fileProcessors/connectors/googleDrive';
 
 export const Connectors = async () => {
   const connectors = [
@@ -14,41 +13,41 @@ export const Connectors = async () => {
       description: 'Connect your Google Drive to access documents and files',
       link: authGoogleDrive,
     },
-    {
-      id: 'aws',
-      name: 'AWS',
-      icon: <SiAwslambda className="w-6 h-6" />,
-      description: 'Integrate with AWS services and storage',
-      link: () => "/"
-    },
-    {
-      id: 'notion',
-      name: 'Notion',
-      icon: <SiNotion className="w-6 h-6" />,
-      description: 'Sync your Notion workspace and databases',
-      link: () => "/"
-    },
-    {
-      id: 'slack',
-      name: 'Slack',
-      icon: <SiSlack className="w-6 h-6" />,
-      description: 'Connect Slack workspaces and channels',
-      link: () => "/"
-    },
-    {
-      id: 'gmail',
-      name: 'Gmail',
-      icon: <SiGmail className="w-6 h-6" />,
-      description: 'Integrate Gmail account and emails',
-      link: () => "/"
-    },
-    {
-      id: "confluence",
-      name: "Confluence",
-      icon: <SiConfluence className='w-6 h-6' />,
-      description: "connect Confluence",
-      link: () => "/"
-    }
+    // {
+    //   id: 'aws',
+    //   name: 'AWS',
+    //   icon: <SiAwslambda className="w-6 h-6" />,
+    //   description: 'Integrate with AWS services and storage',
+    //   link: () => "/"
+    // },
+    // {
+    //   id: 'notion',
+    //   name: 'Notion',
+    //   icon: <SiNotion className="w-6 h-6" />,
+    //   description: 'Sync your Notion workspace and databases',
+    //   link: () => "/"
+    // },
+    // {
+    //   id: 'slack',
+    //   name: 'Slack',
+    //   icon: <SiSlack className="w-6 h-6" />,
+    //   description: 'Connect Slack workspaces and channels',
+    //   link: () => "/"
+    // },
+    // {
+    //   id: 'gmail',
+    //   name: 'Gmail',
+    //   icon: <SiGmail className="w-6 h-6" />,
+    //   description: 'Integrate Gmail account and emails',
+    //   link: () => "/"
+    // },
+    // {
+    //   id: "confluence",
+    //   name: "Confluence",
+    //   icon: <SiConfluence className='w-6 h-6' />,
+    //   description: "connect Confluence",
+    //   link: () => "/"
+    // }
   ];
 
   return (<>
