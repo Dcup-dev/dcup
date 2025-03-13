@@ -10,6 +10,7 @@ export type FileProgress = {
   processedFile: number,
   lastAsync: Date,
   errorMessage?: string,
+  isFinished: boolean
 }
 
 export const processingUpdates = "processing-updates"

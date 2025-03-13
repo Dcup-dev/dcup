@@ -24,7 +24,7 @@ export function Navbar() {
           </SheetTrigger>
           <SheetContent>
             <SheetHeader>
-              <SheetTitle>
+              <SheetTitle asChild >
                 <Logo href="/" />
               </SheetTitle>
             </SheetHeader>

@@ -8,6 +8,7 @@ import { ConnectionQuery } from "@/app/(protected)/connections/page";
 import { FileProgress } from "@/events";
 
 export default function ConnectionDetails({ connection, children }: { connection: ConnectionQuery, children: ReactNode }) {
+  const [isMounted, setIsMounted] = useState(false);
   const [progress, setProgress] = useState({
     connectionId: connection.id,
     processedPage: connection.files.reduce((sum, file) => sum + file.totalPages, 0),
@@ -16,6 +17,7 @@ export default function ConnectionDetails({ connection, children }: { connection
   });
 
   useEffect(() => {
+    setIsMounted(true);
     const eventSource = new EventSource("/api/progress");
 
     eventSource.onmessage = (event) => {
@@ -67,10 +69,10 @@ export default function ConnectionDetails({ connection, children }: { connection
     <TableCell>{progress.processedFile}</TableCell>
     <TableCell>{progress.processedPage}</TableCell>
     <TableCell>
-      {timeAgo(connection.createdAt)}
+      {isMounted ? timeAgo(connection.createdAt) : "Loading..."}
     </TableCell>
     <TableCell>
-      {progress.lastAsync
+      {!isMounted ? "Loading...":progress.lastAsync
         ? timeAgo(progress.lastAsync)
         : <span className="text-muted-foreground">Never</span>}
     </TableCell>

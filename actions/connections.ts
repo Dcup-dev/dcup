@@ -1,10 +1,9 @@
 "use server"
-
 import { authOptions } from "@/auth";
 import { databaseDrizzle } from "@/db";
 import { connections } from "@/db/schemas/connections";
 import { fromErrorToFormState, toFormState } from "@/lib/zodErrorHandle";
-import { connectionConfigSchema, deleteConnectionConfigSchema } from "@/validations/connectionConfigSchema";
+import { newConnectionSchema, deleteConnectionSchema, syncConnectionSchema } from "@/validations/connectionConfigSchema";
 import { addToProcessFilesQueue } from "@/workers/queues/jobs/processFiles.job";
 import { eq } from "drizzle-orm";
 import { getServerSession } from "next-auth";
@@ -20,7 +19,7 @@ export async function setConnectionConfig(_: FormState, formData: FormData) {
   try {
     if (!session?.user?.email) throw new Error("forbidden");
 
-    const config = connectionConfigSchema.parse({
+    const config = newConnectionSchema.parse({
       id: formData.get("id"),
       folderName: formData.get("folderName"),
       directory: formData.get("directory"),
@@ -34,15 +33,15 @@ export async function setConnectionConfig(_: FormState, formData: FormData) {
     await databaseDrizzle.update(connections).set({
       folderName: config.folderName,
       directory: config.directory,
-      importMode: config.importMode,
       partition: config.partition,
       metadata: config.metadata,
-      pagesCount: config.pageLimit ?? undefined,
-      documentsCount: config.documentLimit ?? undefined,
       isConfigSet: true,
+      isSyncing: true,
     }).where(eq(connections.id, config.id))
 
-    await addToProcessFilesQueue({connectionId: config.id})
+    console.log("connection ==> start processing")
+
+    await addToProcessFilesQueue({ connectionId: config.id, pageLimit: config.pageLimit, fileLimit: config.documentLimit })
 
     revalidatePath("/connections");
     return toFormState("SUCCESS", "start processing");
@@ -57,7 +56,7 @@ export async function deleteConnectionConfig(_: FormState, formData: FormData) {
   const session = await getServerSession(authOptions);
   try {
     if (!session?.user?.id) throw new Error("forbidden");
-    const { id } = deleteConnectionConfigSchema.parse({
+    const { id } = deleteConnectionSchema.parse({
       id: formData.get("id")
     })
 
@@ -73,3 +72,27 @@ export async function deleteConnectionConfig(_: FormState, formData: FormData) {
   }
 }
 
+export const syncConnectionConfig = async (_: FormState, formData: FormData) => {
+  const session = await getServerSession(authOptions)
+
+  try {
+    if (!session?.user?.email) throw new Error("forbidden");
+    const { id, pageLimit, documentLimit } = syncConnectionSchema.parse({
+      id: formData.get("id"),
+      pageLimit: formData.get("pageLimit"),
+      fileLimit: formData.get("fileLimit")
+    })
+
+    await databaseDrizzle.update(connections).set({
+      isSyncing: false,
+    }).where(eq(connections.id, id))
+
+    await addToProcessFilesQueue({ connectionId: id, pageLimit: pageLimit, fileLimit: documentLimit })
+
+    revalidatePath("/connections");
+    return toFormState("SUCCESS", "start processing");
+
+  } catch (e) {
+    return fromErrorToFormState(e);
+  }
+}

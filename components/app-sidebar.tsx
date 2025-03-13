@@ -3,7 +3,8 @@ import {
   LifeBuoy,
   Home,
   Plug,
-  Key
+  Key,
+  Github
 } from "lucide-react"
 
 import { NavMain } from "@/components/nav-main"
@@ -44,7 +45,7 @@ const data = {
     },
     {
       title: "Documentation",
-      url: "#",
+      url: "https://dcup.dev/docs",
       icon: BookOpen,
     },
   ],
@@ -54,6 +55,11 @@ const data = {
       url: "/contact",
       icon: LifeBuoy,
     },
+    {
+      title: "Github",
+      url: "https://github.com/dcup-dev/dcup",
+      icon: Github
+    }
   ],
 
 }

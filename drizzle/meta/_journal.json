@@ -183,6 +183,13 @@
       "when": 1741792820955,
       "tag": "0025_even_luminals",
       "breakpoints": true
+    },
+    {
+      "idx": 26,
+      "version": "7",
+      "when": 1741864808018,
+      "tag": "0026_supreme_steve_rogers",
+      "breakpoints": true
     }
   ]
 }

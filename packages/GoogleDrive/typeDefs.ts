@@ -19,11 +19,11 @@ export type CallbackDoc = {
 }
 
 export type PickerCallback = {
-  action: string
+  action: "loaded" | "picked" | "cancel"
   docs: CallbackDoc[]
 }
 
-export type authResult =  {
+export type authResult = {
   access_token: string;
   token_type: string;
   expires_in: number;

@@ -8,6 +8,7 @@ import { processGoogleDriveFiles } from "./processors/storages/googleDrive";
 import { redisConnection } from "@/workers/redis";
 import { publishProgress } from "@/events";
 import { connections, processedFiles } from "@/db/schemas/connections";
+import { eq } from "drizzle-orm";
 
 export type FileContent = {
   name: string,
@@ -21,7 +22,7 @@ export type PageContent = {
   tables: unknown[]
 }
 
-export const processFiles = async (connectionId: string) => {
+export const processFiles = async (connectionId: string, pageLimit: number | null, fileLimit: number | null) => {
   const completedFiles: typeof processedFiles.$inferInsert[] = []
   let filesContent: FileContent[] = []
   const allPoints = [];
@@ -41,6 +42,7 @@ export const processFiles = async (connectionId: string) => {
       where: (c, ops) => ops.eq(c.id, connectionId)
     })
 
+
     if (!connection) return;
 
     switch (connection.service) {
@@ -49,8 +51,8 @@ export const processFiles = async (connectionId: string) => {
         break;
     }
 
-    // todo: fix(bugs): update the metadata 
     for (const [fileIndex, file] of filesContent.entries()) {
+      if (fileLimit && fileLimit > 0 && fileLimit === fileIndex) break;
       const baseMetadata = {
         _document_id: file.name,
         _source: connection.service,
@@ -60,28 +62,31 @@ export const processFiles = async (connectionId: string) => {
         },
       };
       for (const [pageIndex, page] of file.pages.entries()) {
+        if (pageLimit && pageLimit > 0 && pageLimit === pageIndex) break;
         try {
           const textPoints = await processingTextPage(page.text, pageIndex, baseMetadata, splitter)
           if (textPoints) allPoints.push(textPoints)
-          const tablesPoints = await processingTablePage(page.tables, pageIndex, baseMetadata)
-          if (tablesPoints) allPoints.push(tablesPoints)
+          const vectorPoints = await processingTablePage(page.tables, pageIndex, baseMetadata)
+          if (vectorPoints) allPoints.push(vectorPoints)
 
           processedAllPages += 1;
           processedPage += 1;
-
 
           await publishProgress({
             connectionId,
             fileName: file.name,
             processedPage: processedAllPages,
             processedFile: fileIndex + 1,
-            lastAsync: now
+            lastAsync: now,
+            isFinished: false,
           })
 
         } catch (error: any) {
           let errorMessage = "";
           if (error instanceof Error) {
             errorMessage = error.message;
+          } if (error.data) {
+            errorMessage = error.data
           } else {
             errorMessage = String(error);
           }
@@ -91,7 +96,8 @@ export const processFiles = async (connectionId: string) => {
             processedFile: fileIndex + 1,
             processedPage: processedAllPages,
             errorMessage: errorMessage,
-            lastAsync: now
+            lastAsync: now,
+            isFinished: false,
           })
         }
       }
@@ -119,14 +125,24 @@ export const processFiles = async (connectionId: string) => {
           })
       )
 
-      await databaseDrizzle
-        .update(connections)
-        .set({ lastSynced: now })
-
       allPoints.forEach(async point => {
-        await redisConnection.set(point.payload._hash, point.id, "EX", 3600 * 5) // Cache for 5 hours
+        await redisConnection.set(point.payload._hash, JSON.stringify(point.payload._metadata), "EX", 3600 * 5) // Cache for 5 hours
       })
     }
+    await databaseDrizzle
+      .update(connections)
+      .set({ lastSynced: now, isSyncing: false })
+      .where(eq(connections.id, connectionId))
+
+    await publishProgress({
+      connectionId: connectionId,
+      fileName: "",
+      processedFile: filesContent.length,
+      processedPage: processedAllPages,
+      lastAsync: now,
+      isFinished: true,
+    })
+
   } catch (error: any) {
     await publishProgress({
       connectionId: connectionId,
@@ -134,7 +150,8 @@ export const processFiles = async (connectionId: string) => {
       processedFile: 0,
       processedPage: 0,
       errorMessage: error.data,
-      lastAsync: now
+      lastAsync: now,
+      isFinished: true,
     })
   }
 }
@@ -152,8 +169,8 @@ const processingTextPage = async (pageText: string, pageIndex: number, baseMetad
       _hash: textHash,
     };
 
-    const pointCached = await redisConnection.get(textHash)
-    if (!pointCached) {
+    const cachedMetadata = await redisConnection.get(textHash)
+    if (!cachedMetadata || cachedMetadata !== JSON.stringify(baseMetadata._metadata)) {
       const textVectors = await vectorizeText(chunk);
       const existingPoints = await qdrantCLient.search(qdrant_collection_name, {
         vector: textVectors,
@@ -161,21 +178,23 @@ const processingTextPage = async (pageText: string, pageIndex: number, baseMetad
           must: [{ key: "_hash", match: { value: textHash } }]
         },
         limit: 1,
+        with_payload: {
+          include: ["_metadata"]
+        }
       });
 
-      if (existingPoints.length === 0) {
-        const { title, summary } = await getTitleAndSummary(chunk, JSON.stringify(textMetadata))
-        const metadata = {
-          ...textMetadata,
-          _title: title,
-          _summary: summary
-        }
-        return {
-          id: uuidv4(),
-          vector: textVectors,
-          payload: metadata,
-        };
+      const { title, summary } = await getTitleAndSummary(chunk, JSON.stringify(textMetadata))
+      const metadata = {
+        ...textMetadata,
+        _title: title,
+        _summary: summary
       }
+
+      return {
+        id: existingPoints.length > 0 ? existingPoints[0].id : uuidv4(),
+        vector: textVectors,
+        payload: metadata,
+      };
     }
   }
 }
@@ -192,8 +211,8 @@ const processingTablePage = async (tables: unknown[], pageIndex: number, baseMet
     _hash: tableHash,
   };
 
-  const pointCached = await redisConnection.get(tableHash)
-  if (!pointCached) {
+  const cachedMetadata = await redisConnection.get(tableHash)
+  if (!cachedMetadata || cachedMetadata !== JSON.stringify(baseMetadata._metadata)) {
     const tableVectors = await vectorizeText(pageTables);
     const existingPoints = await qdrantCLient.search(qdrant_collection_name, {
       vector: tableVectors,
@@ -201,21 +220,23 @@ const processingTablePage = async (tables: unknown[], pageIndex: number, baseMet
         must: [{ key: "_hash", match: { value: tableHash } }]
       },
       limit: 1,
+      with_payload: {
+        include: ["_metadata"]
+      }
     });
 
-    if (existingPoints.length === 0) {
-      const { title, summary } = await getTitleAndSummary(pageTables, JSON.stringify(tableMetadata))
-      const metadata = {
-        ...tableMetadata,
-        _title: title,
-        _summary: summary
-      }
-      return {
-        id: uuidv4(),
-        vector: tableVectors,
-        payload: metadata,
-      };
+    const { title, summary } = await getTitleAndSummary(pageTables, JSON.stringify(tableMetadata))
+    const metadata = {
+      ...tableMetadata,
+      _title: title,
+      _summary: summary
     }
+
+    return {
+      id: existingPoints.length > 0 ? existingPoints[0].id : uuidv4(),
+      vector: tableVectors,
+      payload: metadata,
+    };
   }
 }
 

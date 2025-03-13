@@ -5,7 +5,7 @@ import { processPdf } from '../Files/pdf';
 import { getOAuth2Client } from '@/fileProcessors/connectors/googleDrive';
 import { FileContent } from '@/fileProcessors';
 
-export const processGoogleDriveFiles = async (connection: typeof ConnectionTable): Promise<FileContent[]> => {
+export const processGoogleDriveFiles = async (connection: ConnectionTable): Promise<FileContent[]> => {
   const folderId = connection.directory ? extractFolderId(connection.directory) : "root";
   const oauth = getOAuth2Client({
     accessToken: connection.accessToken,

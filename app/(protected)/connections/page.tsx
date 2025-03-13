@@ -14,13 +14,11 @@ import { eq } from "drizzle-orm";
 import { AlertCircle } from "lucide-react";
 import { getOAuth2Client } from "@/fileProcessors/connectors/googleDrive";
 import dynamic from 'next/dynamic'
- 
-const ConnectionDetails  = dynamic(() => import('@/components/ConnectionDetails/ConnectionDetails'), {
-  ssr:true
+
+const ConnectionDetails = dynamic(() => import('@/components/ConnectionDetails/ConnectionDetails'), {
 })
 
-type ConnectionSelection = typeof ConnectionTable;
-export interface ConnectionQuery extends ConnectionSelection {
+export interface ConnectionQuery extends ConnectionTable {
   files: {
     totalPages: number
   }[]
@@ -87,7 +85,7 @@ async function CurrentConnections({ connections }: { connections: ConnectionQuer
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead className="w-[150px]">Source</TableHead>
+              <TableHead className="w-[200px]">Source</TableHead>
               <TableHead>Directory</TableHead>
               <TableHead>Partition</TableHead>
               <TableHead>Documents</TableHead>
@@ -107,7 +105,7 @@ async function CurrentConnections({ connections }: { connections: ConnectionQuer
   );
 }
 
-async function Source({ connection }: { connection: typeof ConnectionTable }) {
+async function Source({ connection }: { connection: ConnectionQuery }) {
   try {
     const { token } = await getOAuth2Client({
       accessToken: connection.accessToken,
@@ -117,13 +115,16 @@ async function Source({ connection }: { connection: typeof ConnectionTable }) {
 
     if (connection.isConfigSet) {
       return <>
-        <SyncConnection />
-        <SourceConfiguration accessToken={token} currentConnection={connection} />
-        <DeleteConnection connectionId={connection.id} />
+        <SyncConnection connection={connection} />
+        <SourceConfiguration accessToken={token} connection={connection} />
+        <DeleteConnection connection={connection} />
       </>
     }
     return (
-      <SourceConfiguration accessToken={token} currentConnection={connection} />
+      <>
+        <SourceConfiguration accessToken={token} connection={connection} />
+        <DeleteConnection connection={connection} />
+      </>
     );
   } catch (error: any) {
     if (error.message.includes("invalid_grant")) {

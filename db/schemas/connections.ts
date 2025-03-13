@@ -12,7 +12,6 @@ import { users } from "./users"
 import { relations } from "drizzle-orm";
 
 export const connectionEnum = pgEnum('connectors', ['GOOGLE_DRIVE', 'AWS', 'NOTION', 'SLACK', 'GMAIL', 'CONFLUENCE',]);
-export const importMode = pgEnum("importMode", ["Fast", "Hi-res"])
 
 export const connections = pgTable("connection", {
   id: text("id")
@@ -30,8 +29,8 @@ export const connections = pgTable("connection", {
   folderName: text("folder_name"),
   partition: text("partition").default("default").notNull(),
   metadata: text("metadata"),
-  importMode: importMode("import_mode").default("Fast").notNull(),
   lastSynced: timestamp("last_synced", { withTimezone: true }),
+  isSyncing: boolean("is_syncing").default(false).notNull(),
   isConfigSet: boolean("is_config_set").default(false).notNull(),
   createdAt: timestamp("createdAt", { withTimezone: true }).notNull().defaultNow(),
 }, (t) => [unique().on(t.email, t.service)])
@@ -48,12 +47,12 @@ export const connectionRelations = relations(connections, ({ many }) => ({
   files: many(processedFiles)
 }))
 
-export const processedFilesRelations = relations(processedFiles, ({one})=>({
+export const processedFilesRelations = relations(processedFiles, ({ one }) => ({
   connection: one(connections, {
     fields: [processedFiles.connectionId],
-    references:[connections.id]
+    references: [connections.id]
   })
 }))
 
-export const ProcessedFilesTable = processedFiles.$inferSelect
-export const ConnectionTable = connections.$inferSelect
+export type ProcessedFilesTable = typeof processedFiles.$inferSelect
+export type ConnectionTable = typeof connections.$inferSelect

@@ -7,6 +7,8 @@ export const processFilesJobName = 'processFiles';
 
 type TQueue = {
   connectionId: string;
+  pageLimit: number| null,
+  fileLimit: number | null,
 };
 
 export const addToProcessFilesQueue = (data: TQueue) => {
@@ -22,8 +24,8 @@ const processfilesQueue = new Queue(processFilesJobName, {
 });
 
 new Worker(processFilesJobName, async (job) => {
-  const { connectionId }: TQueue = job.data;
-  await processFiles(connectionId)
+  const { connectionId, pageLimit, fileLimit }: TQueue = job.data;
+  await processFiles(connectionId, pageLimit, fileLimit)
 }, {
   connection: redisConnection
 });

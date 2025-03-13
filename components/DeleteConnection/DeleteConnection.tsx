@@ -10,21 +10,41 @@ import {
 } from "@/components/ui/dialog"
 import { Button } from "../ui/button"
 import { Loader2, Trash } from "lucide-react"
-import { useState, useTransition } from "react"
-import { deleteConnectionConfig } from "@/actions/connections/config"
+import { useEffect, useState, useTransition } from "react"
 import { EMPTY_FORM_STATE } from "@/lib/zodErrorHandle"
 import { toast } from "@/hooks/use-toast"
+import { deleteConnectionConfig } from "@/actions/connections"
+import { ConnectionQuery } from "@/app/(protected)/connections/page"
+import { FileProgress } from "@/events"
 
-export const DeleteConnection = ({ connectionId }: { connectionId: string }) => {
+export const DeleteConnection = ({ connection }: { connection: ConnectionQuery }) => {
   const [open, setOpen] = useState(false)
   const [isPending, startTransition] = useTransition();
+  const [isFinished, setIsFinished] = useState(false)
+
+  useEffect(() => {
+    const eventSource = new EventSource("/api/progress");
+
+    eventSource.onmessage = (event) => {
+      const data = JSON.parse(event.data) as FileProgress;
+      if (data.connectionId === connection.id) setIsFinished(data.isFinished)
+    };
+
+    eventSource.onerror = () => {
+      eventSource.close();
+    };
+
+    return () => {
+      eventSource.close();
+    };
+  }, []);
 
 
   const handleDeleteConnection = () => {
     startTransition(async () => {
       try {
         const formData = new FormData();
-        formData.set("id", connectionId)
+        formData.set("id", connection.id)
         const res = await deleteConnectionConfig(EMPTY_FORM_STATE, formData)
         if (res.status !== 'SUCCESS') {
           throw new Error(res.message)
@@ -49,7 +69,7 @@ export const DeleteConnection = ({ connectionId }: { connectionId: string }) => 
     <Dialog open={open} onOpenChange={e => setOpen(e)} >
       <DialogTrigger asChild>
         <DialogTrigger asChild>
-          <Button size='sm' variant={'ghost'} >
+          <Button size='sm' variant={'ghost'} disabled={!isFinished && connection.isSyncing} >
             <Trash />
             Delete
           </Button>

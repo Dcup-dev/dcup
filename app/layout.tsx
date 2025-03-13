@@ -4,7 +4,6 @@ import { Inter } from 'next/font/google';
 import type { ReactNode } from 'react';
 import type { Metadata } from "next";
 import { Toaster } from '@/components/ui/toaster';
-import { Navbar } from '@/components/Navbar/Navbar';
 
 const inter = Inter({
   subsets: ['latin'],
@@ -39,7 +38,6 @@ export default async function Layout({ children }: { children: ReactNode }) {
           enableSystem
           disableTransitionOnChange
         >
-          <Navbar />
           {children}
           <Toaster />
         </ThemeProvider>

@@ -1,38 +1,82 @@
 'use client'
-import { useActionState, useEffect, useState } from 'react';
+import { useState } from 'react';
 import { Dialog, DialogTrigger, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
-import { Select, SelectTrigger, SelectContent, SelectItem } from '@/components/ui/select';
-import { SelectGroup, SelectValue } from '@radix-ui/react-select';
 import useDrivePicker from '@/packages/GoogleDrive';
 import { DialogClose } from '@radix-ui/react-dialog';
-import { Settings2, X } from 'lucide-react';
+import { Loader2, RefreshCcw, Settings2, X } from 'lucide-react';
 import { EMPTY_FORM_STATE } from '@/lib/zodErrorHandle';
-import { setConnectionConfig } from '@/actions/connections/config';
-import { ConnectionTable } from '@/db/schemas/connections';
 import { toast } from '@/hooks/use-toast';
+import { ConnectionQuery } from '@/app/(protected)/connections/page';
+import { setConnectionConfig } from '@/actions/connections';
+import { useTransition, useEffect } from "react";
+import { FileProgress } from '@/events';
 
-export default function SourceConfiguration({ accessToken, currentConnection }: { accessToken: string | null | undefined, currentConnection: typeof ConnectionTable }) {
+
+export default function SourceConfiguration({ accessToken, connection }: { accessToken: string | null | undefined, connection: ConnectionQuery }) {
   const [open, setOpen] = useState(false)
-  const [isConfigSet, setIsConfigSet] = useState(currentConnection.isConfigSet)
+  const [isConfigSet, setIsConfigSet] = useState(connection.isConfigSet)
   const [openPicker] = useDrivePicker()
-  const [state, formAction] = useActionState(setConnectionConfig, EMPTY_FORM_STATE);
+  const [pending, startTransition] = useTransition()
+  const [isFinished, setIsFinished] = useState(false)
   const [directory, setDirectory] = useState<{ name: string, url: string }>({
-    name: currentConnection.folderName || "*",
-    url: currentConnection.directory || "root"
+    name: connection.folderName || "*",
+    url: connection.directory || "root"
   });
 
   useEffect(() => {
-    if (state.status === 'SUCCESS') {
-      setOpen(false)
-      setIsConfigSet(true)
-    }
-    toast({
-      title: state.message,
-    });
-  }, [state])
+    const eventSource = new EventSource("/api/progress");
+
+    eventSource.onmessage = (event) => {
+      const data = JSON.parse(event.data) as FileProgress;
+      if (data.connectionId === connection.id) setIsFinished(data.isFinished)
+    };
+
+    eventSource.onerror = () => {
+      eventSource.close();
+    };
+
+    return () => {
+      eventSource.close();
+    };
+  }, []);
+
+
+
+  const handleSetConfig = (data: FormData) => {
+    data.set("id", connection.id)
+    data.set("folderName", directory.name)
+    data.set("directory", directory.url)
+    startTransition(async () => {
+      const setConfig = async () => {
+        try {
+          const res = await setConnectionConfig(EMPTY_FORM_STATE, data)
+          if (res.status === 'SUCCESS') {
+            setOpen(false)
+            setIsConfigSet(true)
+          }
+          if (res.message) {
+            toast({
+              title: res.message,
+            });
+          }
+          if (res.status === 'ERROR') {
+            throw new Error(res.message)
+          }
+        } catch (err: any) {
+          toast({
+            title: err.message,
+            variant: 'destructive'
+          });
+        }
+        return;
+      };
+      await setConfig();
+    })
+  }
+
 
 
   const showPicker = () => {
@@ -45,13 +89,20 @@ export default function SourceConfiguration({ accessToken, currentConnection }: 
       token: accessToken ?? undefined,
       supportDrives: true,
       callbackFunction: (data) => {
+        console.log({ data })
+        if (data.action === "loaded") {
+          setOpen(false)
+        }
         if (data.action === 'picked') {
           setDirectory({
             name: data.docs[0].name,
             url: data.docs[0].url
           })
+          setOpen(true)
         }
-        setOpen(true)
+        if (data.action === "cancel") {
+          setOpen(true)
+        }
       },
     })
   };
@@ -59,7 +110,8 @@ export default function SourceConfiguration({ accessToken, currentConnection }: 
 
   return (<Dialog open={open} onOpenChange={o => setOpen(o)} >
     <DialogTrigger asChild>
-      <Button size='sm' variant={isConfigSet ? 'ghost' : 'default'} onClick={() => setOpen(true)} >
+      <Button size='sm' disabled={!isFinished && connection.isSyncing} variant={isConfigSet ? 'ghost' : 'default'} onClick={() => setOpen(true)} >
+        {!isFinished && connection.isSyncing && <RefreshCcw className='animate-spin' />}
         <Settings2 />
         Configure
       </Button>
@@ -75,24 +127,20 @@ export default function SourceConfiguration({ accessToken, currentConnection }: 
           Configure your connection settings.
         </DialogDescription>
       </DialogHeader>
-      <form action={(data) => {
-        data.set("id", currentConnection.id)
-        data.set("folderName", directory?.name)
-        data.set("directory", directory?.url)
-        formAction(data)
-      }}>
+      <form action={handleSetConfig}>
         <div className="grid gap-4 py-4">
 
           <div>
             <label className="block text-sm font-medium">Folder</label>
             <div className="flex items-center gap-2">
               <Input
-                value={directory?.name || currentConnection.folderName || ""}
+                value={directory?.name || connection.folderName || ""}
                 placeholder="No folder selected"
+                disabled={!isFinished && connection.isSyncing || connection.isConfigSet}
                 onClick={showPicker} type='button'
                 readOnly
               />
-              <Button onClick={showPicker} type="button">
+              <Button onClick={showPicker} type="button" disabled={!isFinished && connection.isSyncing || connection.isConfigSet}  >
                 Select Folder
               </Button>
             </div>
@@ -103,24 +151,10 @@ export default function SourceConfiguration({ accessToken, currentConnection }: 
             <Input
               id='partition'
               name='partition'
+              disabled={!isFinished && connection.isSyncing || connection.isConfigSet}
               placeholder="default"
-              defaultValue={currentConnection.partition}
+              defaultValue={connection.partition}
             />
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium">Import Mode</label>
-            <Select name='importMode' defaultValue={currentConnection.importMode} >
-              <SelectTrigger className="w-full">
-                <SelectValue placeholder="Modes" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectGroup>
-                  <SelectItem value="Fast">Fast (Text Only)</SelectItem>
-                  <SelectItem value="Hi-res">Hi-res (Text, Images, Tables)</SelectItem>
-                </SelectGroup>
-              </SelectContent>
-            </Select>
           </div>
 
           <div>
@@ -128,8 +162,9 @@ export default function SourceConfiguration({ accessToken, currentConnection }: 
             <Textarea
               id='metadata'
               name='metadata'
+              disabled={!isFinished && connection.isSyncing}
               placeholder='{"company": "dcup"}'
-              defaultValue={currentConnection.metadata || "{}"}
+              defaultValue={connection.metadata || "{}"}
             />
           </div>
 
@@ -138,8 +173,9 @@ export default function SourceConfiguration({ accessToken, currentConnection }: 
             <Input
               type="number"
               name='pageLimit'
+              disabled={!isFinished && connection.isSyncing || connection.isConfigSet}
               id='pageLimit'
-              defaultValue={currentConnection.pagesCount !== 0 ? currentConnection.pagesCount : undefined}
+              defaultValue={connection.files.reduce((s, f) => s + f.totalPages, 0) !== 0 ? connection.files.reduce((s, f) => s + f.totalPages, 0) : undefined}
               placeholder="Enter page limit"
             />
             <p className="text-xs text-muted-foreground">
@@ -152,8 +188,9 @@ export default function SourceConfiguration({ accessToken, currentConnection }: 
             <Input
               name='documentLimit'
               id='documentLimit'
+              disabled={!isFinished && connection.isSyncing || connection.isConfigSet}
               type="number"
-              defaultValue={currentConnection.documentsCount !== 0 ? currentConnection.documentsCount : undefined}
+              defaultValue={connection.files.length !== 0 ? connection.files.length : undefined}
               placeholder="Enter document limit"
             />
             <p className="text-xs text-muted-foreground">
@@ -163,7 +200,16 @@ export default function SourceConfiguration({ accessToken, currentConnection }: 
 
         </div>
         <DialogFooter>
-          <Button type="submit">{isConfigSet ? "Save changes" : "Set Configuration"}</Button>
+          <Button disabled={pending} type="submit">
+            {pending ? (
+              <>
+                {" "}
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                Please wait
+              </>
+            ) : isConfigSet ? "Save Changes" : "Set Configuration"
+            }
+          </Button>
         </DialogFooter>
       </form>
     </DialogContent>
