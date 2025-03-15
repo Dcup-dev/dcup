@@ -4,7 +4,7 @@ import { hashApiKey } from '@/lib/api_key';
 import { expandQuery, generateHypotheticalAnswer, vectorizeText } from '@/openAi';
 import { qdrant_collection_name, qdrantCLient } from '@/qdrant';
 import { RetrievalFilter } from '@/validations/retrievalsFilteringSchema'
-import { eq } from 'drizzle-orm';
+import { eq, sql } from 'drizzle-orm';
 import { NextRequest, NextResponse } from 'next/server'
 import { z } from 'zod'
 
@@ -55,17 +55,22 @@ export async function POST(request: NextRequest) {
         { status: 403 },
       );
     }
-    const user = await databaseDrizzle
-      .select({ plan: users.plan })
-      .from(users)
-      .where(eq(users.id, key[0].userId)).limit(1).then(u => u[0])
-    if (!user) return NextResponse.json(
-      {
-        code: "forbidden",
-        message: "The requested resource was not found.",
-      },
-      { status: 403 },
-    )
+
+    try {
+      await databaseDrizzle
+        .update(users)
+        .set({ apiCalls: sql`${users.apiCalls} + 1` })
+        .where(eq(users.id, key[0].userId))
+    } catch (error) {
+      return NextResponse.json(
+        {
+          code: "forbidden",
+          message: "The requested resource was not found.",
+        },
+        { status: 403 },
+      )
+    }
+
 
     const { query, filter, top_chunk, rerank, min_score_threshold } = validation.data
     // 1. expanded Query

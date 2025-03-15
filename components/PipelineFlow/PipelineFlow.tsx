@@ -41,7 +41,7 @@ export const CustomNode = ({ id, data }: NodeProps) => {
             </div>
             <div className="flex-1 overflow-hidden">
               <p className="text-xs font-medium text-gray-700 dark:text-gray-200 truncate">
-                {data.service as string}
+                {(data.service as string).replace('_', ' ')}
               </p>
               <p className="text-[0.7rem] text-gray-500 dark:text-gray-400 mt-0.5 truncate">
                 {data.account as string}
@@ -99,11 +99,12 @@ const staticEdges = [
     type: "animatedSvgEdge",
     data: {
       duration: 2,
-      shape: "package",
+      shape: "circle",
       path: "bezier",
     },
   }
-];
+] satisfies AnimatedSvgEdge[];
+
 const getConnectionNode = (connections: ConnectionQuery[]) => {
   let connection = false;
   const mainNode = {

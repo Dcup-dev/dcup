@@ -10,7 +10,6 @@ import {
 } from "drizzle-orm/pg-core"
 import { users } from "./users"
 import { relations } from "drizzle-orm";
-
 export const connectionEnum = pgEnum('connectors', ['GOOGLE_DRIVE', 'AWS', 'NOTION', 'SLACK', 'GMAIL', 'CONFLUENCE',]);
 
 export const connections = pgTable("connection", {
@@ -43,15 +42,19 @@ export const processedFiles = pgTable("pocessed_file", {
   totalPages: integer("total_pages").default(0).notNull(),
 })
 
-export const connectionRelations = relations(connections, ({ many }) => ({
-  files: many(processedFiles)
+export const connectionRelations = relations(connections, ({ many, one }) => ({
+  files: many(processedFiles),
+  user: one(users, {
+    fields:[connections.userId],
+    references: [users.id]
+  })
 }))
 
 export const processedFilesRelations = relations(processedFiles, ({ one }) => ({
   connection: one(connections, {
     fields: [processedFiles.connectionId],
     references: [connections.id]
-  })
+  }),
 }))
 
 export type ProcessedFilesTable = typeof processedFiles.$inferSelect

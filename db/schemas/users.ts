@@ -22,6 +22,7 @@ export const users = pgTable("user", {
   email: text("email").unique().notNull(),
   emailVerified: timestamp("emailVerified", { mode: "date" }),
   image: text("image"),
+  apiCalls: integer("api_calls").default(0).notNull(),
   plan: planEnum("plan").default("Free").notNull(),
   volume: bigint({ mode: 'number' }).default(1024 * 1024).notNull(),
   customerId: text("customer_id")

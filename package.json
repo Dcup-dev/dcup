@@ -61,6 +61,7 @@
     "react-icons": "^5.4.0",
     "react-syntax-highlighter": "^15.6.1",
     "reactflow": "^11.11.4",
+    "recharts": "^2.15.1",
     "stripe": "^17.6.0",
     "tailwind-merge": "^2.6.0",
     "tailwindcss-animate": "^1.0.7"
