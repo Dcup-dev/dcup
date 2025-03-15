@@ -36,7 +36,7 @@ export async function GET(request: Request) {
     refreshToken: tokens.refresh_token!,
     email: data.email!,
     service: 'GOOGLE_DRIVE',
-    expiryDate: tokens.expiry_date?.toString()!
+    expiryDate: tokens.expiry_date?.toString() || new Date().toString()
   })
   return NextResponse.redirect(new URL('/connections', request.url));
 }

@@ -65,7 +65,7 @@ export function timeAgo(dateInput: Date) {
   const date = new Date(dateInput);
   const now = new Date();
   
-  let diff = now.getTime() - date.getTime();
+  const diff = now.getTime() - date.getTime();
   if (diff < 0) {
     return "just now";
   }

@@ -31,7 +31,7 @@ export default function ConnectionDetails({ connection, children }: { connection
     return () => {
       eventSource.close();
     };
-  }, []);
+  }, [connection.id]);
 
   return (<TableRow>
     <TableCell className="flex flex-col gap-2">

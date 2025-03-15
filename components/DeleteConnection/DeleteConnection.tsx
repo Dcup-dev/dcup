@@ -37,7 +37,7 @@ export const DeleteConnection = ({ connection }: { connection: ConnectionQuery }
     return () => {
       eventSource.close();
     };
-  }, []);
+  }, [connection.id]);
 
 
   const handleDeleteConnection = () => {

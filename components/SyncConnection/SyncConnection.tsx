@@ -62,7 +62,7 @@ export const SyncConnection = ({ connection }: { connection: ConnectionQuery }) 
     return () => {
       eventSource.close();
     };
-  }, []);
+  }, [connection.id]);
 
   return (<Dialog open={open} onOpenChange={e => setOpen(e)} >
     <DialogTrigger asChild>

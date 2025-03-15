@@ -61,7 +61,7 @@ export async function POST(request: NextRequest) {
         .update(users)
         .set({ apiCalls: sql`${users.apiCalls} + 1` })
         .where(eq(users.id, key[0].userId))
-    } catch (error) {
+    } catch {
       return NextResponse.json(
         {
           code: "forbidden",
@@ -71,15 +71,13 @@ export async function POST(request: NextRequest) {
       )
     }
 
-
     const { query, filter, top_chunk, rerank, min_score_threshold } = validation.data
-    // 1. expanded Query
     const queries = await expandQuery(query)
     const vectors = await vectorizeText(queries)
 
     const queryPoints = await qdrantCLient.search(qdrant_collection_name, {
       vector: vectors,
-      filter: filter,
+      filter: { must: [{ nested: { key: "_metadata", filter: filter } }] },
       limit: rerank ? top_chunk * 2 : top_chunk,
       with_payload: true,
       with_vector: true
@@ -104,7 +102,6 @@ export async function POST(request: NextRequest) {
           score: point.score,
         }
       })
-
 
     if (rerank) {
       const cosineSimilarity = (vecA: number[], vecB: number[]): number => {
@@ -150,5 +147,4 @@ export async function POST(request: NextRequest) {
       { status: 500 },
     );
   }
-
 }

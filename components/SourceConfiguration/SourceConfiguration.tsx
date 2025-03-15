@@ -41,7 +41,7 @@ export default function SourceConfiguration({ accessToken, connection }: { acces
     return () => {
       eventSource.close();
     };
-  }, []);
+  }, [connection.id]);
 
 
 
