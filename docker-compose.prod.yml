@@ -1,0 +1,81 @@
+version: '3.9'
+
+services:
+  postgres:
+    image: postgres:15
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: root
+      POSTGRES_DB: dcup
+    ports:
+     - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+  redis:
+    image: redis:7.2.4
+    restart: unless-stopped
+    ports:
+      - "${REDIS_DB_PORT:-6379}:6379"
+    volumes:
+      - redis_data:/data
+  qdrant:
+    image: qdrant/qdrant
+    restart: unless-stopped
+    environment:
+      QDRANT__SERVICE__GRPC_PORT: 6334
+    ports:
+      - "6333:6333"
+    volumes:
+      - qdrant_data:/data
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    environment:
+      NODE_ENV: production
+      PORT: 8080
+      HOSTNAME: "0.0.0.0"
+      DCUP_DOC_URL: https://dcup.dev/docs
+      NEXTAUTH_URL: http://localhost:8080
+      NEXTAUTH_SECRET: ${NEXTAUTH_SECRET}
+      API_SECRET: ${API_SECRET}
+
+      # POSTGRES
+      DRIZZLE_DATABASE_URL: postgres://postgres:root@postgres:5432/dcup
+
+      # Google Auth 
+      NEXT_PUBLIC_GOOGLE_CLIENT_ID: ${NEXT_PUBLIC_GOOGLE_CLIENT_ID}
+      GOOGLE_CLIENT_SECRET: ${GOOGLE_CLIENT_SECRET}
+      NEXT_PUBLIC_GOOGLE_API_KEY: ${NEXT_PUBLIC_GOOGLE_API_KEY}
+
+      # Github Auth
+      AUTH_GITHUB_ID: ${AUTH_GITHUB_ID}
+      AUTH_GITHUB_SECRET: ${AUTH_GITHUB_SECRET}
+      
+      # REDIS
+      REDIS_DB_ADDRESS: redis
+      REDIS_DB_PORT: 6379
+      REDIS_DB_PASSWORD: ${REDIS_DB_PASSWORD}
+      REDIS_DB_DATABASE: ${REDIS_DB_DATABASE}
+
+      # QDRANT
+      QDRANT_DB_URL: http://qdrant:6333
+
+      # Open Ai
+      OPENAI_KEY: ${OPENAI_KEY}
+      OPENAI_ENDPOINT: ${OPENAI_ENDPOINT}
+      OPENAI_EMBEDDINGS_MODEL: ${OPENAI_EMBEDDINGS_MODEL}
+      OPENAI_AGENT_MODEL: ${OPENAI_AGENT_MODEL}
+    ports:
+      - "8080:8080"
+    depends_on:
+      - postgres
+      - redis
+      - qdrant
+
+volumes:
+  postgres_data:
+  redis_data:
+  qdrant_data:

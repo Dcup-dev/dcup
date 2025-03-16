@@ -74,6 +74,16 @@ function FilesTable({ connections }: { connections: FileConnectionQuery[] }) {
   const allFiles = connections.flatMap(conn =>
     conn.files.map(file => ({ ...file, connection: conn })))
 
+  if (allFiles.length === 0) return (
+    <div className="flex items-center justify-center h-full">
+      <div className="py-12 text-center text-gray-500 dark:text-gray-400">
+        <div className="mb-4 text-2xl">📁</div>
+        <p className="font-medium">No files found</p>
+        <p className="text-sm mt-1">Connect your storage to get started</p>
+      </div>
+    </div>
+  )
+
   return (
     <div className="relative overflow-hidden">
       <Table className="[&_td]:align-middle min-w-[700px] lg:min-w-0">
@@ -143,16 +153,6 @@ function FilesTable({ connections }: { connections: FileConnectionQuery[] }) {
             </TableRow>
           ))}
         </TableBody>
-
-        {allFiles.length === 0 && (
-          <div className="absolute inset-0 flex items-center justify-center">
-            <div className="py-12 text-center text-gray-500 dark:text-gray-400">
-              <div className="mb-4 text-2xl">📁</div>
-              <p className="font-medium">No files found</p>
-              <p className="text-sm mt-1">Connect your storage to get started</p>
-            </div>
-          </div>
-        )}
       </Table>
     </div>)
 }

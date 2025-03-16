@@ -14,13 +14,15 @@ RUN npm ci
 
 COPY . .
 
-ARG NEXT_PUBLIC_ENV
-ENV NEXT_PUBLIC_ENV=${NEXT_PUBLIC_ENV}
+# Add the entrypoint script to the container
+COPY docker-entrypoint.sh /usr/local/bin/
 
-# Disable Qdrant connection during build
-ENV NEXT_PHASE=phase-production-build
+# Make sure the entrypoint script is executable
+RUN chmod +x /usr/local/bin/docker-entrypoint.sh
 
 RUN npm run build
+
+RUN cp -r public .next/standalone/ && cp -r .next/static .next/standalone/.next/
 
 # Set production environment variables
 ENV NODE_ENV=production
@@ -35,4 +37,4 @@ EXPOSE 8080
 
 USER nextjs
 
-CMD ["node", "server.js"]
+ENTRYPOINT ["docker-entrypoint.sh"]

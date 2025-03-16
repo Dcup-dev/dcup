@@ -9,7 +9,7 @@
     "start": "next start",
     "test": "echo \"No tests yet\" && exit 0",
     "generate": "drizzle-kit generate",
-    "pushdb": "drizzle-kit push"
+    "pushdb": "drizzle-kit push --force"
   },
   "dependencies": {
     "@auth/drizzle-adapter": "^1.7.4",
