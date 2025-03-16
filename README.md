@@ -50,10 +50,10 @@ The final step is to use the Dcup Retrieval API to get relevant chunks for your 
 2. Update your ENV config using .env.example
 3. Create containers
 ```bash
-docker compose -f docker-compose.prod.yml up
+docker compose -f docker-compose.prod.yml  --env-file .env up
 ```
 ## 💻 For Developers
 Dcup is designed to be modular and flexible, allowing developers to build custom RAG pipelines effortlessly. With open-source architecture, you can contribute, customize, and scale as needed
 
 ## Contributing
-We welcome contributions from the community! Check out our [Contributing Guide](https://github.com/Dcup-dev/dcup/CONTRIBUTING.md) to get started.
+We welcome contributions from the community! Check out our [Contributing Guide](https://github.com/Dcup-dev/dcup/blob/main/CONTRIBUTING.md) to get started.
