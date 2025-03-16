@@ -1,54 +1,59 @@
-# Dcup: The Ultimate Open-Source RAG Platform
+# Dcup: The Open-Source RAG-as-a-Service Platform 
 
-📖 **Open Source, Now and Forever**
+<h1 align="center">
+        <a target="_blank" href="https://dcup.dev"><img align="center" style="width:80%;" src="https://github.com/user-attachments/assets/be7cfdc3-35f2-4886-8616-ebf0bc16be1e"> </a>
+</h1>
 
-Dcup is a fully open-source, self-hostable data pipeline designed to revolutionize how you process and retrieve information from unstructured documents. Our mission is to empower developers, data engineers, and AI teams with a powerful tool that transforms raw data into structured, actionable insights.
+# 📖 **Open Source, Now and Forever**
+Dcup is a fully open-source, self-hostable RAG (Retrieval-Augmented Generation) pipeline designed to seamlessly connect your application to your users' data with pre-built integrations and advanced AI capabilities.
 
-## Overview
+## 🚀 Connected RAG
 
-Dcup leverages advanced Retrieval-Augmented Generation (RAG) techniques to convert PDFs, Docs, Sheets, HTML, Markdown, and more into perfectly structured JSON. By combining an intuitive, flexible ingestion process with intelligent text chunking and indexing, Dcup makes it easy to query your data with precision and efficiency.
+With Dcup Connect, you can easily link your application to data sources like Google Drive, with more integrations coming soon.
 
-## Key Features
+## 🌐 Future-Ready
 
-- **Flexible Data Ingestion:**  
-  Easily connect to a variety of data sources and automatically sync your documents, keeping your information current.
+Advanced features such as LLM re-ranking, summary indexing, entity extraction, and hybrid search using OpenAI embeddings and Qdrant vector storage make Dcup the perfect platform for scalable, intelligent retrieval.
 
-- **Intelligent Chunking & Indexing:**  
-  Break down large documents into manageable segments and build efficient indexes for rapid, accurate retrieval. We integrate advanced processing (via Python where needed) to ensure optimal chunking.
+## 🛠️ Built for Developers
 
-- **Advanced Retrieval API:**  
-  Perform semantic and keyword-based searches to retrieve the most relevant data, with features like entity extraction and filtering built in.
+Dcup provides easy-to-use APIs that get you started in minutes.
 
-- **Scalable & High-Performance Architecture:**  
-  Built on a modern Next.js framework with a master/worker design, Dcup is engineered to handle high-volume processing seamlessly—whether self-hosted or via our cost-effective cloud solution.
+# ⚡️ How Dcup Works
 
-- **Developer-Friendly Experience:**  
-  Enjoy simple APIs, comprehensive documentation, and easy configuration using YAML/JSON files, so you can integrate Dcup into your workflows quickly.
+### 1️⃣ Ingest
 
-- **Fully Open Source:**  
-  With our MIT-licensed platform, you have the freedom to modify, contribute, and deploy Dcup exactly as you need—open source, now and forever.
+The first step in the RAG pipeline is data ingestion. Dcup offers simple APIs for uploading files or directly connecting to popular sources like Google Drive. With automatic syncing, your data stays up-to-date effortlessly, handling PDFs and more.
 
+### 2️⃣ Chunk and Index
 
-## How It Works
+Next, Dcup automatically chunks and embeds your data into vectors using OpenAI embeddings. These vectors are stored in a highly scalable Qdrant vector database. Out of the box, Dcup supports vector indexing, summary indexing, and keyword indexing for enhanced retrieval.
 
-1. **Ingest:**  
-   Upload your files or connect to your favorite data sources. Dcup supports a wide range of formats—from PDFs and Word documents to raw HTML and Markdown.
+### 3️⃣ Retrieve
 
-2. **Chunk & Index:**  
-   Automatically process and segment your documents into manageable chunks, generate embeddings, and build robust indexes for fast data retrieval.
-
-3. **Retrieve:**  
-   Query your data using our powerful API. Whether you need semantic search or precise keyword matching, Dcup delivers accurate, context-aware results every time.
+The final step is to use the Dcup Retrieval API to get relevant chunks for your semantic search queries. Built-in features like re-ranking, summary index, entity extraction, flexible filtering, and hybrid semantic and keyword search ensure highly accurate and relevant results for your AI applications.
 
 
-## Getting Started
+### 🌟 Key Features
 
-- **Installation:** Follow our detailed installation guide to deploy Dcup on your own server or use our cloud version.
-- **Configuration:** Customize your data pipeline with straightforward YAML/JSON configuration files.
-- **Documentation:** Explore our comprehensive docs and API reference to integrate Dcup into your applications with ease.
+- ✅ Pre-built Google Drive integration (more integrations coming soon)
+- ✅ OpenAI-powered embeddings
+- ✅ Qdrant vector storage
+- ✅ Automatic chunking and indexing
+- ✅ Advanced retrieval with re-ranking and hybrid search
+- ✅ Easy-to-use APIs for fast implementation
+- ✅ Scalable and open-source
 
+## 🛠️ Quick Start Guide
+### Self-host Dcup using docker compose
+1. Clone the repository
+2. Update your ENV config using .env.example
+3. Create containers
+```bash
+docker compose -f docker-compose.prod.yml up
+```
+## 💻 For Developers
+Dcup is designed to be modular and flexible, allowing developers to build custom RAG pipelines effortlessly. With open-source architecture, you can contribute, customize, and scale as needed
 
 ## Contributing
-
-We welcome contributions from the community! Check out our contributing guidelines to learn how you can help make Dcup even better.
-
+We welcome contributions from the community! Check out our [Contributing Guide](https://github.com/Dcup-dev/dcup/CONTRIBUTING.md) to get started.
