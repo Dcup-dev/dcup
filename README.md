@@ -4,7 +4,15 @@
         <a target="_blank" href="https://dcup.dev"><img align="center" style="width:80%;" src="https://github.com/user-attachments/assets/be7cfdc3-35f2-4886-8616-ebf0bc16be1e"> </a>
 </h1>
 
+
 # 📖 **Open Source, Now and Forever**
+
+<div align="center">
+    <a target="_blank" href="https://dcup.dev"><img align="center" style="max-width:300px;" src="https://github.com/user-attachments/assets/1b00557b-e672-480b-b2e1-2dcc6fa5641e"> </a>
+</div>
+
+<br>
+
 Dcup is a fully open-source, self-hostable RAG (Retrieval-Augmented Generation) pipeline designed to seamlessly connect your application to your users' data with pre-built integrations and advanced AI capabilities.
 
 ## 🚀 Connected RAG
