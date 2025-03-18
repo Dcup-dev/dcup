@@ -26,92 +26,49 @@ Describe why this enhancement would be useful for Dcup users.
 
 ### Working on Your First Pull Request?
 
-### Opening a Pull Request
-
-1. Fork the repository.
-2. Clone the fork to your local machine:
-
+## Opening a Pull Request
+1. Fork the Repository:
 ```bash
 git clone https://github.com/Dcup-dev/dcup.git
 cd dcup
 git remote add upstream https://github.com/Dcup-dev/dcup.git
 ```
-
-3. Sync your local main branch with the upstream one:
-
+2. Sync Your Local Main Branch:
 ```bash
 git checkout main
 git pull upstream main
 ```
-
-4. Install dependencies:
-
+3. Install Dependencies:
 ```bash
 npm install
 ```
-
-5. Create a new topic branch:
-
+4. Setting Up the Development Environment
+    - Copy `.env.example` into `.env`: Update the .env file with your settings.
+    - Launch Required Services: Start PostgreSQL, Redis, and Qdrant with
+```bash
+make docker-run
+```
+5. Start the Development Server:
+```bash
+npm run dev
+```
+6. Create a New Topic Branch:
 ```bash
 git checkout -b feature/my-feature
 ```
-
-6. Make changes, commit, and push to your fork:
-
+7. Make Your Changes, Commit, and Push:
 ```bash
 git push -u origin feature/my-feature
 ```
-
-7. Open a Pull Request on GitHub.
-
-### Commit & Pull Request Naming Conventions
-
-We follow the conventional commit standard:
-
-```
-<type>[optional scope]: <description>
-```
-
-Examples:
-
-```
-feat: add support for Google Drive integration
-fix: resolve indexing bug
-docs: update API documentation
-```
+8. Open a Pull Request on GitHub:
+Describe your changes clearly and reference any related issues.
 
 ### Merge Strategy
 
 We use **squash & merge** to keep the main branch history clean.
-
-
-## Setting Up the Development Environment
-
-### Using Docker Compose
-
-1. Clone the Dcup repo:
-
-```bash
-git clone https://github.com/dcup/dcup.git
-```
-
-2. Copy `.env.example` into `.env` and configure your environment variables.
-
-3. Run the following Docker command to start PostgreSQL, Redis, and Qdrant:
-
-```bash
-make docker-run
-```
-
-4. Start the Dcup development server:
-
-```bash
-npm run dev
-```
 
 Now you're ready to start building!
 
 ---
 
 Happy coding! 🚀
-
