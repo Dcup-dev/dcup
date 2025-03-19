@@ -14,6 +14,7 @@ import { eq } from "drizzle-orm";
 import { AlertCircle } from "lucide-react";
 import { getOAuth2Client } from "@/fileProcessors/connectors/googleDrive";
 import dynamic from 'next/dynamic'
+import { UploadFilesDialog } from "@/components/UploadFilesDialog/UploadFilesDialog";
 
 const ConnectionDetails = dynamic(() => import('@/components/ConnectionDetails/ConnectionDetails'), {
 })
@@ -50,12 +51,16 @@ export default async function ConnectionsPage() {
             Manage your data sources and keep your application in sync.
           </p>
         </div>
-        <Button asChild className="mt-4 md:mt-0">
-          <Link href={"/connections/new"}>
-            New Connection
-          </Link>
-        </Button>
+        <div className="flex gap-3 items-center">
+          <UploadFilesDialog />
+          <Button asChild>
+            <Link href={"/connections/new"}>
+              New Connection
+            </Link>
+          </Button>
+        </div>
       </div>
+
       {connections.length === 0 ? (<EmptyState />)
         : (<CurrentConnections connections={connections} />)}
     </div>
