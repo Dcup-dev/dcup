@@ -8,9 +8,9 @@ import { redirect } from 'next/navigation';
 import { FiDatabase } from "react-icons/fi";
 import { ConnectionTable } from "@/db/schemas/connections";
 import { Table, TableBody, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { DataSource } from "@/DataSource";
+import { UploadFilesDialog } from "@/components/UploadFilesDialog/UploadFilesDialog";
 import { getConnectionToken } from "@/fileProcessors/connectors";
-import { DirectUploadPicker } from "@/DataSource/DirectUpload/DirectUploadPicker/DirectUploadPicker";
+import { DataSource } from "@/DataSource";
 
 const ConnectionDetails = dynamic(() => import('@/components/ConnectionDetails/ConnectionDetails'))
 
@@ -47,7 +47,7 @@ export default async function ConnectionsPage() {
           </p>
         </div>
         <div className="flex gap-3 items-center">
-          <DirectUploadPicker />
+          <UploadFilesDialog />
           <Button asChild>
             <Link href={"/connections/new"}>
               New Connection
