@@ -9,8 +9,8 @@ import { FiDatabase } from "react-icons/fi";
 import { ConnectionTable } from "@/db/schemas/connections";
 import { Table, TableBody, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { UploadFilesDialog } from "@/components/UploadFilesDialog/UploadFilesDialog";
-import { getConnectionToken } from "@/fileProcessors/connectors";
 import { DataSource } from "@/DataSource";
+import { getConnectionToken } from "@/fileProcessors/connectors";
 
 const ConnectionDetails = dynamic(() => import('@/components/ConnectionDetails/ConnectionDetails'))
 

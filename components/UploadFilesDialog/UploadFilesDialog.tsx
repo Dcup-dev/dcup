@@ -14,8 +14,8 @@ import {
   TabsTrigger,
 } from "@/components/ui/tabs"
 import { Label } from "@/components/ui/label"
-import { AlertCircle, Link, UploadCloud, XCircleIcon } from "lucide-react"
-import { ChangeEvent, Dispatch, SetStateAction, useRef, useState } from "react"
+import { AlertCircle, Link, Loader2, UploadCloud, XCircleIcon } from "lucide-react"
+import { ChangeEvent, Dispatch, SetStateAction, useRef, useState, useTransition } from "react"
 import { Textarea } from "../ui/textarea"
 import {
   Dialog,
@@ -25,34 +25,92 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog"
+import { Input } from "../ui/input"
+import { EMPTY_FORM_STATE } from "@/lib/zodErrorHandle"
+import { directUploading } from "@/actions/uploadFiles"
+import { toast } from "@/hooks/use-toast"
 
 
 export const UploadFilesDialog = () => {
-  const [links, setLinks] = useState<string[]>([])
-  const [files, setFiles] = useState<File[]>([])
+  const [open, setOpen] = useState(false);
+  const [links, setLinks] = useState<string[]>([]);
+  const [files, setFiles] = useState<File[]>([]);
+  const [uploadName, setUploadName] = useState("")
+  const [pending, startTransition] = useTransition();
 
-  const handleUpload = () => {
-    // todo
-    console.log({ files, links })
-  }
+  const handleUploadFiles = async (data: FormData) => {
+    data.set("uploadName", uploadName)
+    links.forEach((link) => data.append("links", link));
+    files.forEach((file) => data.append("files", file));
+    startTransition(async () => {
+      try {
+        const res = await directUploading(EMPTY_FORM_STATE, data);
+        if (res.status === "SUCCESS") {
+          setOpen(false);
+        }
+        if (res.message) {
+          toast({
+            title: res.message,
+          });
+        }
+        if (res.status === "ERROR") {
+          throw new Error(res.message);
+        }
+      } catch (err: any) {
+        toast({
+          title: err.message,
+          variant: "destructive",
+        });
+      }
+    });
+  };
+
 
   return (
-    <Dialog>
+    <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
         <Button>Upload Files</Button>
       </DialogTrigger>
       <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>
-          <DialogTitle>Upload Files Directy</DialogTitle>
+          <DialogTitle>Upload Files Directly</DialogTitle>
         </DialogHeader>
-        <DataInput files={files} links={links} setFiles={setFiles} setLinks={setLinks} />
+        <div className="grid w-full max-w-sm items-center gap-1.5">
+          <Label htmlFor="uploadName">Upload Name</Label>
+          <Input
+            value={uploadName}
+            onChange={(e)=> {
+              e.preventDefault()
+              setUploadName(e.target.value)
+            }}
+            placeholder="Unique upload name"
+          />
+        </div>
+        <DataInput
+          files={files}
+          links={links}
+          setFiles={setFiles}
+          setLinks={setLinks}
+        />
         <DialogFooter>
-          <Button onClick={handleUpload} type="submit">Upload</Button>
+          <form action={handleUploadFiles}>
+            <Button disabled={pending} type="submit">
+              {pending ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Please wait
+                </>
+              ) : (
+                "Upload"
+              )}
+            </Button>
+          </form>
         </DialogFooter>
       </DialogContent>
     </Dialog>
-  )
-}
+  );
+};
+
 
 type TDataInput = {
   files: File[],
