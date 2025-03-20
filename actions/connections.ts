@@ -22,27 +22,24 @@ export async function setConnectionConfig(_: FormState, formData: FormData) {
     const config = newConnectionSchema.parse({
       id: formData.get("id"),
       folderName: formData.get("folderName"),
-      directory: formData.get("directory"),
-      importMode: formData.get("importMode"),
+      folderId: formData.get("folderId"),
       partition: formData.get("partition"),
       metadata: formData.get("metadata"),
       pageLimit: formData.get("pageLimit"),
-      documentLimit: formData.get("documentLimit")
+      documentLimit: formData.get("documentLimit"),
     })
 
     await databaseDrizzle.update(connections).set({
       folderName: config.folderName,
-      directory: config.directory,
-      partition: config.partition,
+      connectionMetadata: config.folderId ? {
+        folderId: config.folderId,
+      } : undefined,
+      partition: config.partition ?? undefined,
       metadata: config.metadata,
       isConfigSet: true,
       isSyncing: true,
     }).where(eq(connections.id, config.id))
-
-    console.log("connection ==> start processing")
-
     await addToProcessFilesQueue({ connectionId: config.id, pageLimit: config.pageLimit, fileLimit: config.documentLimit })
-
     revalidatePath("/connections");
     return toFormState("SUCCESS", "start processing");
 

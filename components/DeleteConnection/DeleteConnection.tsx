@@ -64,7 +64,6 @@ export const DeleteConnection = ({ connection }: { connection: ConnectionQuery }
     })
   }
 
-
   return (
     <Dialog open={open} onOpenChange={e => setOpen(e)} >
       <DialogTrigger asChild>

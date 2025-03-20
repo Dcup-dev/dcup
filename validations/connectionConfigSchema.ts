@@ -2,12 +2,12 @@ import { z } from "zod";
 
 export const newConnectionSchema = z.object({
   id: z.string().min(2),
-  folderName: z.string().transform((str): string | null => {
+  folderName: z.string().transform((str): string => {
     if (str) return str
     return "*"
   }),
-  directory: z.string(),
-  partition: z.string().default("default"),
+  folderId: z.string(),
+  partition: z.string().default("default").nullable(),
   metadata: z.string()
     .transform((str, ctx): string => {
       try {

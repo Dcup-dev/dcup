@@ -48,8 +48,6 @@ export default function useInjectScript(url: string): [boolean, boolean] {
     }
 
     const onScriptEvent = (error: boolean) => {
-      // Get all error or load functions and call them
-      if (error) console.log('error loading the script')
       injectorState.queue?.[url]?.forEach((job) => job(error))
 
       if (error && injectorState.scriptMap[url]) {

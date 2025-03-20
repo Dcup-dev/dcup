@@ -1,23 +1,18 @@
+import Link from "next/link"
+import dynamic from 'next/dynamic'
 import { authOptions } from "@/auth";
 import { Button } from "@/components/ui/button";
-import Link from "next/link"
 import { databaseDrizzle } from "@/db";
 import { getServerSession } from "next-auth";
 import { redirect } from 'next/navigation';
 import { FiDatabase } from "react-icons/fi";
-import { connections, ConnectionTable } from "@/db/schemas/connections";
+import { ConnectionTable } from "@/db/schemas/connections";
 import { Table, TableBody, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import SourceConfiguration from "@/components/SourceConfiguration/SourceConfiguration";
-import { DeleteConnection } from "@/components/DeleteConnection/DeleteConnection";
-import { SyncConnection } from "@/components/SyncConnection/SyncConnection";
-import { eq } from "drizzle-orm";
-import { AlertCircle } from "lucide-react";
-import { getOAuth2Client } from "@/fileProcessors/connectors/googleDrive";
-import dynamic from 'next/dynamic'
 import { UploadFilesDialog } from "@/components/UploadFilesDialog/UploadFilesDialog";
+import { DataSource } from "@/DataSource";
+import { getConnectionToken } from "@/fileProcessors/connectors";
 
-const ConnectionDetails = dynamic(() => import('@/components/ConnectionDetails/ConnectionDetails'), {
-})
+const ConnectionDetails = dynamic(() => import('@/components/ConnectionDetails/ConnectionDetails'))
 
 export interface ConnectionQuery extends ConnectionTable {
   files: {
@@ -67,22 +62,7 @@ export default async function ConnectionsPage() {
   );
 }
 
-function EmptyState() {
-  return (
-    <div className="flex flex-col items-center justify-center h-full w-full text-center p-6">
-      <div className="bg-muted p-4 rounded-full mb-4">
-        <FiDatabase className="h-12 w-12 text-muted-foreground" />
-      </div>
-      <h2 className="text-2xl font-semibold">No Connected Sources</h2>
-      <p className="text-muted-foreground max-w-md">
-        Connect your first data source to start syncing documents and pages with your application. We support Google Drive, Notion, AWS, and more.
-      </p>
-    </div>
-  );
-}
-
 async function CurrentConnections({ connections }: { connections: ConnectionQuery[] }) {
-
   return (
     <div className="mb-12">
       <h2 className="text-2xl font-semibold mb-6">Active Connections</h2>
@@ -100,9 +80,9 @@ async function CurrentConnections({ connections }: { connections: ConnectionQuer
             </TableRow>
           </TableHeader>
           <TableBody>
-            {connections.map((connection, idx) => (<ConnectionDetails connection={connection} key={idx}>
-              <Source connection={connection} />
-            </ConnectionDetails>))}
+            {connections.map((conn, idx) => <ConnectionDetails key={idx} connection={conn} >
+              <Connection connection={conn} />
+            </ConnectionDetails>)}
           </TableBody>
         </Table>
       </div>
@@ -110,46 +90,21 @@ async function CurrentConnections({ connections }: { connections: ConnectionQuer
   );
 }
 
-async function Source({ connection }: { connection: ConnectionQuery }) {
-  try {
-    const { token } = await getOAuth2Client({
-      accessToken: connection.accessToken,
-      refreshToken: connection.refreshToken,
-      expiryDate: Number(connection.expiryDate),
-    }).getAccessToken()
-
-    if (connection.isConfigSet) {
-      return <>
-        <SyncConnection connection={connection} />
-        <SourceConfiguration accessToken={token} connection={connection} />
-        <DeleteConnection connection={connection} />
-      </>
-    }
-    return (
-      <>
-        <SourceConfiguration accessToken={token} connection={connection} />
-        <DeleteConnection connection={connection} />
-      </>
-    );
-  } catch (error: any) {
-    if (error.message.includes("invalid_grant")) {
-      await databaseDrizzle
-        .delete(connections)
-        .where(eq(connections.id, connection.id));
-
-      return <ConnectionError message={"This connection is no longer valid. Please reconnect your account."} />
-    }
-    return <ConnectionError message={" An unexpected error occurred while authenticating."} />
-  }
+async function Connection({ connection }: { connection: ConnectionQuery }) {
+  const token = await getConnectionToken(connection)
+  return (<DataSource connection={connection} token={token} />)
 }
 
-function ConnectionError({ message }: { message: string }) {
+function EmptyState() {
   return (
-    <div className="flex items-center space-x-3 rounded-md border border-red-400 bg-red-50 p-4">
-      <AlertCircle className="h-6 w-6 text-red-600" />
-      <span className="text-sm font-medium text-red-700">
-        {message}
-      </span>
+    <div className="flex flex-col items-center justify-center h-full w-full text-center p-6">
+      <div className="bg-muted p-4 rounded-full mb-4">
+        <FiDatabase className="h-12 w-12 text-muted-foreground" />
+      </div>
+      <h2 className="text-2xl font-semibold">No Connected Sources</h2>
+      <p className="text-muted-foreground max-w-md">
+        Connect your first data source to start syncing documents and pages with your application. We support Google Drive, Notion, AWS, and more.
+      </p>
     </div>
   );
 }

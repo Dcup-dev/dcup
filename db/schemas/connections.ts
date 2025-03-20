@@ -5,12 +5,20 @@ import {
   timestamp,
   integer,
   unique,
-
+  jsonb,
   boolean
 } from "drizzle-orm/pg-core"
 import { users } from "./users"
 import { relations } from "drizzle-orm";
-export const connectionEnum = pgEnum('connectors', ['GOOGLE_DRIVE', 'AWS', 'NOTION', 'SLACK', 'GMAIL', 'CONFLUENCE',]);
+export const connectionEnum = pgEnum('connectors', [
+  'GOOGLE_DRIVE',
+  'AWS',
+  'NOTION',
+  'SLACK',
+  'GMAIL',
+  'CONFLUENCE',
+  'DIRECT_UPLOAD'
+]);
 
 export const connections = pgTable("connection", {
   id: text("id")
@@ -21,11 +29,9 @@ export const connections = pgTable("connection", {
     .notNull(),
   service: connectionEnum("service").notNull(),
   email: text("email").notNull(),
-  accessToken: text("access_token").notNull(),
-  refreshToken: text("refresh_token").notNull(),
-  expiryDate: text("expiry_date").notNull(),
-  directory: text("directory"),
-  folderName: text("folder_name"),
+  credentials: jsonb("credentials"),
+  connectionMetadata: jsonb("connection_metadata"),
+  folderName: text("folder_name").default("*"),
   partition: text("partition").default("default").notNull(),
   metadata: text("metadata"),
   lastSynced: timestamp("last_synced", { withTimezone: true }),
@@ -45,7 +51,7 @@ export const processedFiles = pgTable("pocessed_file", {
 export const connectionRelations = relations(connections, ({ many, one }) => ({
   files: many(processedFiles),
   user: one(users, {
-    fields:[connections.userId],
+    fields: [connections.userId],
     references: [users.id]
   })
 }))
