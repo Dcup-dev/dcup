@@ -10,7 +10,6 @@ import { toast } from '@/hooks/use-toast';
 import { ConnectionQuery } from '@/app/(protected)/connections/page';
 import { setConnectionConfig } from '@/actions/connections';
 import { useTransition } from "react";
-import useDrivePicker from '../GoogleDrivePicker';
 import {
   Dialog,
   DialogTrigger,
@@ -24,91 +23,54 @@ import { FileProgress } from '@/events';
 
 
 
-export const ConfigGoogleDrive = ({ connection, token }: { connection: ConnectionQuery, token: string | null | undefined }) => {
+export const ConfigDirectUpload = ({ connection }: { connection: ConnectionQuery }) => {
   const [open, setOpen] = useState(false)
   const [isFinished, setIsFinished] = useState(false)
   const [isConfigSet, setIsConfigSet] = useState(connection.isConfigSet)
-  const [openPicker] = useDrivePicker()
   const [pending, startTransition] = useTransition()
-  const [directory, setDirectory] = useState<{ name: string, id: string | null }>({
-    name: connection.folderName || "",
-    id: null,
-  });
 
   useEffect(() => {
     const eventSource = new EventSource("/api/progress");
+
     eventSource.onmessage = (event) => {
       const data = JSON.parse(event.data) as FileProgress;
       if (data.connectionId === connection.id) setIsFinished(data.isFinished)
     };
+
     eventSource.onerror = () => {
       eventSource.close();
     };
+
     return () => {
       eventSource.close();
     };
   }, [connection.id]);
 
   const handleSetConfig = (data: FormData) => {
-    data.set("id", connection.id)
-    data.set("folderName", directory.name)
-    data.set("service", connection.service)
-    directory?.id && data.set("folderId", directory.id)
+    console.log("handleSetConfig called with data:", Object.fromEntries(data));
+    data.set("id", connection.id);
+    data.set("service", connection.service);
     startTransition(async () => {
-      const setConfig = async () => {
-        try {
-          const res = await setConnectionConfig(EMPTY_FORM_STATE, data)
-          if (res.status === 'SUCCESS') {
-            setOpen(false)
-            setIsConfigSet(true)
-          }
-          if (res.message) {
-            toast({
-              title: res.message,
-            });
-          }
-          if (res.status === 'ERROR') {
-            throw new Error(res.message)
-          }
-        } catch (err: any) {
-          toast({
-            title: err.message,
-            variant: 'destructive'
-          });
+      console.log("Inside startTransition");
+      try {
+        console.log("Calling setConnectionConfig");
+        const res = await setConnectionConfig(EMPTY_FORM_STATE, data);
+        console.log("Response from setConnectionConfig:", res);
+        if (res.status === "SUCCESS") {
+          setOpen(false);
+          setIsConfigSet(true);
         }
-        return;
-      };
-      await setConfig();
-    })
-  }
-
-
-
-  const showPicker = async () => {
-    openPicker({
-      clientId: process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID!,
-      developerKey: process.env.NEXT_PUBLIC_GOOGLE_API_KEY!,
-      viewId: 'FOLDERS',
-      setIncludeFolders: true,
-      setSelectFolderEnabled: true,
-      token: token ?? undefined,
-      supportDrives: true,
-      callbackFunction: (data) => {
-        if (data.action === "loaded") {
-          setOpen(false)
+        if (res.message) {
+          toast({ title: res.message });
         }
-        if (data.action === 'picked') {
-          setDirectory({
-            name: data.docs[0].name,
-            id: data.docs[0].id
-          })
-          setOpen(true)
+        if (res.status === "ERROR") {
+          throw new Error(res.message);
         }
-        if (data.action === "cancel") {
-          setOpen(true)
-        }
-      },
-    })
+      } catch (err: any) {
+        console.error("Error in setConfig:", err);
+        toast({ title: err.message, variant: "destructive" });
+      }
+    });
   };
 
 
@@ -133,22 +95,6 @@ export const ConfigGoogleDrive = ({ connection, token }: { connection: Connectio
       </DialogHeader>
       <form action={handleSetConfig}>
         <div className="grid gap-4 py-4">
-          <div>
-            <label className="block text-sm font-medium">Folder</label>
-            <div className="flex items-center gap-2">
-              <Input
-                value={directory?.name || connection.folderName || ""}
-                placeholder="No folder selected"
-                disabled={connection.isSyncing || connection.isConfigSet}
-                onClick={showPicker} type='button'
-                readOnly
-              />
-              <Button onClick={showPicker} type="button" disabled={connection.isSyncing || connection.isConfigSet}  >
-                Select Folder
-              </Button>
-            </div>
-          </div>
-
           <div>
             <label className="block text-sm font-medium">Partition</label>
             <Input
