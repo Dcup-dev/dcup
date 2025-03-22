@@ -46,8 +46,6 @@ export const DirectUploadPicker = () => {
       try {
         const res = await directUploading(EMPTY_FORM_STATE, data);
         if (res.status === "SUCCESS") {
-          setLinks([])
-          setFiles([])
           setOpen(false);
         }
         if (res.message) {
@@ -81,7 +79,7 @@ export const DirectUploadPicker = () => {
           <Label htmlFor="uploadName">Upload Name</Label>
           <Input
             value={uploadName}
-            onChange={(e) => {
+            onChange={(e)=> {
               e.preventDefault()
               setUploadName(e.target.value)
             }}

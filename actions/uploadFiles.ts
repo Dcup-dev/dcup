@@ -69,7 +69,6 @@ export async function directUploading(_: FormState, formData: FormData) {
     revalidatePath("/connections");
     return toFormState("SUCCESS", "file process");
   } catch (e) {
-    console.log({e})
     return fromErrorToFormState(e);
   }
 

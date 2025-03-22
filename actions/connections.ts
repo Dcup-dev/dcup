@@ -1,11 +1,12 @@
 "use server"
 import { authOptions } from "@/auth";
+import { setConnectionToProcess } from "@/DataSource";
 import { databaseDrizzle } from "@/db";
 import { connections } from "@/db/schemas/connections";
 import { fromErrorToFormState, toFormState } from "@/lib/zodErrorHandle";
-import { newConnectionSchema, deleteConnectionSchema, syncConnectionSchema } from "@/validations/connectionConfigSchema";
+import { deleteConnectionSchema, syncConnectionSchema } from "@/validations/connectionConfigSchema";
 import { addToProcessFilesQueue } from "@/workers/queues/jobs/processFiles.job";
-import { eq } from "drizzle-orm";
+import { and, eq } from "drizzle-orm";
 import { getServerSession } from "next-auth";
 import { revalidatePath } from "next/cache";
 
@@ -18,32 +19,14 @@ export async function setConnectionConfig(_: FormState, formData: FormData) {
   const session = await getServerSession(authOptions);
   try {
     if (!session?.user?.email) throw new Error("forbidden");
+    const config = await setConnectionToProcess(formData)
+    console.log({ connection_to_process: config });
 
-    const config = newConnectionSchema.parse({
-      id: formData.get("id"),
-      folderName: formData.get("folderName"),
-      folderId: formData.get("folderId"),
-      partition: formData.get("partition"),
-      metadata: formData.get("metadata"),
-      pageLimit: formData.get("pageLimit"),
-      documentLimit: formData.get("documentLimit"),
-    })
-
-    await databaseDrizzle.update(connections).set({
-      folderName: config.folderName,
-      connectionMetadata: config.folderId ? {
-        folderId: config.folderId,
-      } : undefined,
-      partition: config.partition ?? undefined,
-      metadata: config.metadata,
-      isConfigSet: true,
-      isSyncing: true,
-    }).where(eq(connections.id, config.id))
-    await addToProcessFilesQueue({ connectionId: config.id, pageLimit: config.pageLimit, fileLimit: config.documentLimit })
+    await addToProcessFilesQueue(config)
     revalidatePath("/connections");
     return toFormState("SUCCESS", "start processing");
-
   } catch (e) {
+    console.log({ e })
     return fromErrorToFormState(e);
   }
 }
@@ -59,7 +42,10 @@ export async function deleteConnectionConfig(_: FormState, formData: FormData) {
 
     await databaseDrizzle
       .delete(connections)
-      .where(eq(connections.id, id))
+      .where(and(
+        eq(connections.id, id),
+        eq(connections.isSyncing, false)
+      ))
 
     revalidatePath("/connections");
     return toFormState("SUCCESS", "Connection Deleted Successfully");
@@ -81,7 +67,7 @@ export const syncConnectionConfig = async (_: FormState, formData: FormData) => 
     })
 
     await databaseDrizzle.update(connections).set({
-      isSyncing: false,
+      isSyncing: true,
     }).where(eq(connections.id, id))
 
     await addToProcessFilesQueue({ connectionId: id, pageLimit: pageLimit, fileLimit: documentLimit })

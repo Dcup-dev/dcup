@@ -4,7 +4,6 @@ import { FileContent } from "..";
 import { readDirectUploadFiles } from "./directUpload";
 
 
-
 export const getConnectionToken = async (connection: ConnectionTable) => {
   switch (connection.service) {
     case "GOOGLE_DRIVE":
@@ -12,7 +11,7 @@ export const getConnectionToken = async (connection: ConnectionTable) => {
       const { token } = await oauthClient.getAccessToken()
       return token;
     case "DIRECT_UPLOAD":
-    return "DIRECT_UPLOAD"
+      return "DIRECT_UPLOAD"
     default:
       break;
   }
