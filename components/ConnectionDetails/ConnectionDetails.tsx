@@ -95,6 +95,18 @@ export default function ConnectionDetails({ connection, children }: { connection
         ? timeAgo(progress.lastAsync)
         : <span className="text-muted-foreground">Never</span>}
     </TableCell>
+    {!progress.isFinished && connection.isSyncing && <TableCell>
+      <TooltipProvider>
+        <Tooltip>
+          <TooltipTrigger>
+            <Pickaxe className="animate-bounce" />
+          </TooltipTrigger>
+          <TooltipContent>
+            <p>Processing Files...</p>
+          </TooltipContent>
+        </Tooltip>
+      </TooltipProvider>
+    </TableCell>}
     <TableCell>
       <TooltipProvider>
         <Tooltip>

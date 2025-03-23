@@ -17,6 +17,8 @@ import {
 import { deleteConnectionConfig } from "@/actions/connctions/delete"
 
 
+
+
 export const DeleteConnection = ({ connection }: { connection: ConnectionQuery }) => {
   const [open, setOpen] = useState(false)
   const [isPending, startTransition] = useTransition();

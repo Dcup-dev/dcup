@@ -40,6 +40,7 @@ export const connections = pgTable("connection", {
   createdAt: timestamp("createdAt", { withTimezone: true }).notNull().defaultNow(),
 })
 
+
 export const processedFiles = pgTable("pocessed_file", {
   name: text("name").notNull(),
   connectionId: text("connection_id")
