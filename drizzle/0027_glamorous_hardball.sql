@@ -1,1 +1,0 @@
-ALTER TABLE "user" ADD COLUMN "api_calls" integer DEFAULT 0 NOT NULL;

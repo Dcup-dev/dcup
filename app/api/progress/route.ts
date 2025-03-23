@@ -27,7 +27,6 @@ export async function GET(request: Request) {
       }
 
       request.signal.addEventListener('abort', async () => {
-        console.log('Client disconnected, cleaning up');
         await subscriber.unsubscribe(processingUpdates);
         subscriber.disconnect();
       });

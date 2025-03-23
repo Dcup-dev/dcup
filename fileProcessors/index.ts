@@ -4,11 +4,11 @@ import { RecursiveCharacterTextSplitter } from "@langchain/textsplitters";
 import { v4 as uuidv4 } from 'uuid';
 import { getTitleAndSummary, vectorizeText } from "@/openAi";
 import { qdrant_collection_name, qdrantCLient } from "@/qdrant";
-import { processGoogleDriveFiles } from "./processors/storages/googleDrive";
 import { redisConnection } from "@/workers/redis";
 import { publishProgress } from "@/events";
 import { connections, processedFiles } from "@/db/schemas/connections";
 import { eq } from "drizzle-orm";
+import { getFileContent } from "./connectors";
 
 export type FileContent = {
   name: string,
@@ -24,7 +24,6 @@ export type PageContent = {
 
 export const processFiles = async (connectionId: string, pageLimit: number | null, fileLimit: number | null) => {
   const completedFiles: typeof processedFiles.$inferInsert[] = []
-  let filesContent: FileContent[] = []
   const allPoints = [];
   let processedPage = 0;
   let processedAllPages = 0
@@ -38,18 +37,21 @@ export const processFiles = async (connectionId: string, pageLimit: number | nul
   });
 
   try {
+    await publishProgress({
+      connectionId: connectionId,
+      fileName: "",
+      processedFile: 0,
+      processedPage: 0,
+      lastAsync: now,
+      isFinished: false,
+    })
+
     const connection = await databaseDrizzle.query.connections.findFirst({
       where: (c, ops) => ops.eq(c.id, connectionId)
     })
-
-
     if (!connection) return;
 
-    switch (connection.service) {
-      case 'GOOGLE_DRIVE':
-        filesContent = await processGoogleDriveFiles(connection)
-        break;
-    }
+    const filesContent = await getFileContent(connection)
 
     for (const [fileIndex, file] of filesContent.entries()) {
       if (fileLimit && fileLimit > 0 && fileLimit === fileIndex) break;

@@ -1,16 +1,10 @@
-import { authOptions } from "@/auth";
 import { AppSidebar } from "@/components/app-sidebar";
 import { SidebarInset, SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { Separator } from "@radix-ui/react-separator";
-import { getServerSession } from "next-auth";
-import { redirect } from 'next/navigation'
 import { ReactNode } from "react";
 
 
 export default async function Layout({ children }: { children: ReactNode }) {
-  const session = await getServerSession(authOptions)
-  if (!session) return redirect("/login")
-
   return (<SidebarProvider>
     <AppSidebar />
     <SidebarInset>

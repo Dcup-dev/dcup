@@ -1,4 +1,11 @@
 "use client"
+import { Button } from "../ui/button"
+import { Loader2, Trash } from "lucide-react"
+import { useEffect, useState, useTransition } from "react"
+import { EMPTY_FORM_STATE } from "@/lib/zodErrorHandle"
+import { toast } from "@/hooks/use-toast"
+import { deleteConnectionConfig } from "@/actions/connections"
+import { ConnectionQuery } from "@/app/(protected)/connections/page"
 import {
   Dialog,
   DialogContent,
@@ -8,19 +15,13 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog"
-import { Button } from "../ui/button"
-import { Loader2, Trash } from "lucide-react"
-import { useEffect, useState, useTransition } from "react"
-import { EMPTY_FORM_STATE } from "@/lib/zodErrorHandle"
-import { toast } from "@/hooks/use-toast"
-import { deleteConnectionConfig } from "@/actions/connections"
-import { ConnectionQuery } from "@/app/(protected)/connections/page"
 import { FileProgress } from "@/events"
+
 
 export const DeleteConnection = ({ connection }: { connection: ConnectionQuery }) => {
   const [open, setOpen] = useState(false)
-  const [isPending, startTransition] = useTransition();
   const [isFinished, setIsFinished] = useState(false)
+  const [isPending, startTransition] = useTransition();
 
   useEffect(() => {
     const eventSource = new EventSource("/api/progress");
@@ -39,12 +40,13 @@ export const DeleteConnection = ({ connection }: { connection: ConnectionQuery }
     };
   }, [connection.id]);
 
-
   const handleDeleteConnection = () => {
     startTransition(async () => {
       try {
         const formData = new FormData();
         formData.set("id", connection.id)
+        formData.set("service", connection.service)
+        formData.set("metadata", JSON.stringify(connection.connectionMetadata))
         const res = await deleteConnectionConfig(EMPTY_FORM_STATE, formData)
         if (res.status !== 'SUCCESS') {
           throw new Error(res.message)
@@ -53,7 +55,6 @@ export const DeleteConnection = ({ connection }: { connection: ConnectionQuery }
         toast({
           title: res.message,
         });
-
       } catch (error: any) {
         toast({
           variant: "destructive",
@@ -63,7 +64,6 @@ export const DeleteConnection = ({ connection }: { connection: ConnectionQuery }
       }
     })
   }
-
 
   return (
     <Dialog open={open} onOpenChange={e => setOpen(e)} >

@@ -1,1 +1,0 @@
-ALTER TABLE "connection" ALTER COLUMN "expiry_date" SET DATA TYPE integer;

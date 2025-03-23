@@ -5,6 +5,13 @@ import { ReactNode, useEffect, useState } from "react";
 import { ConnectionQuery } from "@/app/(protected)/connections/page";
 import { FileProgress } from "@/events";
 import { getServiceIcon } from "@/lib/helepers";
+import { Pickaxe } from "lucide-react";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip"
 
 export default function ConnectionDetails({ connection, children }: { connection: ConnectionQuery, children: ReactNode }) {
   const [isMounted, setIsMounted] = useState(false);
@@ -13,6 +20,7 @@ export default function ConnectionDetails({ connection, children }: { connection
     processedPage: connection.files.reduce((sum, file) => sum + file.totalPages, 0),
     processedFile: connection.files.length,
     lastAsync: connection.lastSynced,
+    isFinished: false
   });
 
   useEffect(() => {
@@ -42,7 +50,7 @@ export default function ConnectionDetails({ connection, children }: { connection
         </span>
       </div>
       <p className="text-muted-foreground">
-        {connection.email}
+        {connection.identifier}
       </p>
     </TableCell>
     <TableCell>{connection.folderName || 'Untitled'}</TableCell>
@@ -53,10 +61,22 @@ export default function ConnectionDetails({ connection, children }: { connection
       {isMounted ? timeAgo(connection.createdAt) : "Loading..."}
     </TableCell>
     <TableCell>
-      {!isMounted ? "Loading...":progress.lastAsync
+      {!isMounted ? "Loading..." : progress.lastAsync
         ? timeAgo(progress.lastAsync)
         : <span className="text-muted-foreground">Never</span>}
     </TableCell>
+    {!progress.isFinished && connection.isSyncing && <TableCell>
+      <TooltipProvider>
+        <Tooltip>
+          <TooltipTrigger>
+            <Pickaxe className="animate-bounce" />
+          </TooltipTrigger>
+          <TooltipContent>
+            <p>Processing Files...</p>
+          </TooltipContent>
+        </Tooltip>
+      </TooltipProvider>
+    </TableCell>}
     <TableCell>
       {children}
     </TableCell>
