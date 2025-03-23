@@ -2,6 +2,8 @@ import { z } from "zod";
 
 export const deleteConnectionSchema = z.object({
   id: z.string().min(2),
+  service: z.string().min(2),
+  metadata:z.string().min(2)
 });
 
 export const syncConnectionSchema = z.object({

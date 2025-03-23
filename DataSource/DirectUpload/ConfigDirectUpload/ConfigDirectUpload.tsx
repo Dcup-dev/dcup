@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { DialogClose } from '@radix-ui/react-dialog';
-import { Loader2, RefreshCcw, Settings2, X } from 'lucide-react';
+import { Loader2, Settings2, X } from 'lucide-react';
 import { EMPTY_FORM_STATE } from '@/lib/zodErrorHandle';
 import { toast } from '@/hooks/use-toast';
 import { ConnectionQuery } from '@/app/(protected)/connections/page';
@@ -47,15 +47,11 @@ export const ConfigDirectUpload = ({ connection }: { connection: ConnectionQuery
   }, [connection.id]);
 
   const handleSetConfig = (data: FormData) => {
-    console.log("handleSetConfig called with data:", Object.fromEntries(data));
     data.set("id", connection.id);
     data.set("service", connection.service);
     startTransition(async () => {
-      console.log("Inside startTransition");
       try {
-        console.log("Calling setConnectionConfig");
         const res = await setConnectionConfig(EMPTY_FORM_STATE, data);
-        console.log("Response from setConnectionConfig:", res);
         if (res.status === "SUCCESS") {
           setOpen(false);
           setIsConfigSet(true);
@@ -67,17 +63,15 @@ export const ConfigDirectUpload = ({ connection }: { connection: ConnectionQuery
           throw new Error(res.message);
         }
       } catch (err: any) {
-        console.error("Error in setConfig:", err);
         toast({ title: err.message, variant: "destructive" });
       }
     });
   };
 
 
-  return (<Dialog open={open} onOpenChange={o => setOpen(o)} >
+  return (<Dialog open={open} onOpenChange={setOpen} >
     <DialogTrigger asChild>
-      <Button size='sm' disabled={!isFinished && connection.isSyncing} variant={isConfigSet ? 'ghost' : 'default'} onClick={() => setOpen(true)} >
-        {!isFinished && connection.isSyncing && <RefreshCcw className='animate-spin' />}
+      <Button size='sm' disabled={!isFinished && connection.isSyncing} variant={isConfigSet ? 'ghost' : 'default'} >
         <Settings2 />
         Configure
       </Button>

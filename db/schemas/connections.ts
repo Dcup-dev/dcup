@@ -28,7 +28,7 @@ export const connections = pgTable("connection", {
     .references(() => users.id, { onDelete: "cascade" })
     .notNull(),
   service: connectionEnum("service").notNull(),
-  email: text("email").notNull(),
+  identifier: text("identifier").notNull(),
   credentials: jsonb("credentials"),
   connectionMetadata: jsonb("connection_metadata"),
   folderName: text("folder_name").default("*"),
@@ -38,7 +38,7 @@ export const connections = pgTable("connection", {
   isSyncing: boolean("is_syncing").default(false).notNull(),
   isConfigSet: boolean("is_config_set").default(false).notNull(),
   createdAt: timestamp("createdAt", { withTimezone: true }).notNull().defaultNow(),
-}, (t) => [unique().on(t.email, t.service)])
+}, (t) => [unique().on(t.identifier, t.service)])
 
 export const processedFiles = pgTable("pocessed_file", {
   name: text("name").primaryKey().unique(),

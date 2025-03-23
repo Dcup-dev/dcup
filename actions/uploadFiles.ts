@@ -2,15 +2,18 @@
 import { authOptions } from "@/auth";
 import { databaseDrizzle } from "@/db";
 import { connections } from "@/db/schemas/connections";
+import { directUploadMetadata } from "@/fileProcessors/connectors/directUpload";
 import { fromErrorToFormState, toFormState } from "@/lib/zodErrorHandle";
-import {
-  S3Client,
-  PutObjectCommand,
-} from "@aws-sdk/client-s3";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 import { getServerSession } from "next-auth";
 import { revalidatePath } from "next/cache";
 import { z } from "zod"
+import {
+  S3Client,
+  PutObjectCommand,
+  DeleteObjectsCommand,
+} from "@aws-sdk/client-s3";
+
 
 
 const s3 = new S3Client({
@@ -33,7 +36,7 @@ const allowedFiles = z.object({
     })
   ),
   links: z.array(z.string().min(5)),
-  uploadName: z.string().min(1, {message: "Upload Name is required"}),
+  uploadName: z.string().min(1, { message: "Upload Name is required" }),
 })
 
 type FormState = {
@@ -49,16 +52,15 @@ export async function directUploading(_: FormState, formData: FormData) {
       links: formData.getAll("links"),
       uploadName: formData.get("uploadName")
     })
-    console.log({files, uploadName, links})
- 
-    if(files.length === 0 && links.length === 0){
+
+    if (files.length === 0 && links.length === 0) {
       throw new Error("no file or links privateded")
     }
     const filesUrl = await setFilesInBucket(files, session.user.id!)
- 
+
     await databaseDrizzle.insert(connections).values({
       userId: session.user.id!,
-      email: uploadName,
+      identifier: uploadName,
       service: 'DIRECT_UPLOAD',
       connectionMetadata: {
         filesUrl: filesUrl,
@@ -99,13 +101,16 @@ async function setFilesInBucket(files: File[], userId: string) {
         "content-type": file.type,
       },
     });
-    signedUrls.push({name:file.name, url: signedUrl.split("?")[0]});
+    signedUrls.push({ name: file.name, url: signedUrl.split("?")[0] });
   }
   return signedUrls
 }
 
-// const deleteProjectLogo = (logoName: string) =>
-//   new DeleteObjectCommand({
-//     Bucket: process.env.S3_NAME!,
-//     Key: logoName,
-//   });
+export async function deleteFilesInBucket(userId: string, connectionMetadata: unknown) {
+  const { filesUrl } = directUploadMetadata.parse(connectionMetadata);
+  const deleteObjectsCommand = new DeleteObjectsCommand({
+    Bucket: process.env.S3_NAME!,
+    Delete: { Objects: filesUrl.map((f) => ({ Key: `${f.name}-${userId}` })) },
+  });
+  return await s3.send(deleteObjectsCommand);
+}

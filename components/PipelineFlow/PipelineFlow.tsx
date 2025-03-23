@@ -124,7 +124,7 @@ const getConnectionNode = (connections: ConnectionQuery[]) => {
       id: conn.id,
       position: { x: 50, y: 50 * index * 1.5 },  // Vertical layout
       type: 'custom',
-      data: { account: conn.email, service: conn.service },
+      data: { account: conn.identifier, service: conn.service },
     }
   });
 

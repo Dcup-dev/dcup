@@ -37,6 +37,15 @@ export const processFiles = async (connectionId: string, pageLimit: number | nul
   });
 
   try {
+    await publishProgress({
+      connectionId: connectionId,
+      fileName: "",
+      processedFile: 0,
+      processedPage: 0,
+      lastAsync: now,
+      isFinished: false,
+    })
+
     const connection = await databaseDrizzle.query.connections.findFirst({
       where: (c, ops) => ops.eq(c.id, connectionId)
     })

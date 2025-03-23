@@ -6,7 +6,7 @@ import { FileContent } from "..";
 import { drive, drive_v3 } from "@googleapis/drive";
 import { Readable } from "stream";
 import { publishProgress } from "@/events";
-import { processPdf } from "../Files/pdf";
+import { processPdfBuffer } from "../Files/pdf";
 
 const googleDriveCredentials = z.object({
   accessToken: z.string().min(5),
@@ -97,7 +97,7 @@ export const readGoogleDriveFiles = async (connectionId: string, connectionMetad
         }, { responseType: 'stream' });
 
         const buf = await streamToBuffer(res.data);
-        const content = await processPdf(buf);
+        const content = await processPdfBuffer(buf);
         const fileContent: FileContent = {
           name: file.name || "",
           pages: content,

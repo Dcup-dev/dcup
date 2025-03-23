@@ -50,7 +50,7 @@ export default function ConnectionDetails({ connection, children }: { connection
         </span>
       </div>
       <p className="text-muted-foreground">
-        {connection.email}
+        {connection.identifier}
       </p>
     </TableCell>
     <TableCell>{connection.folderName || 'Untitled'}</TableCell>

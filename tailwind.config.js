@@ -80,6 +80,7 @@ export default {
     }
   },
   content: [
+    './DataSource/**/*.{ts,tsx}',
     './components/**/*.{ts,tsx}',
     './app/**/*.{ts,tsx}',
     './content/**/*.{md,mdx}',
