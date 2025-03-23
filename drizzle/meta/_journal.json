@@ -8,6 +8,13 @@
       "when": 1742414680001,
       "tag": "0000_lame_tyger_tiger",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1742729985734,
+      "tag": "0001_cold_scarecrow",
+      "breakpoints": true
     }
   ]
 }

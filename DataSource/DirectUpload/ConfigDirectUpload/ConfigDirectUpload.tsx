@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { DialogClose } from '@radix-ui/react-dialog';
-import { Loader2, RefreshCcw, Settings2, X } from 'lucide-react';
+import { Loader2, Settings2, X } from 'lucide-react';
 import { EMPTY_FORM_STATE } from '@/lib/zodErrorHandle';
 import { toast } from '@/hooks/use-toast';
 import { ConnectionQuery } from '@/app/(protected)/connections/page';
@@ -47,7 +47,6 @@ export const ConfigDirectUpload = ({ connection }: { connection: ConnectionQuery
   }, [connection.id]);
 
   const handleSetConfig = (data: FormData) => {
-
     data.set("id", connection.id);
     data.set("service", connection.service);
     startTransition(async () => {
@@ -70,10 +69,9 @@ export const ConfigDirectUpload = ({ connection }: { connection: ConnectionQuery
   };
 
 
-  return (<Dialog open={open} onOpenChange={o => setOpen(o)} >
+  return (<Dialog open={open} onOpenChange={setOpen} >
     <DialogTrigger asChild>
-      <Button size='sm' disabled={!isFinished && connection.isSyncing} variant={isConfigSet ? 'ghost' : 'default'} onClick={() => setOpen(true)} >
-        {!isFinished && connection.isSyncing && <RefreshCcw className='animate-spin' />}
+      <Button size='sm' disabled={!isFinished && connection.isSyncing} variant={isConfigSet ? 'ghost' : 'default'} >
         <Settings2 />
         Configure
       </Button>

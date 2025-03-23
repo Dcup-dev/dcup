@@ -9,7 +9,7 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog"
 import { Button } from "../ui/button"
-import { FolderSync, Loader2 } from "lucide-react"
+import { FolderSync } from "lucide-react"
 import { useEffect, useState, useTransition } from "react"
 import { toast } from "@/hooks/use-toast"
 import { EMPTY_FORM_STATE } from "@/lib/zodErrorHandle"
@@ -69,8 +69,7 @@ export const SyncConnection = ({ connection }: { connection: ConnectionQuery }) 
   return (<Dialog open={open} onOpenChange={e => setOpen(e)} >
     <DialogTrigger asChild>
       <DialogTrigger asChild>
-        <Button size='sm' variant={'ghost'} disabled={connection.isSyncing} >
-          {connection.isSyncing && <Loader2 className="animate-spin" />}
+        <Button size='sm' variant={'ghost'} disabled={!isFinished && connection.isSyncing} >
           <FolderSync />
           Sync
         </Button>

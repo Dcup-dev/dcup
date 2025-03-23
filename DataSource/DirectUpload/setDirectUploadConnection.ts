@@ -49,6 +49,7 @@ export const setDirectUploadConnection = async (formData: FormData) => {
     documentLimit: formData.get("documentLimit"),
   })
 
+<<<<<<< HEAD
 
   // await databaseDrizzle.update(connections).set({
   //   partition: config.partition ?? undefined,
@@ -56,6 +57,14 @@ export const setDirectUploadConnection = async (formData: FormData) => {
   //   isConfigSet: true,
   //   isSyncing: true,
   // }).where(eq(connections.id, config.id))
+=======
+  await databaseDrizzle.update(connections).set({
+    partition: config.partition ?? undefined,
+    metadata: config.metadata,
+    isConfigSet: true,
+    isSyncing: true,
+  }).where(eq(connections.id, config.id))
+>>>>>>> 03948f6 (implement connection set for Direct Upload #25)
 
   return {
     connectionId: config.id,
