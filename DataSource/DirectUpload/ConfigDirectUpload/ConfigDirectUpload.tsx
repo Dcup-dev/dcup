@@ -1,5 +1,5 @@
 "use client"
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -8,7 +8,6 @@ import { Loader2, Settings2, X } from 'lucide-react';
 import { EMPTY_FORM_STATE } from '@/lib/zodErrorHandle';
 import { toast } from '@/hooks/use-toast';
 import { ConnectionQuery } from '@/app/(protected)/connections/page';
-import { setConnectionConfig } from '@/actions/connections';
 import { useTransition } from "react";
 import {
   Dialog,
@@ -19,32 +18,15 @@ import {
   DialogDescription,
   DialogFooter,
 } from '@/components/ui/dialog';
-import { FileProgress } from '@/events';
+import { setConnectionConfig } from '@/actions/connctions/new';
 
 
 
 export const ConfigDirectUpload = ({ connection }: { connection: ConnectionQuery }) => {
   const [open, setOpen] = useState(false)
-  const [isFinished, setIsFinished] = useState(false)
   const [isConfigSet, setIsConfigSet] = useState(connection.isConfigSet)
   const [pending, startTransition] = useTransition()
 
-  useEffect(() => {
-    const eventSource = new EventSource("/api/progress");
-
-    eventSource.onmessage = (event) => {
-      const data = JSON.parse(event.data) as FileProgress;
-      if (data.connectionId === connection.id) setIsFinished(data.isFinished)
-    };
-
-    eventSource.onerror = () => {
-      eventSource.close();
-    };
-
-    return () => {
-      eventSource.close();
-    };
-  }, [connection.id]);
 
   const handleSetConfig = (data: FormData) => {
     data.set("id", connection.id);
@@ -71,7 +53,7 @@ export const ConfigDirectUpload = ({ connection }: { connection: ConnectionQuery
 
   return (<Dialog open={open} onOpenChange={setOpen} >
     <DialogTrigger asChild>
-      <Button size='sm' disabled={!isFinished && connection.isSyncing} variant={isConfigSet ? 'ghost' : 'default'} >
+      <Button size='sm' disabled={connection.isSyncing} variant={isConfigSet ? 'ghost' : 'default'} >
         <Settings2 />
         Configure
       </Button>

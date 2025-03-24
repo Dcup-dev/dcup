@@ -4,7 +4,6 @@ import { Label } from "@/components/ui/label"
 import { AlertCircle, Link, Loader2, UploadCloud, XCircleIcon } from "lucide-react"
 import { ChangeEvent, Dispatch, SetStateAction, useRef, useState, useTransition } from "react"
 import { EMPTY_FORM_STATE } from "@/lib/zodErrorHandle"
-import { directUploading } from "@/actions/uploadFiles"
 import { toast } from "@/hooks/use-toast"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
@@ -29,22 +28,22 @@ import {
   TabsList,
   TabsTrigger,
 } from "@/components/ui/tabs"
+import { setConnectionConfig } from "@/actions/connctions/new"
 
 
 export const DirectUploadPicker = () => {
   const [open, setOpen] = useState(false);
   const [links, setLinks] = useState<string[]>([]);
   const [files, setFiles] = useState<File[]>([]);
-  const [uploadName, setUploadName] = useState("")
   const [pending, startTransition] = useTransition();
 
   const handleUploadFiles = async (data: FormData) => {
-    data.set("uploadName", uploadName)
+    data.set("service", "DIRECT_UPLOAD")
     links.forEach((link) => data.append("links", link));
     files.forEach((file) => data.append("files", file));
     startTransition(async () => {
       try {
-        const res = await directUploading(EMPTY_FORM_STATE, data);
+        const res = await setConnectionConfig(EMPTY_FORM_STATE, data);
         if (res.status === "SUCCESS") {
           setLinks([])
           setFiles([])
@@ -77,25 +76,60 @@ export const DirectUploadPicker = () => {
         <DialogHeader>
           <DialogTitle>Upload Files Directly</DialogTitle>
         </DialogHeader>
-        <div className="grid w-full max-w-sm items-center gap-1.5">
-          <Label htmlFor="uploadName">Upload Name</Label>
-          <Input
-            value={uploadName}
-            onChange={(e) => {
-              e.preventDefault()
-              setUploadName(e.target.value)
-            }}
-            placeholder="Unique upload name"
-          />
-        </div>
-        <DataInput
-          files={files}
-          links={links}
-          setFiles={setFiles}
-          setLinks={setLinks}
-        />
-        <DialogFooter>
-          <form action={handleUploadFiles}>
+        <form action={handleUploadFiles}>
+          <div className="flex justify-between items-center gap-5">
+            <div className="grid w-full max-w-sm items-center gap-1.5">
+              <Label htmlFor="uploadName">Upload Name</Label>
+              <Input
+                id="uploadName"
+                name="uploadName"
+                placeholder="Unique upload name"
+              />
+            </div>
+            <div className="grid gap-4 py-4">
+              <div>
+                <label className="block text-sm font-medium">Partition</label>
+                <Input
+                  id="partition"
+                  name="partition"
+                  defaultValue={"default"}
+                  placeholder="default"
+                />
+              </div>
+            </div>
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium">Metadata (JSON)</label>
+            <Textarea
+              id="metadata"
+              name="metadata"
+              placeholder='{"company": "dcup"}'
+              defaultValue={"{}"}
+              className="max-h-10"
+            />
+          </div>
+
+          <div className="py-3">
+            <label className="block text-sm font-medium">Page Limit</label>
+            <Input
+              type="number"
+              name="pageLimit"
+              id="pageLimit"
+              placeholder="Enter page limit"
+            />
+          </div>
+
+          <div className="py-2">
+            <DataInput
+              files={files}
+              links={links}
+              setFiles={setFiles}
+              setLinks={setLinks}
+            />
+          </div>
+
+          <DialogFooter>
             <Button disabled={pending} type="submit">
               {pending ? (
                 <>
@@ -106,8 +140,8 @@ export const DirectUploadPicker = () => {
                 "Upload"
               )}
             </Button>
-          </form>
-        </DialogFooter>
+          </DialogFooter>
+        </form>
       </DialogContent>
     </Dialog>
   );
@@ -193,7 +227,7 @@ const DataInput = ({ files, setFiles, links, setLinks }: TDataInput) => {
 
       {/* File Upload Section */}
       <TabsContent value="file" className="flex-1">
-        <Card className="h-full flex flex-col">
+        <Card className="flex flex-col">
           <CardHeader>
             <CardTitle>Upload your PDFs</CardTitle>
             <CardDescription>Only PDF files are supported.</CardDescription>
@@ -204,11 +238,11 @@ const DataInput = ({ files, setFiles, links, setLinks }: TDataInput) => {
               </div>
             )}
           </CardHeader>
-          <CardContent className="space-y-2 h-full flex-grow">
+          <CardContent>
             <div
               onDragOver={(e) => e.preventDefault()}
               onDrop={handleFileDrop}
-              className="border-2 border-dashed border-gray-300 rounded-xl p-8 text-center hover:border-teal-500 transition-colors h-full flex flex-col justify-center"
+              className="border-2 border-dashed border-gray-300 rounded-xl p-5 text-center hover:border-teal-500 transition-colors flex flex-col justify-center"
             >
               <UploadCloud className="h-12 w-12 mx-auto text-gray-400 mb-4" />
               <p className="text-gray-600 mb-2">Drag & drop PDF files here</p>
@@ -223,7 +257,7 @@ const DataInput = ({ files, setFiles, links, setLinks }: TDataInput) => {
                 id="file-upload"
               />
               <Label htmlFor="file-upload" asChild>
-                <Button size="lg" onClick={() => inputFile.current?.click()}>
+                <Button size="lg" type="button" onClick={() => inputFile.current?.click()}>
                   Browse Files
                 </Button>
               </Label>
@@ -254,12 +288,12 @@ const DataInput = ({ files, setFiles, links, setLinks }: TDataInput) => {
 
       {/* Links Input Section */}
       <TabsContent value="link" className="flex-1">
-        <Card className="h-full flex flex-col">
+        <Card className="flex flex-col">
           <CardHeader>
             <CardTitle>Provide PDF URLs</CardTitle>
             <CardDescription>Enter valid HTTP/HTTPS links to PDF files.</CardDescription>
           </CardHeader>
-          <CardContent className="space-y-2 flex-grow">
+          <CardContent>
             <div className="space-y-4">
               <Textarea
                 defaultValue={links.join("\n")}

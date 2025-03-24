@@ -9,6 +9,9 @@ import { publishProgress } from "@/events";
 import { connections, processedFiles } from "@/db/schemas/connections";
 import { eq } from "drizzle-orm";
 import { getFileContent } from "./connectors";
+import { processPdfLink, processPdfBuffer } from "./Files/pdf";
+import { TQueue } from "@/workers/queues/jobs/processFiles.job";
+
 
 export type FileContent = {
   name: string,
@@ -22,7 +25,60 @@ export type PageContent = {
   tables: unknown[]
 }
 
-export const processFiles = async (connectionId: string, pageLimit: number | null, fileLimit: number | null) => {
+export const directProcessFiles = async ({ files, metadata, service, connectionId, links, pageLimit, fileLimit }: TQueue) => {
+  await publishProgress({
+    connectionId: connectionId,
+    fileName: "",
+    processedFile: 0,
+    processedPage: 0,
+    lastAsync: new Date(),
+    isFinished: false,
+  })
+  // Create promises for processing file URLs
+  const filePromises = files.map(async (file) => {
+    const content = await processPdfBuffer(Buffer.from(file.content, 'base64'));
+    return {
+      name: file.name || "",
+      pages: content,
+      metadata: metadata,
+    } as FileContent;
+  });
+
+  // Create promises for processing links
+  const linkPromises = links.map(async (link) => {
+    const content = await processPdfLink(link);
+    return {
+      name: link,
+      pages: content,
+      metadata: metadata,
+    } as FileContent;
+  });
+
+  const filesContent = await Promise.all([...filePromises, ...linkPromises]);
+  return processFiles(filesContent, service, connectionId, pageLimit, fileLimit)
+}
+
+export const connectionProcessFiles = async ({ connectionId, service, pageLimit, fileLimit }: TQueue) => {
+  await publishProgress({
+    connectionId: connectionId,
+    fileName: "",
+    processedFile: 0,
+    processedPage: 0,
+    lastAsync: new Date(),
+    isFinished: false,
+  })
+
+  const connection = await databaseDrizzle.query.connections.findFirst({
+    where: (c, ops) => ops.eq(c.id, connectionId)
+  })
+  if (!connection) return;
+
+  const filesContent = await getFileContent(connection)
+
+  return processFiles(filesContent, service, connectionId, pageLimit, fileLimit)
+}
+
+const processFiles = async (filesContent: FileContent[], service: string, connectionId: string, pageLimit: number | null, fileLimit: number | null) => {
   const completedFiles: typeof processedFiles.$inferInsert[] = []
   const allPoints = [];
   let processedPage = 0;
@@ -37,30 +93,13 @@ export const processFiles = async (connectionId: string, pageLimit: number | nul
   });
 
   try {
-    await publishProgress({
-      connectionId: connectionId,
-      fileName: "",
-      processedFile: 0,
-      processedPage: 0,
-      lastAsync: now,
-      isFinished: false,
-    })
-
-    const connection = await databaseDrizzle.query.connections.findFirst({
-      where: (c, ops) => ops.eq(c.id, connectionId)
-    })
-    if (!connection) return;
-
-    const filesContent = await getFileContent(connection)
-
     for (const [fileIndex, file] of filesContent.entries()) {
       if (fileLimit && fileLimit > 0 && fileLimit === fileIndex) break;
       const baseMetadata = {
         _document_id: file.name,
-        _source: connection.service,
+        _source: service,
         _metadata: {
           ...file.metadata,
-          ...JSON.parse(connection.metadata || "{}"),
         },
       };
       for (const [pageIndex, page] of file.pages.entries()) {
