@@ -123,7 +123,7 @@ function FilesTable({ connections }: { connections: FileConnectionQuery[] }) {
                       {file.connection.service.toLowerCase().replace('_', ' ')}
                     </span>
                     <span className="text-sm text-gray-500 dark:text-gray-400 truncate">
-                      {file.connection.email}
+                      {file.connection.identifier}
                     </span>
                   </div>
                 </div>

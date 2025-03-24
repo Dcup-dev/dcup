@@ -11,6 +11,7 @@ import { Table, TableBody, TableHead, TableHeader, TableRow } from "@/components
 import { DataSource } from "@/DataSource";
 import { getConnectionToken } from "@/fileProcessors/connectors";
 import { DirectUploadPicker } from "@/DataSource/DirectUpload/DirectUploadPicker/DirectUploadPicker";
+import { ConnectionProvider } from "@/context/connectionContext";
 
 const ConnectionDetails = dynamic(() => import('@/components/ConnectionDetails/ConnectionDetails'))
 
@@ -80,9 +81,11 @@ async function CurrentConnections({ connections }: { connections: ConnectionQuer
             </TableRow>
           </TableHeader>
           <TableBody>
-            {connections.map((conn, idx) => <ConnectionDetails key={idx} connection={conn} >
-              <Connection connection={conn} />
-            </ConnectionDetails>)}
+            <ConnectionProvider>
+              {connections.map((conn, idx) => <ConnectionDetails key={idx} connection={conn} >
+                <Connection connection={conn} />
+              </ConnectionDetails>)}
+            </ConnectionProvider>
           </TableBody>
         </Table>
       </div>

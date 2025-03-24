@@ -5,16 +5,19 @@ import { ReactNode, useEffect, useState } from "react";
 import { ConnectionQuery } from "@/app/(protected)/connections/page";
 import { FileProgress } from "@/events";
 import { getServiceIcon } from "@/lib/helepers";
-import { Pickaxe } from "lucide-react";
+import { Check, Clock, Pickaxe } from "lucide-react";
 import {
   Tooltip,
   TooltipContent,
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip"
+import { useConnectionContext } from "@/context/connectionContext";
 
 export default function ConnectionDetails({ connection, children }: { connection: ConnectionQuery, children: ReactNode }) {
   const [isMounted, setIsMounted] = useState(false);
+  const { addConnection, removeConnection, queuedConnections } = useConnectionContext()
+  const [status, setStatus] = useState<'active' | 'queued' | 'inactive'>('inactive')
   const [progress, setProgress] = useState({
     connectionId: connection.id,
     processedPage: connection.files.reduce((sum, file) => sum + file.totalPages, 0),
@@ -25,22 +28,44 @@ export default function ConnectionDetails({ connection, children }: { connection
 
   useEffect(() => {
     setIsMounted(true);
-    const eventSource = new EventSource("/api/progress");
+    if (!connection.isSyncing) return
 
-    eventSource.onmessage = (event) => {
-      const data = JSON.parse(event.data) as FileProgress;
-      if (data.connectionId === connection.id) setProgress(data)
-    };
+    let eventSource: EventSource | null = null
 
-    eventSource.onerror = () => {
-      eventSource.close();
-    };
+    const connect = () => {
+      if (addConnection(connection.id)) {
+        eventSource = new EventSource(`/api/progress?id=${connection.id}`)
+        setStatus('active')
+
+        eventSource.onmessage = (event) => {
+          const data = JSON.parse(event.data) as FileProgress
+          setProgress(data)
+          if (data.isFinished) {
+            eventSource?.close()
+            removeConnection(connection.id)
+          }
+        }
+
+        eventSource.onerror = () => {
+          eventSource?.close()
+          removeConnection(connection.id)
+          setStatus('inactive')
+        }
+      } else {
+        setStatus('queued')
+      }
+    }
+
+    connect()
 
     return () => {
-      eventSource.close();
-    };
-  }, [connection.id]);
+      eventSource?.close()
+      removeConnection(connection.id)
+    }
+  }, [connection.isSyncing, connection.id])
 
+  // Render status based on current state
+  const queuePosition = queuedConnections.indexOf(connection.id) + 1
   return (<TableRow>
     <TableCell className="flex flex-col gap-2">
       <div className="flex items-center gap-2">
@@ -65,18 +90,35 @@ export default function ConnectionDetails({ connection, children }: { connection
         ? timeAgo(progress.lastAsync)
         : <span className="text-muted-foreground">Never</span>}
     </TableCell>
-    {!progress.isFinished && connection.isSyncing && <TableCell>
+    <TableCell>
       <TooltipProvider>
         <Tooltip>
           <TooltipTrigger>
-            <Pickaxe className="animate-bounce" />
+            {progress.isFinished ? (
+              <Check className="text-green-500" />
+            ) : status === 'active' ? (
+              <Pickaxe className="animate-bounce text-blue-500" />
+            ) : status === 'queued' ? (
+              <div className="flex items-center gap-1">
+                <Clock className="text-yellow-500" />
+                <span className="text-xs">{queuePosition}</span>
+              </div>
+            ) : (
+              <Check className="text-muted-foreground" />
+            )}
           </TooltipTrigger>
           <TooltipContent>
-            <p>Processing Files...</p>
+            {progress.isFinished
+              ? "Sync completed"
+              : status === 'active'
+                ? "Currently syncing"
+                : status === 'queued'
+                  ? `Queued position: ${queuePosition}`
+                  : "Sync not started"}
           </TooltipContent>
         </Tooltip>
       </TooltipProvider>
-    </TableCell>}
+    </TableCell>
     <TableCell>
       {children}
     </TableCell>

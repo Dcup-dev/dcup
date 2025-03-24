@@ -5,6 +5,7 @@ import { ConfigGoogleDrive } from './GoogleDrive/ConfigGoogleDrive/ConfigGoogleD
 import { ConfigDirectUpload } from './DirectUpload/ConfigDirectUpload/ConfigDirectUpload';
 import { setGoogleDriveConnection } from './GoogleDrive/setGoogleDriveConnection';
 import { setDirectUploadConnection } from './DirectUpload/setDirectUploadConnection';
+import { TQueue } from '@/workers/queues/jobs/processFiles.job';
 
 export const DataSource = async ({ connection, token }: { connection: ConnectionQuery, token: string | undefined | null }) => {
   switch (connection.service) {
@@ -28,7 +29,7 @@ export const DataSource = async ({ connection, token }: { connection: Connection
   }
 }
 
-export const setConnectionToProcess = async (formData: FormData) => {
+export const setConnectionToProcess = async (formData: FormData): Promise<TQueue> => {
   switch (formData.get("service")) {
     case "GOOGLE_DRIVE":
       return await setGoogleDriveConnection(formData)

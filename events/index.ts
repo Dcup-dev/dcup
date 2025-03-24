@@ -17,5 +17,5 @@ export const processingUpdates = "processing-updates"
 const publisher = redisConnection.duplicate()
 
 export const publishProgress = async (progress: FileProgress) => {
-  return await publisher.publish(processingUpdates, JSON.stringify(progress));
+  return await publisher.publish(`${processingUpdates}:${progress.connectionId}`, JSON.stringify(progress));
 };
