@@ -11,7 +11,11 @@ import { Table, TableBody, TableHead, TableHeader, TableRow } from "@/components
 import { DataSource } from "@/DataSource";
 import { getConnectionToken } from "@/fileProcessors/connectors";
 import { DirectUploadPicker } from "@/DataSource/DirectUpload/DirectUploadPicker/DirectUploadPicker";
+<<<<<<< HEAD
 import { ConnectionProvider } from "@/context/connectionContext";
+=======
+import { tryAndCatch } from "@/lib/try-catch";
+>>>>>>> f0d790d (connection bug)
 
 const ConnectionDetails = dynamic(() => import('@/components/ConnectionDetails/ConnectionDetails'))
 
@@ -94,8 +98,8 @@ async function CurrentConnections({ connections }: { connections: ConnectionQuer
 }
 
 async function Connection({ connection }: { connection: ConnectionQuery }) {
-  const token = await getConnectionToken(connection)
-  return (<DataSource connection={connection} token={token} />)
+  const { data } = await tryAndCatch(getConnectionToken(connection))
+  return (<DataSource connection={connection} token={data ?? "invalid_grant"} />)
 }
 
 function EmptyState() {
