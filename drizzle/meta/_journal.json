@@ -15,6 +15,13 @@
       "when": 1742729985734,
       "tag": "0001_cold_scarecrow",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1743347633137,
+      "tag": "0002_watery_lockjaw",
+      "breakpoints": true
     }
   ]
 }

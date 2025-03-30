@@ -5,17 +5,14 @@ import { Button } from "@/components/ui/button";
 import { databaseDrizzle } from "@/db";
 import { getServerSession } from "next-auth";
 import { redirect } from 'next/navigation';
-import { FiDatabase } from "react-icons/fi";
 import { ConnectionTable } from "@/db/schemas/connections";
 import { Table, TableBody, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { DataSource } from "@/DataSource";
 import { getConnectionToken } from "@/fileProcessors/connectors";
 import { DirectUploadPicker } from "@/DataSource/DirectUpload/DirectUploadPicker/DirectUploadPicker";
-<<<<<<< HEAD
 import { ConnectionProvider } from "@/context/connectionContext";
-=======
 import { tryAndCatch } from "@/lib/try-catch";
->>>>>>> f0d790d (connection bug)
+import { FiDatabase } from "react-icons/fi";
 
 const ConnectionDetails = dynamic(() => import('@/components/ConnectionDetails/ConnectionDetails'))
 
