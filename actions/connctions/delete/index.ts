@@ -3,7 +3,7 @@ import { authOptions } from "@/auth";
 import { databaseDrizzle } from "@/db";
 import { connections } from "@/db/schemas/connections";
 import { fromErrorToFormState, toFormState } from "@/lib/zodErrorHandle";
-import { and, eq } from "drizzle-orm";
+import { eq } from "drizzle-orm";
 import { getServerSession } from "next-auth";
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
@@ -26,10 +26,7 @@ export async function deleteConnectionConfig(_: FormState, formData: FormData) {
 
     await databaseDrizzle
       .delete(connections)
-      .where(and(
-        eq(connections.id, id),
-        eq(connections.isSyncing, true)
-      ))
+      .where(eq(connections.id, id))
 
     revalidatePath("/connections");
     return toFormState("SUCCESS", "Connection Deleted Successfully");

@@ -94,6 +94,7 @@ const processFiles = async (filesContent: FileContent[], service: string, connec
 
   try {
     for (const [fileIndex, file] of filesContent.entries()) {
+      const chunksId = [];
       if (fileLimit && fileLimit > 0 && fileLimit === fileIndex) break;
       const baseMetadata = {
         _document_id: file.name,
@@ -106,9 +107,16 @@ const processFiles = async (filesContent: FileContent[], service: string, connec
         if (pageLimit && pageLimit > 0 && pageLimit === pageIndex) break;
         try {
           const textPoints = await processingTextPage(page.text, pageIndex, baseMetadata, splitter)
-          if (textPoints) allPoints.push(textPoints)
-          const vectorPoints = await processingTablePage(page.tables, pageIndex, baseMetadata)
-          if (vectorPoints) allPoints.push(vectorPoints)
+          if (textPoints) {
+            allPoints.push(textPoints);
+            chunksId.push(textPoints.id)
+          }
+
+          const tablePoints = await processingTablePage(page.tables, pageIndex, baseMetadata)
+          if (tablePoints) {
+            allPoints.push(tablePoints)
+            chunksId.push(tablePoints.id)
+          }
 
           processedAllPages += 1;
           processedPage += 1;
@@ -147,6 +155,7 @@ const processFiles = async (filesContent: FileContent[], service: string, connec
         connectionId: connectionId,
         name: file.name,
         totalPages: processedPage,
+        chunksIds: chunksId as string[],
       })
       processedPage = 0
     }
@@ -212,18 +221,23 @@ const processingTextPage = async (pageText: string, pageIndex: number, baseMetad
 
     const cachedMetadata = await redisConnection.get(textHash)
     if (!cachedMetadata || cachedMetadata !== JSON.stringify(baseMetadata._metadata)) {
-      const textVectors = await vectorizeText(chunk);
-      const existingPoints = await qdrantCLient.search(qdrant_collection_name, {
-        vector: textVectors,
+      const existingPoints = await qdrantCLient.scroll(qdrant_collection_name, {
         filter: {
           must: [{ key: "_hash", match: { value: textHash } }]
         },
         limit: 1,
-        with_payload: {
-          include: ["_metadata"]
-        }
+        with_payload: true,
+        with_vector: true,
       });
+      if (existingPoints.points.length > 0) {
+        return {
+          id: existingPoints.points[0].id,
+          vector: existingPoints.points[0].vector as number[],
+          payload: existingPoints.points[0].payload,
+        }
+      }
 
+      const textVectors = await vectorizeText(chunk);
       const { title, summary } = await getTitleAndSummary(chunk, JSON.stringify(textMetadata))
       const metadata = {
         ...textMetadata,
@@ -232,7 +246,7 @@ const processingTextPage = async (pageText: string, pageIndex: number, baseMetad
       }
 
       return {
-        id: existingPoints.length > 0 ? existingPoints[0].id : uuidv4(),
+        id: uuidv4(),
         vector: textVectors,
         payload: metadata,
       };
@@ -254,18 +268,23 @@ const processingTablePage = async (tables: unknown[], pageIndex: number, baseMet
 
   const cachedMetadata = await redisConnection.get(tableHash)
   if (!cachedMetadata || cachedMetadata !== JSON.stringify(baseMetadata._metadata)) {
-    const tableVectors = await vectorizeText(pageTables);
-    const existingPoints = await qdrantCLient.search(qdrant_collection_name, {
-      vector: tableVectors,
+    const existingPoints = await qdrantCLient.scroll(qdrant_collection_name, {
       filter: {
         must: [{ key: "_hash", match: { value: tableHash } }]
       },
       limit: 1,
-      with_payload: {
-        include: ["_metadata"]
-      }
+      with_payload: true,
+      with_vector: true,
     });
+    if (existingPoints.points.length > 0) {
+      return {
+        id: existingPoints.points[0].id,
+        vector: existingPoints.points[0].vector as number[],
+        payload: existingPoints.points[0].payload,
+      }
+    }
 
+    const tableVectors = await vectorizeText(pageTables);
     const { title, summary } = await getTitleAndSummary(pageTables, JSON.stringify(tableMetadata))
     const metadata = {
       ...tableMetadata,
@@ -274,7 +293,7 @@ const processingTablePage = async (tables: unknown[], pageIndex: number, baseMet
     }
 
     return {
-      id: existingPoints.length > 0 ? existingPoints[0].id : uuidv4(),
+      id: uuidv4(),
       vector: tableVectors,
       payload: metadata,
     };

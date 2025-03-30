@@ -4,9 +4,8 @@ import {
   text,
   timestamp,
   integer,
-  unique,
   jsonb,
-  boolean
+  boolean,
 } from "drizzle-orm/pg-core"
 import { users } from "./users"
 import { relations } from "drizzle-orm";
@@ -38,7 +37,7 @@ export const connections = pgTable("connection", {
   isSyncing: boolean("is_syncing").default(false).notNull(),
   isConfigSet: boolean("is_config_set").default(false).notNull(),
   createdAt: timestamp("createdAt", { withTimezone: true }).notNull().defaultNow(),
-}, (t) => [unique().on(t.identifier, t.service)])
+})
 
 export const processedFiles = pgTable("pocessed_file", {
   name: text("name").primaryKey().unique(),
@@ -46,6 +45,7 @@ export const processedFiles = pgTable("pocessed_file", {
     .notNull()
     .references(() => connections.id, { onDelete: "cascade" }),
   totalPages: integer("total_pages").default(0).notNull(),
+  chunksIds: text("chunks_ids").array().notNull(),
 })
 
 export const connectionRelations = relations(connections, ({ many, one }) => ({

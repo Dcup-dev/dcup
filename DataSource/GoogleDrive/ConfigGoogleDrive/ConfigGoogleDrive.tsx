@@ -97,7 +97,7 @@ export const ConfigGoogleDrive = ({ connection, token }: { connection: Connectio
 
   return (<Dialog open={open} onOpenChange={o => setOpen(o)} >
     <DialogTrigger asChild>
-      <Button size='sm' disabled={connection.isSyncing} variant={isConfigSet ? 'ghost' : 'default'} onClick={() => setOpen(true)} >
+      <Button size='sm' variant={isConfigSet ? 'ghost' : 'default'} onClick={() => setOpen(true)} >
         <Settings2 />
         Configure
       </Button>

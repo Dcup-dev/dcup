@@ -53,7 +53,7 @@ export const ConfigDirectUpload = ({ connection }: { connection: ConnectionQuery
 
   return (<Dialog open={open} onOpenChange={setOpen} >
     <DialogTrigger asChild>
-      <Button size='sm' disabled={connection.isSyncing} variant={isConfigSet ? 'ghost' : 'default'} >
+      <Button size='sm' variant={isConfigSet ? 'ghost' : 'default'} >
         <Settings2 />
         Configure
       </Button>

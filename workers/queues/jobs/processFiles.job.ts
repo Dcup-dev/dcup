@@ -24,7 +24,6 @@ export type TQueue = {
 
 
 export const addToProcessFilesQueue = (data: TQueue) => {
-
   return processfilesQueue.add(processFilesJobName, data)
 };
 

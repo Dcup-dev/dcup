@@ -64,8 +64,13 @@ export default function ConnectionDetails({ connection, children }: { connection
     }
   }, [connection.isSyncing, connection.id])
 
+  useEffect(() => {
+    if (queuedConnections.includes(connection.id)) {
+      setStatus('inactive')
+    }
+  }, [queuedConnections])
+
   // Render status based on current state
-  const queuePosition = queuedConnections.indexOf(connection.id) + 1
   return (<TableRow>
     <TableCell className="flex flex-col gap-2">
       <div className="flex items-center gap-2">
@@ -99,10 +104,7 @@ export default function ConnectionDetails({ connection, children }: { connection
             ) : status === 'active' ? (
               <Pickaxe className="animate-bounce text-blue-500" />
             ) : status === 'queued' ? (
-              <div className="flex items-center gap-1">
-                <Clock className="text-yellow-500" />
-                <span className="text-xs">{queuePosition}</span>
-              </div>
+              <Clock className="text-yellow-500" />
             ) : (
               <Check className="text-muted-foreground" />
             )}
@@ -113,7 +115,7 @@ export default function ConnectionDetails({ connection, children }: { connection
               : status === 'active'
                 ? "Currently syncing"
                 : status === 'queued'
-                  ? `Queued position: ${queuePosition}`
+                  ? `Queued position`
                   : "Sync not started"}
           </TooltipContent>
         </Tooltip>
