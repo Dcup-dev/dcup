@@ -22,6 +22,20 @@
       "when": 1743347633137,
       "tag": "0002_watery_lockjaw",
       "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1743352625202,
+      "tag": "0003_fuzzy_leech",
+      "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1743363320141,
+      "tag": "0004_swift_sauron",
+      "breakpoints": true
     }
   ]
 }

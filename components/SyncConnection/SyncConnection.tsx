@@ -49,7 +49,7 @@ export const SyncConnection = ({ connection }: { connection: ConnectionQuery }) 
   return (<Dialog open={open} onOpenChange={e => setOpen(e)} >
     <DialogTrigger asChild>
       <DialogTrigger asChild>
-        <Button size='sm' variant={'ghost'} disabled={connection.isSyncing} >
+        <Button size='sm' variant={'ghost'}  >
           <FolderSync />
           Sync
         </Button>

@@ -50,7 +50,7 @@ export const DeleteConnection = ({ connection }: { connection: ConnectionQuery }
     <Dialog open={open} onOpenChange={e => setOpen(e)} >
       <DialogTrigger asChild>
         <DialogTrigger asChild>
-          <Button size='sm' variant={'ghost'} disabled={connection.isSyncing} >
+          <Button size='sm' variant={'ghost'} >
             <Trash />
             Delete
           </Button>
