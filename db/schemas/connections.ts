@@ -6,6 +6,7 @@ import {
   integer,
   jsonb,
   boolean,
+  unique,
 } from "drizzle-orm/pg-core"
 import { users } from "./users"
 import { relations } from "drizzle-orm";
@@ -40,13 +41,13 @@ export const connections = pgTable("connection", {
 })
 
 export const processedFiles = pgTable("pocessed_file", {
-  name: text("name").primaryKey().unique(),
+  name: text("name").notNull(),
   connectionId: text("connection_id")
     .notNull()
     .references(() => connections.id, { onDelete: "cascade" }),
   totalPages: integer("total_pages").default(0).notNull(),
   chunksIds: text("chunks_ids").array().notNull(),
-})
+}, (t) => [unique().on(t.name, t.connectionId)])
 
 export const connectionRelations = relations(connections, ({ many, one }) => ({
   files: many(processedFiles),

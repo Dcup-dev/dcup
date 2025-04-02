@@ -1,8 +1,9 @@
 "use server"
 import { authOptions } from "@/auth";
 import { databaseDrizzle } from "@/db";
-import { connections } from "@/db/schemas/connections";
+import { connections, processedFiles } from "@/db/schemas/connections";
 import { fromErrorToFormState, toFormState } from "@/lib/zodErrorHandle";
+import { qdrant_collection_name, qdrantCLient } from "@/qdrant";
 import { eq } from "drizzle-orm";
 import { getServerSession } from "next-auth";
 import { revalidatePath } from "next/cache";
@@ -23,6 +24,17 @@ export async function deleteConnectionConfig(_: FormState, formData: FormData) {
     const { id } = deleteConnectionSchema.parse({
       id: formData.get("id"),
     })
+
+    const connectionChunksIds = await databaseDrizzle
+      .select({ chunksIds: processedFiles.chunksIds })
+      .from(processedFiles)
+      .where(eq(processedFiles.connectionId, id))
+
+    for (const { chunksIds } of connectionChunksIds) {
+      await qdrantCLient.delete(qdrant_collection_name, {
+        points: chunksIds,
+      })
+    }
 
     await databaseDrizzle
       .delete(connections)
