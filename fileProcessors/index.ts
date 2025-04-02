@@ -74,7 +74,6 @@ export const connectionProcessFiles = async ({ connectionId, service, pageLimit,
   if (!connection) return;
 
   const filesContent = await getFileContent(connection)
-
   return processFiles(filesContent, service, connectionId, pageLimit, fileLimit)
 }
 
@@ -170,7 +169,7 @@ const processFiles = async (filesContent: FileContent[], service: string, connec
         await databaseDrizzle
           .insert(processedFiles)
           .values(file).onConflictDoUpdate({
-            target: processedFiles.name,
+            target: [processedFiles.name, processedFiles.connectionId],
             set: file
           })
       )

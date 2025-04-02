@@ -9,16 +9,17 @@ import { ConnectionTable } from "@/db/schemas/connections";
 import { Table, TableBody, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { DataSource } from "@/DataSource";
 import { getConnectionToken } from "@/fileProcessors/connectors";
-import { DirectUploadPicker } from "@/DataSource/DirectUpload/DirectUploadPicker/DirectUploadPicker";
 import { ConnectionProvider } from "@/context/connectionContext";
 import { tryAndCatch } from "@/lib/try-catch";
 import { FiDatabase } from "react-icons/fi";
+import { SetNewConfigDirect } from "@/DataSource/DirectUpload/SetNewConfigDirect/SetNewConfigDirect";
 
 const ConnectionDetails = dynamic(() => import('@/components/ConnectionDetails/ConnectionDetails'))
 
 export interface ConnectionQuery extends ConnectionTable {
   files: {
-    totalPages: number
+    totalPages: number,
+    name: string,
   }[]
 }
 
@@ -31,7 +32,8 @@ export default async function ConnectionsPage() {
     with: {
       files: {
         columns: {
-          totalPages: true
+          totalPages: true,
+          name: true,
         }
       }
     }
@@ -49,7 +51,7 @@ export default async function ConnectionsPage() {
           </p>
         </div>
         <div className="flex gap-3 items-center">
-          <DirectUploadPicker />
+          <SetNewConfigDirect />
           <Button asChild>
             <Link href={"/connections/new"}>
               New Connection

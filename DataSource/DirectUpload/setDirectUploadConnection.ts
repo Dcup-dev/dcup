@@ -1,5 +1,7 @@
 import { databaseDrizzle } from "@/db";
-import { connections } from "@/db/schemas/connections";
+import { connections, processedFiles } from "@/db/schemas/connections";
+import { qdrant_collection_name, qdrantCLient } from "@/qdrant";
+import { and, eq } from "drizzle-orm";
 import { z } from "zod";
 
 const directUploadConfig = z.object({
@@ -49,6 +51,83 @@ const directUploadConfig = z.object({
   ),
   links: z.array(z.string().min(5)),
 })
+
+const updateDirectUploadConfig = z.object({
+  connectionId: z.string().min(5),
+  metadata: z.string()
+    .transform((str, ctx): string => {
+      try {
+        if (str) {
+          JSON.parse(str)
+          return str
+        }
+        return "{}"
+      } catch (e) {
+        ctx.addIssue({ code: 'custom', message: 'Invalid JSON' })
+        return z.NEVER
+      }
+    }),
+  files: z.array(z.any().refine((file) => {
+    return (
+      file ||
+      (file instanceof File && file.type === "application/pdf")
+    );
+  },
+    {
+      message: "Invalid File",
+    })
+  ),
+
+  links: z.array(z.string().min(5)),
+  removedFiles: z.array(z.string().min(5))
+})
+
+export const updateDirectUploadConnection = async (formData: FormData) => {
+
+  const config = updateDirectUploadConfig.parse({
+    connectionId: formData.get("connectionId"),
+    metadata: formData.get("metadata"),
+    files: formData.getAll("files") || [],
+    links: formData.getAll("links") || [],
+    removedFiles: formData.getAll("removedFiles") || []
+  })
+
+  const connectionChunksIds: { chunksIds: string[] }[] = [];
+
+  for (const fileName of config.removedFiles) {
+    const files = await databaseDrizzle
+      .delete(processedFiles)
+      .where(and(
+        eq(processedFiles.connectionId, config.connectionId),
+        eq(processedFiles.name, fileName)
+      )).returning({ chunksIds: processedFiles.chunksIds })
+    connectionChunksIds.push(...files)
+  }
+
+  for (const { chunksIds } of connectionChunksIds) {
+    await qdrantCLient.delete(qdrant_collection_name, {
+      points: chunksIds,
+    })
+  }
+
+  const files = config.files.map(async (file) => ({
+    name: file.name,
+    size: file.size,
+    type: file.type,
+    lastModified: file.lastModified,
+    content: await fileToBase64(file),
+  }))
+
+  return {
+    connectionId: config.connectionId,
+    service: "DIRECT_UPLOAD",
+    metadata: config.metadata,
+    files: await Promise.all(files),
+    links: config.links,
+    pageLimit: null,
+    fileLimit: null
+  }
+}
 
 export const setDirectUploadConnection = async (formData: FormData) => {
 
