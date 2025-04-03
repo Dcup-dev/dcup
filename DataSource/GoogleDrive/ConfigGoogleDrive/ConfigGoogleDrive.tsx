@@ -19,6 +19,7 @@ import {
   DialogDescription,
   DialogFooter,
 } from '@/components/ui/dialog';
+
 import { setConnectionConfig } from '@/actions/connctions/new';
 
 export const ConfigGoogleDrive = ({ connection, token }: { connection: ConnectionQuery, token: string | null | undefined }) => {
@@ -30,7 +31,7 @@ export const ConfigGoogleDrive = ({ connection, token }: { connection: Connectio
     name: connection.folderName || "",
     id: null,
   });
- 
+
   const handleSetConfig = (data: FormData) => {
     data.set("id", connection.id)
     data.set("folderName", directory.name)
@@ -63,7 +64,6 @@ export const ConfigGoogleDrive = ({ connection, token }: { connection: Connectio
       await setConfig();
     })
   }
-
 
 
   const showPicker = async () => {

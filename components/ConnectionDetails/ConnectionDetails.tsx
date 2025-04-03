@@ -122,6 +122,32 @@ export default function ConnectionDetails({ connection, children }: { connection
       </TooltipProvider>
     </TableCell>
     <TableCell>
+      <TooltipProvider>
+        <Tooltip>
+          <TooltipTrigger>
+            {progress.isFinished ? (
+              <Check className="text-green-500" />
+            ) : status === 'active' ? (
+              <Pickaxe className="animate-bounce text-blue-500" />
+            ) : status === 'queued' ? (
+              <Clock className="text-yellow-500" />
+            ) : (
+              <Check className="text-muted-foreground" />
+            )}
+          </TooltipTrigger>
+          <TooltipContent>
+            {progress.isFinished
+              ? "Sync completed"
+              : status === 'active'
+                ? "Currently syncing"
+                : status === 'queued'
+                  ? `Queued position`
+                  : "Sync not started"}
+          </TooltipContent>
+        </Tooltip>
+      </TooltipProvider>
+    </TableCell>
+    <TableCell>
       {children}
     </TableCell>
   </TableRow>)
