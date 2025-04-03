@@ -4,11 +4,14 @@ import { RecursiveCharacterTextSplitter } from "@langchain/textsplitters";
 import { v4 as uuidv4 } from 'uuid';
 import { getTitleAndSummary, vectorizeText } from "@/openAi";
 import { qdrant_collection_name, qdrantCLient } from "@/qdrant";
-import { processGoogleDriveFiles } from "./processors/storages/googleDrive";
 import { redisConnection } from "@/workers/redis";
 import { publishProgress } from "@/events";
 import { connections, processedFiles } from "@/db/schemas/connections";
 import { eq } from "drizzle-orm";
+import { getFileContent } from "./connectors";
+import { processPdfLink, processPdfBuffer } from "./Files/pdf";
+import { TQueue } from "@/workers/queues/jobs/processFiles.job";
+
 
 export type FileContent = {
   name: string,
@@ -22,9 +25,60 @@ export type PageContent = {
   tables: unknown[]
 }
 
-export const processFiles = async (connectionId: string, pageLimit: number | null, fileLimit: number | null) => {
+export const directProcessFiles = async ({ files, metadata, service, connectionId, links, pageLimit, fileLimit }: TQueue) => {
+  await publishProgress({
+    connectionId: connectionId,
+    fileName: "",
+    processedFile: 0,
+    processedPage: 0,
+    lastAsync: new Date(),
+    isFinished: false,
+  })
+  // Create promises for processing file URLs
+  const filePromises = files.map(async (file) => {
+    const content = await processPdfBuffer(Buffer.from(file.content, 'base64'));
+    return {
+      name: file.name || "",
+      pages: content,
+      metadata: metadata,
+    } as FileContent;
+  });
+
+  // Create promises for processing links
+  const linkPromises = links.map(async (link) => {
+    const content = await processPdfLink(link);
+    return {
+      name: link,
+      pages: content,
+      metadata: metadata,
+    } as FileContent;
+  });
+
+  const filesContent = await Promise.all([...filePromises, ...linkPromises]);
+  return processFiles(filesContent, service, connectionId, pageLimit, fileLimit)
+}
+
+export const connectionProcessFiles = async ({ connectionId, service, pageLimit, fileLimit }: TQueue) => {
+  await publishProgress({
+    connectionId: connectionId,
+    fileName: "",
+    processedFile: 0,
+    processedPage: 0,
+    lastAsync: new Date(),
+    isFinished: false,
+  })
+
+  const connection = await databaseDrizzle.query.connections.findFirst({
+    where: (c, ops) => ops.eq(c.id, connectionId)
+  })
+  if (!connection) return;
+
+  const filesContent = await getFileContent(connection)
+  return processFiles(filesContent, service, connectionId, pageLimit, fileLimit)
+}
+
+const processFiles = async (filesContent: FileContent[], service: string, connectionId: string, pageLimit: number | null, fileLimit: number | null) => {
   const completedFiles: typeof processedFiles.$inferInsert[] = []
-  let filesContent: FileContent[] = []
   const allPoints = [];
   let processedPage = 0;
   let processedAllPages = 0
@@ -38,36 +92,30 @@ export const processFiles = async (connectionId: string, pageLimit: number | nul
   });
 
   try {
-    const connection = await databaseDrizzle.query.connections.findFirst({
-      where: (c, ops) => ops.eq(c.id, connectionId)
-    })
-
-
-    if (!connection) return;
-
-    switch (connection.service) {
-      case 'GOOGLE_DRIVE':
-        filesContent = await processGoogleDriveFiles(connection)
-        break;
-    }
-
     for (const [fileIndex, file] of filesContent.entries()) {
+      const chunksId = [];
       if (fileLimit && fileLimit > 0 && fileLimit === fileIndex) break;
       const baseMetadata = {
         _document_id: file.name,
-        _source: connection.service,
+        _source: service,
         _metadata: {
           ...file.metadata,
-          ...JSON.parse(connection.metadata || "{}"),
         },
       };
       for (const [pageIndex, page] of file.pages.entries()) {
         if (pageLimit && pageLimit > 0 && pageLimit === pageIndex) break;
         try {
           const textPoints = await processingTextPage(page.text, pageIndex, baseMetadata, splitter)
-          if (textPoints) allPoints.push(textPoints)
-          const vectorPoints = await processingTablePage(page.tables, pageIndex, baseMetadata)
-          if (vectorPoints) allPoints.push(vectorPoints)
+          if (textPoints) {
+            allPoints.push(textPoints);
+            chunksId.push(textPoints.id)
+          }
+
+          const tablePoints = await processingTablePage(page.tables, pageIndex, baseMetadata)
+          if (tablePoints) {
+            allPoints.push(tablePoints)
+            chunksId.push(tablePoints.id)
+          }
 
           processedAllPages += 1;
           processedPage += 1;
@@ -106,6 +154,7 @@ export const processFiles = async (connectionId: string, pageLimit: number | nul
         connectionId: connectionId,
         name: file.name,
         totalPages: processedPage,
+        chunksIds: chunksId as string[],
       })
       processedPage = 0
     }
@@ -120,7 +169,7 @@ export const processFiles = async (connectionId: string, pageLimit: number | nul
         await databaseDrizzle
           .insert(processedFiles)
           .values(file).onConflictDoUpdate({
-            target: processedFiles.name,
+            target: [processedFiles.name, processedFiles.connectionId],
             set: file
           })
       )
@@ -171,18 +220,23 @@ const processingTextPage = async (pageText: string, pageIndex: number, baseMetad
 
     const cachedMetadata = await redisConnection.get(textHash)
     if (!cachedMetadata || cachedMetadata !== JSON.stringify(baseMetadata._metadata)) {
-      const textVectors = await vectorizeText(chunk);
-      const existingPoints = await qdrantCLient.search(qdrant_collection_name, {
-        vector: textVectors,
+      const existingPoints = await qdrantCLient.scroll(qdrant_collection_name, {
         filter: {
           must: [{ key: "_hash", match: { value: textHash } }]
         },
         limit: 1,
-        with_payload: {
-          include: ["_metadata"]
-        }
+        with_payload: true,
+        with_vector: true,
       });
+      if (existingPoints.points.length > 0) {
+        return {
+          id: existingPoints.points[0].id,
+          vector: existingPoints.points[0].vector as number[],
+          payload: existingPoints.points[0].payload,
+        }
+      }
 
+      const textVectors = await vectorizeText(chunk);
       const { title, summary } = await getTitleAndSummary(chunk, JSON.stringify(textMetadata))
       const metadata = {
         ...textMetadata,
@@ -191,7 +245,7 @@ const processingTextPage = async (pageText: string, pageIndex: number, baseMetad
       }
 
       return {
-        id: existingPoints.length > 0 ? existingPoints[0].id : uuidv4(),
+        id: uuidv4(),
         vector: textVectors,
         payload: metadata,
       };
@@ -213,18 +267,23 @@ const processingTablePage = async (tables: unknown[], pageIndex: number, baseMet
 
   const cachedMetadata = await redisConnection.get(tableHash)
   if (!cachedMetadata || cachedMetadata !== JSON.stringify(baseMetadata._metadata)) {
-    const tableVectors = await vectorizeText(pageTables);
-    const existingPoints = await qdrantCLient.search(qdrant_collection_name, {
-      vector: tableVectors,
+    const existingPoints = await qdrantCLient.scroll(qdrant_collection_name, {
       filter: {
         must: [{ key: "_hash", match: { value: tableHash } }]
       },
       limit: 1,
-      with_payload: {
-        include: ["_metadata"]
-      }
+      with_payload: true,
+      with_vector: true,
     });
+    if (existingPoints.points.length > 0) {
+      return {
+        id: existingPoints.points[0].id,
+        vector: existingPoints.points[0].vector as number[],
+        payload: existingPoints.points[0].payload,
+      }
+    }
 
+    const tableVectors = await vectorizeText(pageTables);
     const { title, summary } = await getTitleAndSummary(pageTables, JSON.stringify(tableMetadata))
     const metadata = {
       ...tableMetadata,
@@ -233,7 +292,7 @@ const processingTablePage = async (tables: unknown[], pageIndex: number, baseMet
     }
 
     return {
-      id: existingPoints.length > 0 ? existingPoints[0].id : uuidv4(),
+      id: uuidv4(),
       vector: tableVectors,
       payload: metadata,
     };

@@ -32,11 +32,16 @@ export async function GET(request: Request) {
 
   await databaseDrizzle.insert(connections).values({
     userId: session.user.id!,
-    accessToken: tokens.access_token!,
-    refreshToken: tokens.refresh_token!,
-    email: data.email!,
+    identifier: data.email!,
     service: 'GOOGLE_DRIVE',
-    expiryDate: tokens.expiry_date?.toString() || new Date().toString()
+    connectionMetadata: {
+      folderId: "root"
+    },
+    credentials: {
+      expiryDate: tokens.expiry_date!,
+      accessToken: tokens.access_token!,
+      refreshToken: tokens.refresh_token!,
+    }
   })
   return NextResponse.redirect(new URL('/connections', request.url));
 }

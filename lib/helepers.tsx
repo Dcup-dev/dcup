@@ -1,5 +1,5 @@
-import { FiCloud } from "react-icons/fi";
 import { SiNotion, SiAwslambda, SiGmail, SiSlack, SiConfluence, SiGoogledrive } from "react-icons/si";
+import { FaCloud } from "react-icons/fa";
 
 export const getServiceIcon = (service: string) => {
   switch (service) {
@@ -16,6 +16,6 @@ export const getServiceIcon = (service: string) => {
     case 'CONFLUENCE':
       return < SiConfluence className="w-5 h-5" />;
     default:
-      return <FiCloud className="w-5 h-5" />;
+      return <FaCloud className="w-5 h-5" />;
   }
 };
