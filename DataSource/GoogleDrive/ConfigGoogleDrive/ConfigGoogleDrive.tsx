@@ -30,8 +30,7 @@ export const ConfigGoogleDrive = ({ connection, token }: { connection: Connectio
     name: connection.folderName || "",
     id: null,
   });
-
-
+ 
   const handleSetConfig = (data: FormData) => {
     data.set("id", connection.id)
     data.set("folderName", directory.name)
