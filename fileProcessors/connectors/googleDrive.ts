@@ -64,7 +64,6 @@ export const getGoogleDriveAuthorization = async (credentials: unknown) => {
   return oauth2Client
 }
 
-
 export const readGoogleDriveFiles = async (connectionId: string, metadata: string | null, connectionMetadata: unknown, credentials: unknown): Promise<FileContent[]> => {
   const { folderId } = googleDriveMetadata.parse(connectionMetadata)
   const oauth = await getGoogleDriveAuthorization(credentials)

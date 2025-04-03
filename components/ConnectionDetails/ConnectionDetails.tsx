@@ -95,18 +95,32 @@ export default function ConnectionDetails({ connection, children }: { connection
         ? timeAgo(progress.lastAsync)
         : <span className="text-muted-foreground">Never</span>}
     </TableCell>
-    {!progress.isFinished && connection.isSyncing && <TableCell>
+    <TableCell>
       <TooltipProvider>
         <Tooltip>
           <TooltipTrigger>
-            <Pickaxe className="animate-bounce" />
+            {progress.isFinished ? (
+              <Check className="text-green-500" />
+            ) : status === 'active' ? (
+              <Pickaxe className="animate-bounce text-blue-500" />
+            ) : status === 'queued' ? (
+              <Clock className="text-yellow-500" />
+            ) : (
+              <Check className="text-muted-foreground" />
+            )}
           </TooltipTrigger>
           <TooltipContent>
-            <p>Processing Files...</p>
+            {progress.isFinished
+              ? "Sync completed"
+              : status === 'active'
+                ? "Currently syncing"
+                : status === 'queued'
+                  ? `Queued position`
+                  : "Sync not started"}
           </TooltipContent>
         </Tooltip>
       </TooltipProvider>
-    </TableCell>}
+    </TableCell>
     <TableCell>
       <TooltipProvider>
         <Tooltip>

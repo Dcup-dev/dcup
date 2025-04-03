@@ -12,6 +12,7 @@ import { getFileContent } from "./connectors";
 import { processPdfLink, processPdfBuffer } from "./Files/pdf";
 import { TQueue } from "@/workers/queues/jobs/processFiles.job";
 
+
 export type FileContent = {
   name: string,
   pages: PageContent[],
