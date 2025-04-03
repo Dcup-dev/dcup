@@ -1,11 +1,14 @@
 'use client'
+import '@xyflow/react/dist/style.css';
+import Image from "next/image";
 import { Background, Handle, NodeProps, Position, ReactFlow } from "@xyflow/react";
 import { AnimatedSvgEdge } from "../animated-svg-edge";
 import { FcGoogle } from 'react-icons/fc';
 import { FiCloud } from 'react-icons/fi';
-import '@xyflow/react/dist/style.css';
-import Image from "next/image";
 import { ConnectionQuery } from "@/app/(protected)/connections/page";
+import { FaAws, FaCloud, FaSlack } from "react-icons/fa";
+import { RiNotionFill } from "react-icons/ri";
+import { SiConfluence, SiGmail } from "react-icons/si";
 
 
 export const CustomNode = ({ id, data }: NodeProps) => {
@@ -37,7 +40,7 @@ export const CustomNode = ({ id, data }: NodeProps) => {
         {isConnectionNode ? (
           <>
             <div className="p-1.5 rounded-md bg-emerald-50 dark:bg-emerald-900/20">
-              <FcGoogle className="w-4 h-4" />
+              {getConnectionIcone(data.service as string)}
             </div>
             <div className="flex-1 overflow-hidden">
               <p className="text-xs font-medium text-gray-700 dark:text-gray-200 truncate">
@@ -104,6 +107,25 @@ const staticEdges = [
     },
   }
 ] satisfies AnimatedSvgEdge[];
+
+const getConnectionIcone = (service: string) => {
+  switch (service) {
+    case 'GOOGLE_DRIVE':
+      return <FcGoogle className="w-4 h-4" />
+    case "AWS":
+      return <FaAws className="w-4 h-4" />
+    case "NOTION":
+      return <RiNotionFill className="w-4 h-4" />
+    case "SLACK":
+      return <FaSlack className="w-4 h-4" />
+    case "GMAIL":
+      return <SiGmail className="w-4 h-4" />
+    case "CONFLUENCE":
+      return <SiConfluence className='w-6 h-6' />
+    case "DIRECT_UPLOAD":
+      return <FaCloud className="w-4 h-4" />
+  }
+}
 
 const getConnectionNode = (connections: ConnectionQuery[]) => {
   let connection = false;

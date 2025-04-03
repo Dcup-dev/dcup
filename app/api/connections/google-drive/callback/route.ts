@@ -32,7 +32,7 @@ export async function GET(request: Request) {
 
   await databaseDrizzle.insert(connections).values({
     userId: session.user.id!,
-    email: data.email!,
+    identifier: data.email!,
     service: 'GOOGLE_DRIVE',
     connectionMetadata: {
       folderId: "root"

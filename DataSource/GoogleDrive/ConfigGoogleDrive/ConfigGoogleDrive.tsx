@@ -1,14 +1,14 @@
 "use client"
-import { useEffect, useState } from 'react';
+
+import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { DialogClose } from '@radix-ui/react-dialog';
-import { Loader2, RefreshCcw, Settings2, X } from 'lucide-react';
+import { Loader2, Settings2, X } from 'lucide-react';
 import { EMPTY_FORM_STATE } from '@/lib/zodErrorHandle';
 import { toast } from '@/hooks/use-toast';
 import { ConnectionQuery } from '@/app/(protected)/connections/page';
-import { setConnectionConfig } from '@/actions/connections';
 import { useTransition } from "react";
 import useDrivePicker from '../GoogleDrivePicker';
 import {
@@ -20,13 +20,11 @@ import {
   DialogDescription,
   DialogFooter,
 } from '@/components/ui/dialog';
-import { FileProgress } from '@/events';
 
-
+import { setConnectionConfig } from '@/actions/connctions/new';
 
 export const ConfigGoogleDrive = ({ connection, token }: { connection: ConnectionQuery, token: string | null | undefined }) => {
   const [open, setOpen] = useState(false)
-  const [isFinished, setIsFinished] = useState(false)
   const [isConfigSet, setIsConfigSet] = useState(connection.isConfigSet)
   const [openPicker] = useDrivePicker()
   const [pending, startTransition] = useTransition()
@@ -34,20 +32,6 @@ export const ConfigGoogleDrive = ({ connection, token }: { connection: Connectio
     name: connection.folderName || "",
     id: null,
   });
-
-  useEffect(() => {
-    const eventSource = new EventSource("/api/progress");
-    eventSource.onmessage = (event) => {
-      const data = JSON.parse(event.data) as FileProgress;
-      if (data.connectionId === connection.id) setIsFinished(data.isFinished)
-    };
-    eventSource.onerror = () => {
-      eventSource.close();
-    };
-    return () => {
-      eventSource.close();
-    };
-  }, [connection.id]);
 
   const handleSetConfig = (data: FormData) => {
     data.set("id", connection.id)
@@ -83,7 +67,6 @@ export const ConfigGoogleDrive = ({ connection, token }: { connection: Connectio
   }
 
 
-
   const showPicker = async () => {
     openPicker({
       clientId: process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID!,
@@ -114,8 +97,7 @@ export const ConfigGoogleDrive = ({ connection, token }: { connection: Connectio
 
   return (<Dialog open={open} onOpenChange={o => setOpen(o)} >
     <DialogTrigger asChild>
-      <Button size='sm' disabled={!isFinished && connection.isSyncing} variant={isConfigSet ? 'ghost' : 'default'} onClick={() => setOpen(true)} >
-        {!isFinished && connection.isSyncing && <RefreshCcw className='animate-spin' />}
+      <Button size='sm' variant={isConfigSet ? 'ghost' : 'default'} onClick={() => setOpen(true)} >
         <Settings2 />
         Configure
       </Button>

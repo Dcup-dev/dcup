@@ -68,7 +68,11 @@ export const setGoogleDriveConnection = async (formData: FormData) => {
 
   return {
     connectionId: config.id,
+    service: "GOOGLE_DRIVE",
     pageLimit: config.pageLimit,
-    fileLimit: config.documentLimit
+    fileLimit: config.documentLimit,
+    metadata: config.metadata,
+    files: [],
+    links: []
   }
 }
