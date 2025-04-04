@@ -115,12 +115,11 @@ export const readGoogleDriveFiles = async (connectionId: string, metadata: strin
   } catch (error: any) {
     await publishProgress({
       connectionId: connectionId,
-      fileName: "",
       processedFile: 0,
       processedPage: 0,
       errorMessage: error.data,
       lastAsync: new Date(),
-      isFinished: true,
+      status: 'FINISHED'
     })
     return [];
   }

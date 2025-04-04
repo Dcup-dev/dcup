@@ -3,19 +3,18 @@ import { redisConnection } from "@/workers/redis";
 
 export const subscriber = redisConnection.duplicate()
 
-export type FileProgress = {
-  connectionId: string,
-  fileName: string,
+export type ConnectionProgress = {
+  connectionId: string
   processedPage: number,
   processedFile: number,
   lastAsync: Date,
   errorMessage?: string,
-  isFinished: boolean
+  status: "PROCESSING" | "FINISHED"
 }
 
 export const processingUpdates = "processing-updates"
 const publisher = redisConnection.duplicate()
 
-export const publishProgress = async (progress: FileProgress) => {
-  return await publisher.publish(`${processingUpdates}:${progress.connectionId}`, JSON.stringify(progress));
+export const publishProgress = async (progress: ConnectionProgress) => {
+  return await publisher.publish(processingUpdates, JSON.stringify(progress));
 };

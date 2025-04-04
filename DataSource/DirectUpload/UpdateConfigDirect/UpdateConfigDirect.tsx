@@ -14,12 +14,12 @@ import {
   DialogDescription,
 } from '@/components/ui/dialog';
 
-export const UpdateConfigDirect = ({ connection }: { connection: ConnectionQuery }) => {
+export const UpdateConfigDirect = ({ connection, status }: { connection: ConnectionQuery, status: "PROCESSING" | "FINISHED" | undefined}) => {
   const [open, setOpen] = useState(false)
 
   return (<Dialog open={open} onOpenChange={setOpen} >
     <DialogTrigger asChild>
-      <Button size='sm' variant={connection.isConfigSet ? 'ghost' : 'default'} >
+      <Button size='sm' variant={connection.isConfigSet ? 'ghost' : 'default'} disabled={status === 'PROCESSING' && connection.isSyncing} >
         <Settings2 />
         Configure
       </Button>
