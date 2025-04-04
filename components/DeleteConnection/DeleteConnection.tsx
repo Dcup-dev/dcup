@@ -16,7 +16,8 @@ import {
 } from "@/components/ui/dialog"
 import { deleteConnectionConfig } from "@/actions/connctions/delete"
 
-export const DeleteConnection = ({ connection }: { connection: ConnectionQuery }) => {
+export const DeleteConnection = ({ connection, status }: { connection: ConnectionQuery,  status: "PROCESSING" | "FINISHED" | undefined 
+ }) => {
   const [open, setOpen] = useState(false)
   const [isPending, startTransition] = useTransition();
 
@@ -49,7 +50,7 @@ export const DeleteConnection = ({ connection }: { connection: ConnectionQuery }
     <Dialog open={open} onOpenChange={e => setOpen(e)} >
       <DialogTrigger asChild>
         <DialogTrigger asChild>
-          <Button size='sm' variant={'ghost'} >
+          <Button size='sm' variant={'ghost'} disabled={status === 'PROCESSING' && connection.isSyncing}>
             <Trash />
             Delete
           </Button>

@@ -26,14 +26,7 @@ export type PageContent = {
 }
 
 export const directProcessFiles = async ({ files, metadata, service, connectionId, links, pageLimit, fileLimit }: TQueue) => {
-  await publishProgress({
-    connectionId: connectionId,
-    fileName: "",
-    processedFile: 0,
-    processedPage: 0,
-    lastAsync: new Date(),
-    isFinished: false,
-  })
+
   // Create promises for processing file URLs
   const filePromises = files.map(async (file) => {
     const content = await processPdfBuffer(Buffer.from(file.content, 'base64'));
@@ -59,14 +52,6 @@ export const directProcessFiles = async ({ files, metadata, service, connectionI
 }
 
 export const connectionProcessFiles = async ({ connectionId, service, pageLimit, fileLimit }: TQueue) => {
-  await publishProgress({
-    connectionId: connectionId,
-    fileName: "",
-    processedFile: 0,
-    processedPage: 0,
-    lastAsync: new Date(),
-    isFinished: false,
-  })
 
   const connection = await databaseDrizzle.query.connections.findFirst({
     where: (c, ops) => ops.eq(c.id, connectionId)
@@ -90,6 +75,14 @@ const processFiles = async (filesContent: FileContent[], service: string, connec
     keepSeparator: true,
     separators: ["\n\n## ", "\n\n# ", "\n\n", "\n", ". ", "! ", "? ", " "],
   });
+
+  await publishProgress({
+    connectionId: connectionId,
+    processedFile: processedAllPages,
+    processedPage: processedPage,
+    lastAsync: now,
+    status: 'PROCESSING',
+  })
 
   try {
     for (const [fileIndex, file] of filesContent.entries()) {
@@ -122,11 +115,10 @@ const processFiles = async (filesContent: FileContent[], service: string, connec
 
           await publishProgress({
             connectionId,
-            fileName: file.name,
             processedPage: processedAllPages,
             processedFile: fileIndex + 1,
             lastAsync: now,
-            isFinished: false,
+            status: 'PROCESSING'
           })
 
         } catch (error: any) {
@@ -140,12 +132,11 @@ const processFiles = async (filesContent: FileContent[], service: string, connec
           }
           await publishProgress({
             connectionId: connectionId,
-            fileName: file.name,
             processedFile: fileIndex + 1,
             processedPage: processedAllPages,
             errorMessage: errorMessage,
             lastAsync: now,
-            isFinished: false,
+            status: 'PROCESSING'
           })
         }
       }
@@ -185,22 +176,20 @@ const processFiles = async (filesContent: FileContent[], service: string, connec
 
     await publishProgress({
       connectionId: connectionId,
-      fileName: "",
       processedFile: filesContent.length,
       processedPage: processedAllPages,
       lastAsync: now,
-      isFinished: true,
+      status: 'FINISHED',
     })
 
   } catch (error: any) {
     await publishProgress({
       connectionId: connectionId,
-      fileName: "",
       processedFile: 0,
       processedPage: 0,
       errorMessage: error.data,
       lastAsync: now,
-      isFinished: true,
+      status: 'FINISHED'
     })
   }
 }
@@ -232,7 +221,10 @@ const processingTextPage = async (pageText: string, pageIndex: number, baseMetad
         return {
           id: existingPoints.points[0].id,
           vector: existingPoints.points[0].vector as number[],
-          payload: existingPoints.points[0].payload,
+          payload: {
+            ...existingPoints.points[0].payload,
+            _metadata: baseMetadata._metadata
+          }
         }
       }
 
@@ -279,7 +271,10 @@ const processingTablePage = async (tables: unknown[], pageIndex: number, baseMet
       return {
         id: existingPoints.points[0].id,
         vector: existingPoints.points[0].vector as number[],
-        payload: existingPoints.points[0].payload,
+        payload: {
+          ...existingPoints.points[0].payload,
+          _metadata: baseMetadata._metadata
+        }
       }
     }
 

@@ -16,7 +16,10 @@ import { EMPTY_FORM_STATE } from "@/lib/zodErrorHandle"
 import { ConnectionQuery } from "@/app/(protected)/connections/page"
 import { syncConnectionConfig } from "@/actions/connctions/sync"
 
-export const SyncConnection = ({ connection }: { connection: ConnectionQuery }) => {
+export const SyncConnection = ({ connection, status }: {
+  connection: ConnectionQuery,
+  status: "PROCESSING" | "FINISHED" | undefined
+}) => {
   const [open, setOpen] = useState(false)
   const [isPending, startTransition] = useTransition();
 
@@ -49,7 +52,7 @@ export const SyncConnection = ({ connection }: { connection: ConnectionQuery }) 
   return (<Dialog open={open} onOpenChange={e => setOpen(e)} >
     <DialogTrigger asChild>
       <DialogTrigger asChild>
-        <Button size='sm' variant={'ghost'}  >
+        <Button size='sm' variant={'ghost'} disabled={status === 'PROCESSING' && connection.isSyncing}>
           <FolderSync />
           Sync
         </Button>

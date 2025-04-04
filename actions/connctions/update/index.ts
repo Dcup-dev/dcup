@@ -1,6 +1,6 @@
 "use server"
 import { authOptions } from "@/auth";
-import { setConnectionToProcess } from "@/DataSource";
+import { setConnectionToProcess } from "@/fileProcessors/connectors";
 import { fromErrorToFormState, toFormState } from "@/lib/zodErrorHandle";
 import { addToProcessFilesQueue } from "@/workers/queues/jobs/processFiles.job";
 import { getServerSession } from "next-auth";

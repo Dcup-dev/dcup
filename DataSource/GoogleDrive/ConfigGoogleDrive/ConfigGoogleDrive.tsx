@@ -22,7 +22,11 @@ import {
 
 import { setConnectionConfig } from '@/actions/connctions/new';
 
-export const ConfigGoogleDrive = ({ connection, token }: { connection: ConnectionQuery, token: string | null | undefined }) => {
+export const ConfigGoogleDrive = ({ connection, token,status }: { 
+  connection: ConnectionQuery, 
+  token: string | null | undefined,
+  status: "PROCESSING" | "FINISHED" | undefined
+}) => {
   const [open, setOpen] = useState(false)
   const [isConfigSet, setIsConfigSet] = useState(connection.isConfigSet)
   const [openPicker] = useDrivePicker()
@@ -96,7 +100,7 @@ export const ConfigGoogleDrive = ({ connection, token }: { connection: Connectio
 
   return (<Dialog open={open} onOpenChange={o => setOpen(o)} >
     <DialogTrigger asChild>
-      <Button size='sm' variant={isConfigSet ? 'ghost' : 'default'} onClick={() => setOpen(true)} >
+      <Button size='sm' variant={isConfigSet ? 'ghost' : 'default'} disabled={status === 'PROCESSING' && connection.isSyncing} onClick={() => setOpen(true)} >
         <Settings2 />
         Configure
       </Button>
@@ -146,7 +150,6 @@ export const ConfigGoogleDrive = ({ connection, token }: { connection: Connectio
             <Textarea
               id='metadata'
               name='metadata'
-              disabled={connection.isSyncing}
               placeholder='{"company": "dcup"}'
               defaultValue={connection.metadata || "{}"}
             />

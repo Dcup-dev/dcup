@@ -7,14 +7,12 @@ import { getServerSession } from "next-auth";
 import { redirect } from 'next/navigation';
 import { ConnectionTable } from "@/db/schemas/connections";
 import { Table, TableBody, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { DataSource } from "@/DataSource";
 import { getConnectionToken } from "@/fileProcessors/connectors";
-import { ConnectionProvider } from "@/context/connectionContext";
-import { tryAndCatch } from "@/lib/try-catch";
 import { FiDatabase } from "react-icons/fi";
 import { SetNewConfigDirect } from "@/DataSource/DirectUpload/SetNewConfigDirect/SetNewConfigDirect";
 
-const ConnectionDetails = dynamic(() => import('@/components/ConnectionDetails/ConnectionDetails'))
+const Connections = dynamic(() => import('@/components/Connections/Connections'))
+
 
 export interface ConnectionQuery extends ConnectionTable {
   files: {
@@ -22,6 +20,7 @@ export interface ConnectionQuery extends ConnectionTable {
     name: string,
   }[]
 }
+export type ConnectionToken = Map<string, string | null>;
 
 export default async function ConnectionsPage() {
   const session = await getServerSession(authOptions)
@@ -59,7 +58,6 @@ export default async function ConnectionsPage() {
           </Button>
         </div>
       </div>
-
       {connections.length === 0 ? (<EmptyState />)
         : (<CurrentConnections connections={connections} />)}
     </div>
@@ -67,6 +65,12 @@ export default async function ConnectionsPage() {
 }
 
 async function CurrentConnections({ connections }: { connections: ConnectionQuery[] }) {
+  const tokens: ConnectionToken = new Map()
+  for (const conn of connections) {
+    const token = await getConnectionToken(conn)
+    tokens.set(conn.id, token || null)
+  }
+
   return (
     <div className="mb-12">
       <h2 className="text-2xl font-semibold mb-6">Active Connections</h2>
@@ -84,21 +88,12 @@ async function CurrentConnections({ connections }: { connections: ConnectionQuer
             </TableRow>
           </TableHeader>
           <TableBody>
-            <ConnectionProvider>
-              {connections.map((conn, idx) => <ConnectionDetails key={idx} connection={conn} >
-                <Connection connection={conn} />
-              </ConnectionDetails>)}
-            </ConnectionProvider>
+            <Connections connections={connections} tokens={tokens} />
           </TableBody>
         </Table>
       </div>
     </div>
   );
-}
-
-async function Connection({ connection }: { connection: ConnectionQuery }) {
-  const { data } = await tryAndCatch(getConnectionToken(connection))
-  return (<DataSource connection={connection} token={data ?? "invalid_grant"} />)
 }
 
 function EmptyState() {
