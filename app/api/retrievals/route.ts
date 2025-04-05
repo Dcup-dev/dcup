@@ -23,8 +23,10 @@ export async function POST(request: NextRequest) {
     const body = await request.json()
     const validation = UserQuery.safeParse(body)
     if (!validation.success) {
-      return NextResponse.json(
-        { state: false, message: validation.error.format() },
+      return NextResponse.json({
+        code: "Invalid_Query",
+        message: validation.error.format(),
+      },
         { status: 400 },
       );
     }
