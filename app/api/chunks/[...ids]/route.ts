@@ -96,7 +96,7 @@ export async function GET(request: NextRequest, { params }: Params) {
       dataType: chunk.payload?._type,
       chunkTitle: chunk.payload?._title,
       chunkSummary: chunk.payload?._summary,
-      chunkConent: chunk.payload?._content,
+      chunkContent: chunk.payload?._content,
     }))
 
     return NextResponse.json(response, { status: 200 });
