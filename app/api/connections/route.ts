@@ -3,8 +3,6 @@ import { tryAndCatch } from "@/lib/try-catch";
 import { NextRequest, NextResponse } from "next/server";
 import { APIError } from "@/lib/APIError";
 import { databaseDrizzle } from "@/db";
-import { users } from "@/db/schemas/users";
-import { eq, sql } from "drizzle-orm";
 
 
 
@@ -17,21 +15,6 @@ export async function GET(request: NextRequest) {
         code: authError.code,
         message: authError.message,
       }, { status: authError.status })
-    }
-
-    const { error: updateApiCallsError } = await tryAndCatch(databaseDrizzle
-      .update(users)
-      .set({ apiCalls: sql`${users.apiCalls} + 1` })
-      .where(eq(users.id, userId)))
-
-    if (updateApiCallsError) {
-      return NextResponse.json(
-        {
-          code: "forbidden",
-          message: "The requested resource was not found.",
-        },
-        { status: 403 },
-      )
     }
 
     const { data, error: queryError } = await tryAndCatch(databaseDrizzle.query.connections.findMany({
@@ -80,7 +63,6 @@ export async function GET(request: NextRequest) {
       files: conn.files,
     }))
 
-
     return NextResponse.json(response, { status: 200 });
   } catch (error: any) {
     return NextResponse.json(
@@ -88,5 +70,4 @@ export async function GET(request: NextRequest) {
       { status: 500 },
     );
   }
-
 }
