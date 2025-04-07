@@ -86,7 +86,7 @@ export const updateDirectUploadConnection = async (formData: FormData) => {
 
   const config = updateDirectUploadConfig.parse({
     connectionId: formData.get("connectionId"),
-    metadata: formData.get("metadata"),
+    metadata: formData.get("metadata") || "{}",
     files: formData.getAll("files") || [],
     links: formData.getAll("links") || [],
     removedFiles: formData.getAll("removedFiles") || []
@@ -131,33 +131,44 @@ export const updateDirectUploadConnection = async (formData: FormData) => {
 
 export const setDirectUploadConnection = async (formData: FormData) => {
 
-  const config = directUploadConfig.parse({
+  const config = directUploadConfig.safeParse({
     userId: formData.get("userId"),
     uploadName: formData.get("uploadName"),
     partition: formData.get("partition"),
-    metadata: formData.get("metadata"),
+    metadata: formData.get("metadata") || "{}",
     pageLimit: formData.get("pageLimit"),
     documentLimit: formData.get("documentLimit"),
     files: formData.getAll("files"),
     links: formData.getAll("links"),
   })
 
+  if (!config.success) {
+    const errors = config.error.errors
+      .map(err => {
+        const fieldPath = err.path.length > 0 ? err.path.join('.') : 'value'
+        return `"${fieldPath}": ${err.message}`
+      })
+      .join('; ')
+    throw new Error(`Validation errors - ${errors}`)
+  }
 
-  if (config.files.length === 0 && config.links.length === 0) {
-    throw new Error("no file or links privided")
+  const { files, links, userId, uploadName, partition, metadata, documentLimit, pageLimit } = config.data;
+
+  if (files.length === 0 && links.length === 0) {
+    throw new Error('Please provide at least one file or link to proceed.')
   }
 
   const conn = await databaseDrizzle.insert(connections).values({
-    userId: config.userId,
-    identifier: config.uploadName,
+    userId: userId,
+    identifier: uploadName,
     service: 'DIRECT_UPLOAD',
-    partition: config.partition || undefined,
-    metadata: config.metadata,
+    partition: partition || undefined,
+    metadata: metadata,
     isConfigSet: true,
     isSyncing: true,
   }).returning({ id: connections.id })
 
-  const files = config.files.map(async (file) => ({
+  const allFiles = files.map(async (file) => ({
     name: file.name,
     size: file.size,
     type: file.type,
@@ -168,11 +179,11 @@ export const setDirectUploadConnection = async (formData: FormData) => {
   return {
     connectionId: conn[0].id,
     service: "DIRECT_UPLOAD",
-    metadata: config.metadata,
-    files: await Promise.all(files),
-    links: config.links,
-    pageLimit: config.pageLimit,
-    fileLimit: config.documentLimit
+    metadata: metadata,
+    files: await Promise.all(allFiles),
+    links: links,
+    pageLimit: pageLimit,
+    fileLimit: documentLimit
   }
 }
 

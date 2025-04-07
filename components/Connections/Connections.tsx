@@ -15,9 +15,11 @@ import {
 } from "@/components/ui/tooltip"
 
 export default function Connections({ connections, tokens }: { connections: ConnectionQuery[], tokens: ConnectionToken }) {
+  const [isMounted, setIsMounted] = useState(false)
   const [connProgress, setConnProgress] = useState<ConnectionProgress | null>(null);
 
   useEffect(() => {
+    setIsMounted(true)
     const eventSource = new EventSource("/api/progress")
     eventSource.onmessage = (event) => {
       const data = JSON.parse(event.data) as ConnectionProgress
@@ -51,10 +53,10 @@ export default function Connections({ connections, tokens }: { connections: Conn
       <TableCell>{progress?.processedFile || connection.files.reduce((sum, file) => sum + file.totalPages, 0)}</TableCell>
       <TableCell>{progress?.processedPage || connection.files.length}</TableCell>
       <TableCell>
-        {timeAgo(connection.createdAt)}
+        <span>{!isMounted ? "Loading..." : timeAgo(connection.createdAt)}</span>
       </TableCell>
       <TableCell>
-        <LastSync lastSync={progress?.lastAsync ?? connection.lastSynced} />
+        {!isMounted ? "Loading..." : <LastSync lastSync={progress?.lastAsync ?? connection.lastSynced} />}
       </TableCell>
       <TableCell>
         <ConnectionStatus status={progress?.status} />

@@ -28,7 +28,7 @@ export const connections = pgTable("connection", {
     .references(() => users.id, { onDelete: "cascade" })
     .notNull(),
   service: connectionEnum("service").notNull(),
-  identifier: text("identifier").notNull(),
+  identifier: text("identifier").unique().notNull(),
   credentials: jsonb("credentials"),
   connectionMetadata: jsonb("connection_metadata"),
   folderName: text("folder_name").default("*"),
