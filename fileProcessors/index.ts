@@ -4,7 +4,6 @@ import { RecursiveCharacterTextSplitter } from "@langchain/textsplitters";
 import { v4 as uuidv4 } from 'uuid';
 import { getTitleAndSummary, vectorizeText } from "@/openAi";
 import { qdrant_collection_name, qdrantCLient } from "@/qdrant";
-import { redisConnection } from "@/workers/redis";
 import { publishProgress } from "@/events";
 import { connections, processedFiles } from "@/db/schemas/connections";
 import { eq } from "drizzle-orm";
@@ -26,7 +25,6 @@ export type PageContent = {
 }
 
 export const directProcessFiles = async ({ files, metadata, service, connectionId, links, pageLimit, fileLimit }: TQueue) => {
-
   // Create promises for processing file URLs
   const filePromises = files.map(async (file) => {
     const content = await processPdfBuffer(Buffer.from(file.content, 'base64'));
@@ -165,9 +163,6 @@ const processFiles = async (filesContent: FileContent[], service: string, connec
           })
       )
 
-      allPoints.forEach(async point => {
-        await redisConnection.set(point.payload._hash, JSON.stringify(point.payload._metadata), "EX", 3600 * 5) // Cache for 5 hours
-      })
     }
     await databaseDrizzle
       .update(connections)
@@ -208,61 +203,9 @@ const processingTextPage = async (pageText: string, pageIndex: number, baseMetad
       _hash: textHash,
     };
 
-    const cachedMetadata = await redisConnection.get(textHash)
-    if (!cachedMetadata || cachedMetadata !== JSON.stringify(baseMetadata._metadata)) {
-      const existingPoints = await qdrantCLient.scroll(qdrant_collection_name, {
-        filter: {
-          must: [{ key: "_hash", match: { value: textHash } }]
-        },
-        limit: 1,
-        with_payload: true,
-        with_vector: true,
-      });
-      if (existingPoints.points.length > 0) {
-        return {
-          id: existingPoints.points[0].id,
-          vector: existingPoints.points[0].vector as number[],
-          payload: {
-            ...existingPoints.points[0].payload,
-            _metadata: baseMetadata._metadata
-          }
-        }
-      }
-
-      const textVectors = await vectorizeText(chunk);
-      const { title, summary } = await getTitleAndSummary(chunk, JSON.stringify(textMetadata))
-      const metadata = {
-        ...textMetadata,
-        _title: title,
-        _summary: summary
-      }
-
-      return {
-        id: uuidv4(),
-        vector: textVectors,
-        payload: metadata,
-      };
-    }
-  }
-}
-
-const processingTablePage = async (tables: unknown[], pageIndex: number, baseMetadata: any) => {
-  const pageTables = tables.map(t => JSON.stringify(t)).join("\n-------------\n")
-
-  const tableHash = generateHash(pageTables);
-  const tableMetadata = {
-    ...baseMetadata,
-    _page_number: pageIndex + 1,
-    _type: "table",
-    _content: pageTables,
-    _hash: tableHash,
-  };
-
-  const cachedMetadata = await redisConnection.get(tableHash)
-  if (!cachedMetadata || cachedMetadata !== JSON.stringify(baseMetadata._metadata)) {
     const existingPoints = await qdrantCLient.scroll(qdrant_collection_name, {
       filter: {
-        must: [{ key: "_hash", match: { value: tableHash } }]
+        must: [{ key: "_hash", match: { value: textHash } }]
       },
       limit: 1,
       with_payload: true,
@@ -279,20 +222,66 @@ const processingTablePage = async (tables: unknown[], pageIndex: number, baseMet
       }
     }
 
-    const tableVectors = await vectorizeText(pageTables);
-    const { title, summary } = await getTitleAndSummary(pageTables, JSON.stringify(tableMetadata))
+    const textVectors = await vectorizeText(chunk);
+    const { title, summary } = await getTitleAndSummary(chunk, JSON.stringify(textMetadata))
     const metadata = {
-      ...tableMetadata,
+      ...textMetadata,
       _title: title,
       _summary: summary
     }
 
     return {
       id: uuidv4(),
-      vector: tableVectors,
+      vector: textVectors,
       payload: metadata,
     };
   }
+}
+
+const processingTablePage = async (tables: unknown[], pageIndex: number, baseMetadata: any) => {
+  const pageTables = tables.map(t => JSON.stringify(t)).join("\n-------------\n")
+
+  const tableHash = generateHash(pageTables);
+  const tableMetadata = {
+    ...baseMetadata,
+    _page_number: pageIndex + 1,
+    _type: "table",
+    _content: pageTables,
+    _hash: tableHash,
+  };
+
+  const existingPoints = await qdrantCLient.scroll(qdrant_collection_name, {
+    filter: {
+      must: [{ key: "_hash", match: { value: tableHash } }]
+    },
+    limit: 1,
+    with_payload: true,
+    with_vector: true,
+  });
+  if (existingPoints.points.length > 0) {
+    return {
+      id: existingPoints.points[0].id,
+      vector: existingPoints.points[0].vector as number[],
+      payload: {
+        ...existingPoints.points[0].payload,
+        _metadata: baseMetadata._metadata
+      }
+    }
+  }
+
+  const tableVectors = await vectorizeText(pageTables);
+  const { title, summary } = await getTitleAndSummary(pageTables, JSON.stringify(tableMetadata))
+  const metadata = {
+    ...tableMetadata,
+    _title: title,
+    _summary: summary
+  }
+
+  return {
+    id: uuidv4(),
+    vector: tableVectors,
+    payload: metadata,
+  };
 }
 
 function generateHash(content: string): string {

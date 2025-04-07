@@ -43,6 +43,13 @@
       "when": 1743627093450,
       "tag": "0005_tough_beyonder",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1744043197392,
+      "tag": "0006_large_bruce_banner",
+      "breakpoints": true
     }
   ]
 }
