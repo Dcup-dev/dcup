@@ -192,7 +192,7 @@ const processFiles = async (filesContent: FileContent[], service: string, connec
 const processingTextPage = async (pageText: string, pageIndex: number, baseMetadata: any, splitter: RecursiveCharacterTextSplitter) => {
   const chunks = await splitter.splitText(pageText)
   for (const [chunkIdx, chunk] of chunks.entries()) {
-    if (chunk.length === 0) continue;
+    if(chunk.length === 0) continue;
     const textHash = generateHash(chunk);
     const textMetadata = {
       ...baseMetadata,
