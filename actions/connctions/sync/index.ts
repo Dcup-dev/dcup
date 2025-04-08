@@ -11,7 +11,7 @@ import { z } from "zod"
 
 const syncConnectionSchema = z.object({
   id: z.string().min(2),
-  pageLimit: z.string().nullable().transform((str, ctx): number | null => {
+  pageLimit: z.string().transform((str, ctx): number | null => {
     try {
       if (str) return parseInt(str)
       return null
@@ -19,8 +19,8 @@ const syncConnectionSchema = z.object({
       ctx.addIssue({ code: 'invalid_date', message: "invalid page limit" })
       return z.NEVER
     }
-  }),
-  documentLimit: z.string().nullable().transform((str, ctx): number | null => {
+  }).nullable(),
+  fileLimitd: z.string().nullable().transform((str, ctx): number | null => {
     try {
       if (str) return parseInt(str)
       return null
@@ -28,7 +28,7 @@ const syncConnectionSchema = z.object({
       ctx.addIssue({ code: 'invalid_date', message: "invalid page limit" })
       return z.NEVER
     }
-  }),
+  }).nullable(),
 })
 
 type FormState = {
@@ -40,10 +40,10 @@ export const syncConnectionConfig = async (_: FormState, formData: FormData) => 
 
   try {
     if (!session?.user?.email) throw new Error("forbidden");
-    const { id, pageLimit, documentLimit } = syncConnectionSchema.parse({
+    const { id, pageLimit, fileLimitd } = syncConnectionSchema.parse({
       id: formData.get("id"),
       pageLimit: formData.get("pageLimit"),
-      fileLimit: formData.get("fileLimit")
+      fileLimitd: formData.get("fileLimit")
     })
 
     const conn = await databaseDrizzle.update(connections).set({
@@ -59,7 +59,7 @@ export const syncConnectionConfig = async (_: FormState, formData: FormData) => 
       service: conn[0].service,
       metadata: conn[0].metadata || null,
       pageLimit: pageLimit,
-      fileLimit: documentLimit,
+      fileLimit: fileLimitd,
       files: [],
       links: []
     })

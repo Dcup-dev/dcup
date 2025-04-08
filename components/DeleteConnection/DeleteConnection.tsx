@@ -50,7 +50,7 @@ export const DeleteConnection = ({ connection, status }: { connection: Connectio
     <Dialog open={open} onOpenChange={e => setOpen(e)} >
       <DialogTrigger asChild>
         <DialogTrigger asChild>
-          <Button size='sm' variant={'ghost'} disabled={status === 'PROCESSING' && connection.isSyncing}>
+          <Button size='sm' variant={'ghost'} disabled={status === 'PROCESSING' || (!status && connection.isSyncing)}>
             <Trash />
             Delete
           </Button>
