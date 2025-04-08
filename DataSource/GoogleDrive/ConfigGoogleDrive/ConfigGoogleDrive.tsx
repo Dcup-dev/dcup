@@ -22,11 +22,7 @@ import {
 
 import { setConnectionConfig } from '@/actions/connctions/new';
 
-export const ConfigGoogleDrive = ({ connection, token,status }: { 
-  connection: ConnectionQuery, 
-  token: string | null | undefined,
-  status: "PROCESSING" | "FINISHED" | undefined
-}) => {
+export const ConfigGoogleDrive = ({ connection, token, status }: { connection: ConnectionQuery, token: string | null | undefined, status: "PROCESSING" | "FINISHED" | undefined }) => {
   const [open, setOpen] = useState(false)
   const [isConfigSet, setIsConfigSet] = useState(connection.isConfigSet)
   const [openPicker] = useDrivePicker()
@@ -100,7 +96,7 @@ export const ConfigGoogleDrive = ({ connection, token,status }: {
 
   return (<Dialog open={open} onOpenChange={o => setOpen(o)} >
     <DialogTrigger asChild>
-      <Button size='sm' variant={isConfigSet ? 'ghost' : 'default'} disabled={status === 'PROCESSING' && connection.isSyncing} onClick={() => setOpen(true)} >
+      <Button size='sm' variant={isConfigSet ? 'ghost' : 'default'} disabled={status === 'PROCESSING' || (!status && connection.isSyncing)} onClick={() => setOpen(true)} >
         <Settings2 />
         Configure
       </Button>

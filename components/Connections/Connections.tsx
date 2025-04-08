@@ -17,7 +17,7 @@ import {
 export default function Connections({ connections, tokens }: { connections: ConnectionQuery[], tokens: ConnectionToken }) {
   const [isMounted, setIsMounted] = useState(false)
   const [connProgress, setConnProgress] = useState<ConnectionProgress | null>(null);
-
+  
   useEffect(() => {
     setIsMounted(true)
     const eventSource = new EventSource("/api/progress")
@@ -30,6 +30,8 @@ export default function Connections({ connections, tokens }: { connections: Conn
       eventSource.close()
       setConnProgress(null)
     }
+
+    return () => eventSource.close()
 
   }, [setConnProgress, connProgress])
 
@@ -59,7 +61,7 @@ export default function Connections({ connections, tokens }: { connections: Conn
         {!isMounted ? "Loading..." : <LastSync lastSync={progress?.lastAsync ?? connection.lastSynced} />}
       </TableCell>
       <TableCell>
-        <ConnectionStatus status={progress?.status} />
+        <ConnectionStatus status={progress?.status} connection={connection} />
       </TableCell>
       <TableCell>
         <DataSource connection={connection} token={tokens.get(connection.id)} status={progress?.status} />
@@ -73,28 +75,17 @@ const LastSync = ({ lastSync }: { lastSync: Date | undefined | null }) => {
   return <span>{timeAgo(lastSync)}</span>
 }
 
-const ConnectionStatus = ({ status }: { status: "PROCESSING" | "FINISHED" | undefined }) => {
-
-  if (!status) return (<TooltipProvider>
-    <Tooltip>
-      <TooltipTrigger>
-        <Check className="text-muted-foreground" />
-      </TooltipTrigger>
-      <TooltipContent>
-        Sync completed
-      </TooltipContent>
-    </Tooltip>
-  </TooltipProvider>)
+const ConnectionStatus = ({ status, connection }: { status?: "PROCESSING" | "FINISHED", connection: ConnectionQuery }) => {
 
   return (<TooltipProvider>
     <Tooltip>
       <TooltipTrigger>
-        {status === 'PROCESSING' ? (
+        {status === 'PROCESSING' ||(!status && connection.isSyncing) ? (
           <Pickaxe className="animate-bounce text-blue-500" />
-        ) : (<Check className="text-green-500" />)}
+        ) : (<Check className={connection.isConfigSet || status ? 'text-green-500' : 'text-muted-foreground'} />)}
       </TooltipTrigger>
       <TooltipContent>
-        {status === 'FINISHED' ? "Sync completed" : "Currently syncing"}
+        {status === 'FINISHED' || (!status && !connection.isSyncing) ? "Sync completed" : "Currently syncing"}
       </TooltipContent>
     </Tooltip>
   </TooltipProvider>)
