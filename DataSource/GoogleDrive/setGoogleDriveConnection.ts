@@ -4,7 +4,7 @@ import { eq } from "drizzle-orm";
 import { z } from "zod";
 
 const googleDriveConfig = z.object({
-  id: z.string().min(2),
+  connectionId: z.string().min(2),
   folderName: z.string().transform((str): string => {
     if (str) return str
     return "*"
@@ -45,8 +45,8 @@ const googleDriveConfig = z.object({
 })
 
 export const setGoogleDriveConnection = async (formData: FormData) => {
-  const config = googleDriveConfig.parse({
-    id: formData.get("id"),
+  const config = googleDriveConfig.safeParse({
+    connectionId: formData.get("connectionId"),
     folderName: formData.get("folderName"),
     folderId: formData.get("folderId"),
     partition: formData.get("partition"),
@@ -55,23 +55,33 @@ export const setGoogleDriveConnection = async (formData: FormData) => {
     documentLimit: formData.get("documentLimit"),
   })
 
+  if (!config.success) {
+    const errors = config.error.errors
+      .map(err => {
+        const fieldPath = err.path.length > 0 ? err.path.join('.') : 'value'
+        return `"${fieldPath}": ${err.message}`
+      })
+      .join('; ')
+    throw new Error(`Validation errors - ${errors}`)
+  }
+
   await databaseDrizzle.update(connections).set({
-    folderName: config.folderName,
-    connectionMetadata: config.folderId ? {
-      folderId: config.folderId,
+    folderName: config.data.folderName,
+    connectionMetadata: config.data.folderId ? {
+      folderId: config.data.folderId,
     } : undefined,
-    partition: config.partition ?? undefined,
-    metadata: config.metadata,
+    partition: config.data.partition ?? undefined,
+    metadata: config.data.metadata,
     isConfigSet: true,
     isSyncing: true,
-  }).where(eq(connections.id, config.id))
+  }).where(eq(connections.id, config.data.connectionId))
 
   return {
-    connectionId: config.id,
+    connectionId: config.data.connectionId,
     service: "GOOGLE_DRIVE",
-    pageLimit: config.pageLimit,
-    fileLimit: config.documentLimit,
-    metadata: config.metadata,
+    pageLimit: config.data.pageLimit,
+    fileLimit: config.data.documentLimit,
+    metadata: config.data.metadata,
     files: [],
     links: []
   }

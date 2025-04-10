@@ -4,7 +4,7 @@ import { checkAuth } from "@/lib/api_key";
 import { tryAndCatch } from "@/lib/try-catch";
 import { addToProcessFilesQueue } from "@/workers/queues/jobs/processFiles.job";
 import { NextRequest, NextResponse } from "next/server";
-import { APIError } from "openai";
+import { APIError } from "@/lib/APIError";
 
 export async function POST(request: NextRequest) {
   const wait = request.nextUrl.searchParams.get("wait")

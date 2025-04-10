@@ -5,7 +5,6 @@ import { TQueue } from "@/workers/queues/jobs/processFiles.job";
 import { setGoogleDriveConnection } from "@/DataSource/GoogleDrive/setGoogleDriveConnection";
 import { setDirectUploadConnection, updateDirectUploadConnection } from "@/DataSource/DirectUpload/setDirectUploadConnection";
 
-
 export const getConnectionToken = async (connection: ConnectionTable) => {
   switch (connection.service) {
     case "GOOGLE_DRIVE":
