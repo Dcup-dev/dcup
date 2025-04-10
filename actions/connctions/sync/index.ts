@@ -10,7 +10,7 @@ import { revalidatePath } from "next/cache";
 import { z } from "zod"
 
 const syncConnectionSchema = z.object({
-  id: z.string().min(2),
+  connectionId: z.string().min(2),
   pageLimit: z.string().transform((str, ctx): number | null => {
     try {
       if (str) return parseInt(str)
@@ -40,22 +40,22 @@ export const syncConnectionConfig = async (_: FormState, formData: FormData) => 
 
   try {
     if (!session?.user?.email) throw new Error("forbidden");
-    const { id, pageLimit, fileLimitd } = syncConnectionSchema.parse({
-      id: formData.get("id"),
+    const { connectionId, pageLimit, fileLimitd } = syncConnectionSchema.parse({
+      connectionId: formData.get("connectionId"),
       pageLimit: formData.get("pageLimit"),
       fileLimitd: formData.get("fileLimit")
     })
 
     const conn = await databaseDrizzle.update(connections).set({
       isSyncing: true,
-    }).where(eq(connections.id, id))
+    }).where(eq(connections.id, connectionId))
       .returning({
         metadata: connections.metadata,
         service: connections.service,
       })
 
     await addToProcessFilesQueue({
-      connectionId: id,
+      connectionId: connectionId,
       service: conn[0].service,
       metadata: conn[0].metadata || null,
       pageLimit: pageLimit,

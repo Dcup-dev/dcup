@@ -27,7 +27,7 @@ export const SyncConnection = ({ connection, status }: {
     startTransition(async () => {
       try {
         const formData = new FormData();
-        formData.set("id", connection.id)
+        formData.set("connectionId", connection.id)
         formData.set("pageLimit", connection.files.reduce((s, f) => s + f.totalPages, 0).toString())
         formData.set("fileLimit", connection.files.length.toString())
         const res = await syncConnectionConfig(EMPTY_FORM_STATE, formData)
