@@ -3,8 +3,9 @@ import { tryAndCatch } from "@/lib/try-catch";
 import { NextRequest, NextResponse } from "next/server";
 import { APIError } from "@/lib/APIError";
 import { databaseDrizzle } from "@/db";
-import { users } from "@/db/schemas/users";
-import { eq, sql } from "drizzle-orm";
+import { eq } from "drizzle-orm";
+import { connections } from "@/db/schemas/connections";
+import { qdrant_collection_name, qdrantCLient } from "@/qdrant";
 
 type Params = {
   params: Promise<{
@@ -21,21 +22,6 @@ export async function GET(request: NextRequest, { params }: Params) {
         code: authError.code,
         message: authError.message,
       }, { status: authError.status })
-    }
-
-    const { error: updateApiCallsError } = await tryAndCatch(databaseDrizzle
-      .update(users)
-      .set({ apiCalls: sql`${users.apiCalls} + 1` })
-      .where(eq(users.id, userId)))
-
-    if (updateApiCallsError) {
-      return NextResponse.json(
-        {
-          code: "forbidden",
-          message: "The requested resource was not found.",
-        },
-        { status: 403 },
-      )
     }
 
     const { id } = await params
@@ -95,6 +81,74 @@ export async function GET(request: NextRequest, { params }: Params) {
     }
 
     return NextResponse.json(response, { status: 200 });
+  } catch (error: any) {
+    return NextResponse.json(
+      { code: "internal_server_error", message: error.message },
+      { status: 500 },
+    );
+  }
+}
+
+export async function DELETE(request: NextRequest, { params }: Params) {
+  const wait = request.nextUrl.searchParams.get("wait")
+
+  try {
+    const { data: userId, error: authError } = await tryAndCatch<string, APIError>(checkAuth(request))
+    if (authError) {
+      return NextResponse.json({
+        code: authError.code,
+        message: authError.message,
+      }, { status: authError.status })
+    }
+
+    const { id } = await params
+    const { data: conn, error: deleteError } = await tryAndCatch(databaseDrizzle.query.connections.findFirst({
+      where: (conn, ops) => ops.and(ops.eq(conn.id, id), ops.eq(conn.userId, userId)),
+      columns: {},
+      with: {
+        files: {
+          columns: {
+            chunksIds: true
+          }
+        }
+      }
+    }))
+
+    if (deleteError) {
+      return NextResponse.json(
+        {
+          code: "internal_server_error",
+          message: deleteError.message,
+        },
+        { status: 500 },
+      )
+    }
+    if (!conn) {
+      return NextResponse.json(
+        {
+          code: "not_found",
+          message: "Connection Not Found",
+        },
+        { status: 404 },
+      )
+    }
+
+    for (const { chunksIds } of conn.files) {
+      await qdrantCLient.delete(qdrant_collection_name, {
+        points: chunksIds,
+        wait: wait === "true",
+      })
+    }
+
+    await databaseDrizzle
+      .delete(connections)
+      .where(eq(connections.id, id))
+
+    return NextResponse.json({
+      code: "ok",
+      message: "Connection has been successfully deleted",
+    }, { status: 200 })
+
   } catch (error: any) {
     return NextResponse.json(
       { code: "internal_server_error", message: error.message },
