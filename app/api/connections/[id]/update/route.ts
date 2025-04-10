@@ -13,7 +13,7 @@ type Params = {
   }>
 }
 
-export async function POST(request: NextRequest, { params }: Params) {
+export async function PUT(request: NextRequest, { params }: Params) {
   const wait = request.nextUrl.searchParams.get("wait")
 
   try {
