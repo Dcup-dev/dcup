@@ -22,7 +22,7 @@ export async function deleteConnectionConfig(_: FormState, formData: FormData) {
   try {
     if (!session?.user?.id) throw new Error("forbidden");
     const { id } = deleteConnectionSchema.parse({
-      id: formData.get("id"),
+      id: formData.get("connectionId"),
     })
 
     const connectionChunksIds = await databaseDrizzle

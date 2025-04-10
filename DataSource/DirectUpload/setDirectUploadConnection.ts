@@ -84,7 +84,7 @@ const updateDirectUploadConfig = z.object({
 
 export const updateDirectUploadConnection = async (formData: FormData) => {
 
-  const config = updateDirectUploadConfig.parse({
+  const config = updateDirectUploadConfig.safeParse({
     connectionId: formData.get("connectionId"),
     metadata: formData.get("metadata") || "{}",
     files: formData.getAll("files") || [],
@@ -92,13 +92,23 @@ export const updateDirectUploadConnection = async (formData: FormData) => {
     removedFiles: formData.getAll("removedFiles") || []
   })
 
+  if (!config.success) {
+    const errors = config.error.errors
+      .map(err => {
+        const fieldPath = err.path.length > 0 ? err.path.join('.') : 'value'
+        return `"${fieldPath}": ${err.message}`
+      })
+      .join('; ')
+    throw new Error(`Validation errors - ${errors}`)
+  }
+
   const connectionChunksIds: { chunksIds: string[] }[] = [];
 
-  for (const fileName of config.removedFiles) {
+  for (const fileName of config.data.removedFiles) {
     const files = await databaseDrizzle
       .delete(processedFiles)
       .where(and(
-        eq(processedFiles.connectionId, config.connectionId),
+        eq(processedFiles.connectionId, config.data.connectionId),
         eq(processedFiles.name, fileName)
       )).returning({ chunksIds: processedFiles.chunksIds })
     connectionChunksIds.push(...files)
@@ -110,7 +120,7 @@ export const updateDirectUploadConnection = async (formData: FormData) => {
     })
   }
 
-  const files = config.files.map(async (file) => ({
+  const files = config.data.files.map(async (file) => ({
     name: file.name,
     size: file.size,
     type: file.type,
@@ -119,11 +129,11 @@ export const updateDirectUploadConnection = async (formData: FormData) => {
   }))
 
   return {
-    connectionId: config.connectionId,
+    connectionId: config.data.connectionId,
     service: "DIRECT_UPLOAD",
-    metadata: config.metadata,
+    metadata: config.data.metadata,
     files: await Promise.all(files),
-    links: config.links,
+    links: config.data.links,
     pageLimit: null,
     fileLimit: null
   }

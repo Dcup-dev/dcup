@@ -94,7 +94,6 @@ export async function GET(request: NextRequest, { params }: Params) {
       files: conn.files,
     }
 
-
     return NextResponse.json(response, { status: 200 });
   } catch (error: any) {
     return NextResponse.json(

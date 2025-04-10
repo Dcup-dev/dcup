@@ -25,7 +25,7 @@ export const DeleteConnection = ({ connection, status }: { connection: Connectio
     startTransition(async () => {
       try {
         const formData = new FormData();
-        formData.set("id", connection.id)
+        formData.set("connectionId", connection.id)
         formData.set("service", connection.service)
         formData.set("metadata", JSON.stringify(connection.connectionMetadata))
         const res = await deleteConnectionConfig(EMPTY_FORM_STATE, formData)
