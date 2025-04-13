@@ -12,12 +12,8 @@ import { users } from "./users"
 import { relations } from "drizzle-orm";
 export const connectionEnum = pgEnum('connectors', [
   'GOOGLE_DRIVE',
-  'AWS',
-  'NOTION',
-  'SLACK',
-  'GMAIL',
-  'CONFLUENCE',
-  'DIRECT_UPLOAD'
+  'DIRECT_UPLOAD',
+  'DROPBOX',
 ]);
 
 export const connections = pgTable("connection", {

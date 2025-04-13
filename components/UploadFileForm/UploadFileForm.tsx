@@ -21,7 +21,7 @@ import {
   TabsList,
   TabsTrigger,
 } from "@/components/ui/tabs"
-import { setConnectionConfig } from "@/actions/connctions/new"
+import { setConnectionConfig } from "@/actions/connctions/set"
 import { ChangeEvent, Dispatch, SetStateAction, useMemo, useRef, useState, useTransition } from "react"
 import { ConnectionQuery } from "@/app/(protected)/connections/page"
 import { updateConnectionConfig } from "@/actions/connctions/update"

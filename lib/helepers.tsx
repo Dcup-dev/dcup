@@ -1,10 +1,12 @@
-import { SiNotion, SiAwslambda, SiGmail, SiSlack, SiConfluence, SiGoogledrive } from "react-icons/si";
+import { SiNotion, SiAwslambda, SiGmail, SiSlack, SiConfluence, SiGoogledrive, SiDropbox } from "react-icons/si";
 import { FaCloud } from "react-icons/fa";
 
 export const getServiceIcon = (service: string) => {
   switch (service) {
     case 'GOOGLE_DRIVE':
       return <SiGoogledrive className="w-5 h-5" />;
+    case "DROPBOX":
+      return <SiDropbox className="w-5 h-5" />
     case 'AWS':
       return <SiAwslambda className="w-5 h-5" />;
     case 'NOTION':

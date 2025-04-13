@@ -1,8 +1,8 @@
 import { Card } from '../ui/card'
-import { Button } from '../ui/button'
-import { FaGoogleDrive } from "react-icons/fa";
-import Link from "next/link"
+import { FaGoogleDrive, FaDropbox } from "react-icons/fa";
 import { authGoogleDrive } from '@/fileProcessors/connectors/googleDrive';
+import { authDropbox } from '@/fileProcessors/connectors/dropbox';
+import { ConnectionBtn } from './ConnectionBtn';
 
 export const Connectors = async () => {
   const connectors = [
@@ -13,6 +13,13 @@ export const Connectors = async () => {
       description: 'Connect your Google Drive to access documents and files',
       link: authGoogleDrive,
     },
+    {
+      id: "dropbox",
+      name: "Dropbox",
+      icon: <FaDropbox className='w-6 h-6' />,
+      description: 'Connect your Dropbox to access documents and files',
+      link: authDropbox,
+    }
     // {
     //   id: 'aws',
     //   name: 'AWS',
@@ -52,7 +59,7 @@ export const Connectors = async () => {
 
   return (<>
     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-      {connectors.map((connector) => {
+      {connectors.map(async (connector) => {
         return (
           <Card
             key={connector.id}
@@ -66,9 +73,7 @@ export const Connectors = async () => {
                 <h3 className="text-xl font-semibold">{connector.name}</h3>
               </div>
               <p className="text-muted-foreground mb-6">{connector.description}</p>
-              <Button className="w-full" asChild size='lg'>
-                <Link href={connector.link()}>Connect</Link>
-              </Button>
+              <ConnectionBtn connection={connector.id} />
             </div>
           </Card>
         );
