@@ -7,7 +7,6 @@ import { z } from "zod";
 const directUploadConfig = z.object({
   userId: z.string().min(5),
   uploadName: z.string().min(1, { message: "Upload Name is required" }),
-  partition: z.string().default("default").nullable(),
   metadata: z.string()
     .transform((str, ctx): string => {
       try {
@@ -144,7 +143,6 @@ export const setDirectUploadConnection = async (formData: FormData) => {
   const config = directUploadConfig.safeParse({
     userId: formData.get("userId"),
     uploadName: formData.get("uploadName"),
-    partition: formData.get("partition"),
     metadata: formData.get("metadata") || "{}",
     pageLimit: formData.get("pageLimit"),
     documentLimit: formData.get("documentLimit"),
@@ -162,7 +160,7 @@ export const setDirectUploadConnection = async (formData: FormData) => {
     throw new Error(`Validation errors - ${errors}`)
   }
 
-  const { files, links, userId, uploadName, partition, metadata, documentLimit, pageLimit } = config.data;
+  const { files, links, userId, uploadName, metadata, documentLimit, pageLimit } = config.data;
 
   if (files.length === 0 && links.length === 0) {
     throw new Error('Please provide at least one file or link to proceed.')
@@ -172,7 +170,6 @@ export const setDirectUploadConnection = async (formData: FormData) => {
     userId: userId,
     identifier: uploadName,
     service: 'DIRECT_UPLOAD',
-    partition: partition || undefined,
     metadata: metadata,
     isConfigSet: true,
     isSyncing: true,

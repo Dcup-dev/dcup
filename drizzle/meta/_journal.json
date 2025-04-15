@@ -50,6 +50,20 @@
       "when": 1744043197392,
       "tag": "0006_large_bruce_banner",
       "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1744472067619,
+      "tag": "0007_rapid_sentinel",
+      "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "7",
+      "when": 1744709155840,
+      "tag": "0008_lowly_white_tiger",
+      "breakpoints": true
     }
   ]
 }

@@ -3,8 +3,9 @@ import { connections } from "@/db/schemas/connections";
 import { eq } from "drizzle-orm";
 import { connectionConfig } from "../utils";
 
-export const setGoogleDriveConnection = async (formData: FormData) => {
-  const config = connectionConfig.safeParse({
+
+export const setDropboxConnection = async (formData: FormData) => {
+ const config = connectionConfig.safeParse({
     connectionId: formData.get("connectionId"),
     identifier:formData.get("connectionName"),
     folderName: formData.get("folderName"),
@@ -36,7 +37,7 @@ export const setGoogleDriveConnection = async (formData: FormData) => {
 
   return {
     connectionId: config.data.connectionId,
-    service: "GOOGLE_DRIVE",
+    service: "DROPBOX",
     pageLimit: config.data.pageLimit,
     fileLimit: config.data.documentLimit,
     metadata: config.data.metadata,
