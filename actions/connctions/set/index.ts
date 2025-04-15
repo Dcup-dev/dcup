@@ -16,7 +16,6 @@ export async function setConnectionConfig(_: FormState, formData: FormData) {
     if (!session?.user?.id) throw new Error("forbidden");
     formData.set("userId", session.user.id)
     const config = await setConnectionToProcess(formData)
-
     await addToProcessFilesQueue(config)
     revalidatePath("/connections");
     return toFormState("SUCCESS", "start processing");

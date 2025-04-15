@@ -7,7 +7,6 @@ import { UpdateConfigDirect } from './DirectUpload/UpdateConfigDirect/UpdateConf
 import { ConfigDropbox } from './Dropbox/ConfigDropbox';
 import { DropboxPickerProvider } from './Dropbox/DropboxPicker/dropbox-picker.context';
 
-
 export const DataSource = ({ connection, token, status }: { connection: ConnectionQuery, token: string | undefined | null, status: "PROCESSING" | "FINISHED" | undefined }) => {
   switch (connection.service) {
     case "GOOGLE_DRIVE":

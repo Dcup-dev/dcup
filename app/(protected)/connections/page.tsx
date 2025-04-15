@@ -80,7 +80,6 @@ async function CurrentConnections({ connections }: { connections: ConnectionQuer
             <TableRow>
               <TableHead className="w-[200px]">Source</TableHead>
               <TableHead>Directory</TableHead>
-              <TableHead>Partition</TableHead>
               <TableHead>Documents</TableHead>
               <TableHead>Pages</TableHead>
               <TableHead>Date Added</TableHead>

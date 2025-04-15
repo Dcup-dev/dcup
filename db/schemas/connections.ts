@@ -28,7 +28,6 @@ export const connections = pgTable("connection", {
   credentials: jsonb("credentials"),
   connectionMetadata: jsonb("connection_metadata"),
   folderName: text("folder_name").default("*"),
-  partition: text("partition").default("default").notNull(),
   metadata: text("metadata"),
   lastSynced: timestamp("last_synced", { withTimezone: true }),
   isSyncing: boolean("is_syncing").default(false).notNull(),

@@ -51,7 +51,6 @@ export default function Connections({ connections, tokens }: { connections: Conn
         </p>
       </TableCell>
       <TableCell>{connection.folderName || 'Untitled'}</TableCell>
-      <TableCell>{connection.partition || 'default'}</TableCell>
       <TableCell>{progress?.processedFile || connection.files.reduce((sum, file) => sum + file.totalPages, 0)}</TableCell>
       <TableCell>{progress?.processedPage || connection.files.length}</TableCell>
       <TableCell>

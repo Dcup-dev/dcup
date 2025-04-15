@@ -89,10 +89,10 @@ export const ConfigConnection = ({ connection, directory, status, open, setOpen,
       <form action={handleSetConfig}>
         <div className="grid gap-4 py-4">
           <div className="grid w-full max-w-sm items-center gap-1.5">
-            <Label htmlFor="uploadName">Connection Name</Label>
+            <Label htmlFor="connectionName">Connection Name</Label>
             <Input
               id="connectionName"
-              name="connnectionName"
+              name="connectionName"
               defaultValue={connection ? connection.identifier : ""}
               placeholder="Unique connection name"
             />

@@ -17,10 +17,11 @@ export function DropboxPickerDialog() {
     handleBack,
     handleFolderSelect,
     handleFolderNavigate,
-    setSelectedDirectory
+    setSelectedDirectory,
+    error
   } = useDropboxPicker();
 
-    const handleFinalSelect = () => {
+  const handleFinalSelect = () => {
     if (selectedFolder) {
       setSelectedDirectory({
         name: selectedFolder.path_display,
@@ -29,7 +30,7 @@ export function DropboxPickerDialog() {
     } else {
       setSelectedDirectory({
         name: currentPath || 'Root',
-        id: 'root'
+        id: ''
       });
     }
     closePicker();
@@ -67,7 +68,10 @@ export function DropboxPickerDialog() {
         </div>
 
         <ScrollArea className="h-64 rounded-lg border">
-          {loading ? (
+          {error ? (<div className="p-4 text-center text-sm text-muted-foreground">
+            {error}
+          </div>
+          ) : loading ? (
             <div className="p-4 text-center text-sm text-muted-foreground">
               Loading folders...
             </div>

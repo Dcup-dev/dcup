@@ -57,6 +57,13 @@
       "when": 1744472067619,
       "tag": "0007_rapid_sentinel",
       "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "7",
+      "when": 1744709155840,
+      "tag": "0008_lowly_white_tiger",
+      "breakpoints": true
     }
   ]
 }

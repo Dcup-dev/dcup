@@ -21,8 +21,9 @@ type DropboxPickerContextType = {
   handleBack: () => void;
   handleFolderSelect: (folder: DropboxFolder) => void;
   handleFolderNavigate: (folder: DropboxFolder) => void;
-    selectedDirectory: { name: string; id: string } | null;
+  selectedDirectory: { name: string; id: string } | null;
   setSelectedDirectory: (dir: { name: string; id: string } | null) => void;
+  error: string
 };
 
 const DropboxPickerContext = createContext<DropboxPickerContextType | null>(null);
@@ -36,10 +37,11 @@ export function DropboxPickerProvider({ children }: { children: ReactNode }) {
   const [selectedFolder, setSelectedFolder] = useState<DropboxFolder | null>(null);
   const [pathHistory, setPathHistory] = useState<string[]>([]);
   const [accessToken, setAccessToken] = useState('');
-  const [selectedDirectory, setSelectedDirectory] = useState<{ 
-  name: string; 
-  id: string 
-} | null>(null);
+  const [error, setError] = useState('')
+  const [selectedDirectory, setSelectedDirectory] = useState<{
+    name: string;
+    id: string
+  } | null>(null);
 
   const fetchFolders = async (path: string) => {
     const url = cursor
@@ -62,9 +64,9 @@ export function DropboxPickerProvider({ children }: { children: ReactNode }) {
       },
       body: JSON.stringify(body),
     });
-
-    if (!response.ok) throw new Error('Failed to fetch folders');
-    return response.json();
+    const res = await response.json()
+    if (!response.ok) throw new Error('Failed to fetch folders\n' + res.error_summary);
+    return res
   };
 
   const loadFolders = async (path: string = '') => {
@@ -74,8 +76,8 @@ export function DropboxPickerProvider({ children }: { children: ReactNode }) {
       const folders = data.entries.filter((e: any) => e['.tag'] === 'folder');
       setFolders(folders);
       setCursor(data.has_more ? data.cursor : null);
-    } catch (error) {
-      console.error(error);
+    } catch (error: any) {
+      setError(error.message)
     } finally {
       setLoading(false);
     }
@@ -105,7 +107,6 @@ export function DropboxPickerProvider({ children }: { children: ReactNode }) {
   };
 
   const handleFolderSelect = (folder: DropboxFolder) => {
-    console.log({ folder })
     setSelectedFolder(folder);
   };
 
@@ -136,7 +137,8 @@ export function DropboxPickerProvider({ children }: { children: ReactNode }) {
         handleFolderSelect,
         handleFolderNavigate,
         selectedDirectory,
-        setSelectedDirectory
+        setSelectedDirectory,
+        error
       }}
     >
       {children}

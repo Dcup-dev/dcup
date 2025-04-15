@@ -84,12 +84,11 @@ export async function GET(request: Request) {
           identifier: email + shortId(10),
           service: 'DROPBOX',
           connectionMetadata: {
-            folderId: "root"
+            folderId: ""
           },
           credentials: {
             accessToken: data.access_token,
             refreshToken: data.refresh_token,
-            expiresIn: data.expires_in,
           },
         })
         .onConflictDoUpdate({

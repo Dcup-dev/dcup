@@ -6,13 +6,10 @@ import { useTransition } from "react";
 import { EMPTY_FORM_STATE } from "@/lib/zodErrorHandle";
 import { toast } from "@/hooks/use-toast";
 import { Loader2 } from "lucide-react";
-import { useRouter } from 'next/navigation'
 
 
 export const ConnectionBtn = ({ connection }: { connection: string }) => {
   const [isPending, startTransition] = useTransition();
-  const route = useRouter()
- 
   const handleConnection = () => {
     startTransition(async () => {
       const formData = new FormData();
@@ -23,8 +20,7 @@ export const ConnectionBtn = ({ connection }: { connection: string }) => {
         if (res.status !== 'SUCCESS') {
           throw new Error(res.message)
         }
-        route.push(res.message)
-        
+        window.location.href = res.message
       } catch (error: any) {
         toast({
           variant: "destructive",
