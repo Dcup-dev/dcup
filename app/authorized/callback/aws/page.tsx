@@ -10,7 +10,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { FaAws, FaKey, FaLock, FaGlobe, FaServer } from "react-icons/fa";
 import { useActionState } from "react";
-import { authorizeAWS } from "@/actions/connctions/new";
+import { authorizeAWS } from "@/actions/aws";
 import { EMPTY_FORM_STATE } from "@/lib/zodErrorHandle";
 import { useFormStatus } from "react-dom";
 import { RotateCcwIcon, TriangleAlertIcon } from "lucide-react";
