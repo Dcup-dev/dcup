@@ -6,7 +6,7 @@ import { AnimatedSvgEdge } from "../animated-svg-edge";
 import { FcGoogle } from 'react-icons/fc';
 import { FiCloud } from 'react-icons/fi';
 import { ConnectionQuery } from "@/app/(protected)/connections/page";
-import { FaAws, FaCloud, FaSlack } from "react-icons/fa";
+import { FaAws, FaCloud, FaSlack, FaDropbox } from "react-icons/fa";
 import { RiNotionFill } from "react-icons/ri";
 import { SiConfluence, SiGmail } from "react-icons/si";
 
@@ -43,8 +43,8 @@ export const CustomNode = ({ id, data }: NodeProps) => {
               {getConnectionIcone(data.service as string)}
             </div>
             <div className="flex-1 overflow-hidden">
-              <p className="text-xs font-medium text-gray-700 dark:text-gray-200 truncate">
-                {(data.service as string).replace('_', ' ')}
+              <p className="text-xs font-medium text-gray-700 dark:text-gray-200 truncate capitalize">
+                {(data.service as string).replace('_', ' ').toLowerCase()}
               </p>
               <p className="text-[0.7rem] text-gray-500 dark:text-gray-400 mt-0.5 truncate">
                 {data.account as string}
@@ -114,6 +114,8 @@ const getConnectionIcone = (service: string) => {
       return <FcGoogle className="w-4 h-4" />
     case "AWS":
       return <FaAws className="w-4 h-4" />
+    case "DROPBOX":
+      return <FaDropbox className='w-4 h-4' />
     case "NOTION":
       return <RiNotionFill className="w-4 h-4" />
     case "SLACK":
