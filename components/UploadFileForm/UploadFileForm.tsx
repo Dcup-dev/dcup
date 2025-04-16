@@ -21,7 +21,7 @@ import {
   TabsList,
   TabsTrigger,
 } from "@/components/ui/tabs"
-import { setConnectionConfig } from "@/actions/connctions/new"
+import { setConnectionConfig } from "@/actions/connctions/set"
 import { ChangeEvent, Dispatch, SetStateAction, useMemo, useRef, useState, useTransition } from "react"
 import { ConnectionQuery } from "@/app/(protected)/connections/page"
 import { updateConnectionConfig } from "@/actions/connctions/update"
@@ -76,8 +76,7 @@ export const UploadFileForm = ({ setOpen, connection }: TFileForm) => {
 
   return (
     <form action={handleUploadFiles}>
-      <div className="flex justify-between items-center gap-5">
-        <div className="grid w-full max-w-sm items-center gap-1.5">
+        <div className="grid w-full max-w-sm items-center gap-1.5 pb-2">
           <Label htmlFor="uploadName">Upload Name</Label>
           <Input
             id="uploadName"
@@ -87,18 +86,6 @@ export const UploadFileForm = ({ setOpen, connection }: TFileForm) => {
             placeholder="Unique upload name"
           />
         </div>
-        <div className="grid gap-4 py-4">
-          <div>
-            <label className="block text-sm font-medium">Partition</label>
-            <Input
-              id="partition"
-              name="partition"
-              defaultValue={"default"}
-              placeholder="default"
-            />
-          </div>
-        </div>
-      </div>
 
       <div>
         <label className="block text-sm font-medium">Metadata (JSON)</label>
