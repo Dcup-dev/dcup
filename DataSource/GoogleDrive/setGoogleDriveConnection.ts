@@ -25,6 +25,7 @@ export const setGoogleDriveConnection = async (formData: FormData) => {
   }
 
   await databaseDrizzle.update(connections).set({
+    identifier: config.data.identifier,
     folderName: config.data.folderName,
     connectionMetadata: config.data.folderId ? {
       folderId: config.data.folderId,
