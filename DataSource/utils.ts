@@ -40,5 +40,3 @@ export const connectionConfig = z.object({
     }
   }),
 })
-
-
