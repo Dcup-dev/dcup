@@ -9,11 +9,12 @@ export const ConfigAws = ({ connection, status }: {
   token: string | null | undefined,
   status: "PROCESSING" | "FINISHED" | undefined
 }) => {
+  const { folderId } = connection.connectionMetadata as { folderId?: string }
   const [open, setOpen] = useState(false);
   const [openPicker, setOpenPicker] = useState(false)
   const [directory, setDirectory] = useState<{ name: string, id: string | null }>({
     name: connection.folderName || "",
-    id: null,
+    id: folderId || null,
   });
 
 

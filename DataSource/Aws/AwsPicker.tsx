@@ -1,7 +1,8 @@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { ChevronLeft, ChevronRight, Folder, FolderOpen, PaintBucket } from 'lucide-react';
+import { TbBucket } from "react-icons/tb";
+import { ChevronLeft, ChevronRight, Folder, FolderOpen } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { loadBuckets, loadFolders } from '@/actions/aws';
 import { EMPTY_FORM_STATE } from '@/lib/zodErrorHandle';
@@ -189,7 +190,7 @@ export function S3PickerDialog({
                   className="w-full justify-start gap-3 h-12"
                   onClick={() => handleLoadFolders(bucket)}
                 >
-                  <PaintBucket className="w-5 h-5 text-[#FF9900]" />
+                  <TbBucket className="w-5 h-5 text-[#FF9900]" />
                   <span className="truncate">{bucket}</span>
                 </Button>
               ))}

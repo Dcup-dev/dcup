@@ -45,6 +45,14 @@ export const directProcessFiles = async ({ files, metadata, service, connectionI
     } as FileContent;
   });
 
+  await publishProgress({
+    connectionId: connectionId,
+    processedFile: 0,
+    processedPage: 0,
+    lastAsync: new Date(),
+    status: 'PROCESSING',
+  })
+
   const filesContent = await Promise.all([...filePromises, ...linkPromises]);
   return processFiles(filesContent, service, connectionId, pageLimit, fileLimit)
 }
@@ -55,6 +63,14 @@ export const connectionProcessFiles = async ({ connectionId, service, pageLimit,
     where: (c, ops) => ops.eq(c.id, connectionId)
   })
   if (!connection) return;
+
+  await publishProgress({
+    connectionId: connectionId,
+    processedFile: 0,
+    processedPage: 0,
+    lastAsync: new Date(),
+    status: 'PROCESSING',
+  })
 
   const filesContent = await getFileContent(connection)
   return processFiles(filesContent, service, connectionId, pageLimit, fileLimit)
@@ -73,14 +89,6 @@ const processFiles = async (filesContent: FileContent[], service: string, connec
     keepSeparator: true,
     separators: ["\n\n## ", "\n\n# ", "\n\n", "\n", ". ", "! ", "? ", " "],
   });
-
-  await publishProgress({
-    connectionId: connectionId,
-    processedFile: processedAllPages,
-    processedPage: processedPage,
-    lastAsync: now,
-    status: 'PROCESSING',
-  })
 
   try {
     for (const [fileIndex, file] of filesContent.entries()) {
@@ -192,7 +200,7 @@ const processFiles = async (filesContent: FileContent[], service: string, connec
 const processingTextPage = async (pageText: string, pageIndex: number, baseMetadata: any, splitter: RecursiveCharacterTextSplitter) => {
   const chunks = await splitter.splitText(pageText)
   for (const [chunkIdx, chunk] of chunks.entries()) {
-    if(chunk.length === 0) continue;
+    if (chunk.length === 0) continue;
     const textHash = generateHash(chunk);
     const textMetadata = {
       ...baseMetadata,
