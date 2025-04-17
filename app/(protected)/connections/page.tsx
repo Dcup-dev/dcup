@@ -10,9 +10,9 @@ import { Table, TableBody, TableHead, TableHeader, TableRow } from "@/components
 import { getConnectionToken } from "@/fileProcessors/connectors";
 import { FiDatabase } from "react-icons/fi";
 import { SetNewConfigDirect } from "@/DataSource/DirectUpload/SetNewConfigDirect/SetNewConfigDirect";
+import { tryAndCatch } from "@/lib/try-catch";
 
 const Connections = dynamic(() => import('@/components/Connections/Connections'))
-
 
 export interface ConnectionQuery extends ConnectionTable {
   files: {
@@ -67,8 +67,8 @@ export default async function ConnectionsPage() {
 async function CurrentConnections({ connections }: { connections: ConnectionQuery[] }) {
   const tokens: ConnectionToken = new Map()
   for (const conn of connections) {
-    const token = await getConnectionToken(conn)
-    tokens.set(conn.id, token || null)
+    const { data } = await tryAndCatch(getConnectionToken(conn))
+    tokens.set(conn.id, data || null)
   }
 
   return (

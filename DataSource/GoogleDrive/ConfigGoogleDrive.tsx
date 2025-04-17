@@ -1,8 +1,8 @@
 "use client"
 import { useState } from 'react';
 import { ConnectionQuery } from '@/app/(protected)/connections/page';
-import useDrivePicker from '../GoogleDrivePicker';
 import { ConfigConnection } from '@/components/ConfigConnection/ConfigConnection';
+import useDrivePicker from './GoogleDrivePicker';
 
 export const ConfigGoogleDrive = ({ connection, token, status }: { connection: ConnectionQuery, token: string | null | undefined, status: "PROCESSING" | "FINISHED" | undefined }) => {
   const [open, setOpen] = useState(false)

@@ -2,10 +2,11 @@
 import { ConnectionQuery } from '@/app/(protected)/connections/page'
 import { SyncConnection } from '@/components/SyncConnection/SyncConnection';
 import { DeleteConnection } from '@/components/DeleteConnection/DeleteConnection';
-import { ConfigGoogleDrive } from './GoogleDrive/ConfigGoogleDrive/ConfigGoogleDrive';
 import { UpdateConfigDirect } from './DirectUpload/UpdateConfigDirect/UpdateConfigDirect';
 import { ConfigDropbox } from './Dropbox/ConfigDropbox';
 import { DropboxPickerProvider } from './Dropbox/DropboxPicker/dropbox-picker.context';
+import { ConfigGoogleDrive } from './GoogleDrive/ConfigGoogleDrive';
+import { ConfigAws } from './Aws/ConfigAws';
 
 export const DataSource = ({ connection, token, status }: { connection: ConnectionQuery, token: string | undefined | null, status: "PROCESSING" | "FINISHED" | undefined }) => {
   switch (connection.service) {
@@ -29,6 +30,12 @@ export const DataSource = ({ connection, token, status }: { connection: Connecti
         </DropboxPickerProvider>
         <DeleteConnection connection={connection} status={status} />
       </>
+    case 'AWS': 
+      return <>
+      {connection.isConfigSet && <SyncConnection connection={connection} status={status} />}
+      <ConfigAws connection={connection} status={status} token={token} />
+      <DeleteConnection connection={connection} status={status} />
+    </>
     default:
       return <>
         {connection.isConfigSet && <SyncConnection connection={connection} status={status} />}
