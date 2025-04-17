@@ -33,7 +33,7 @@ export default function Connections({ connections, tokens }: { connections: Conn
 
     return () => eventSource.close()
 
-  }, [setConnProgress, connProgress])
+  }, [])
 
   return connections.map(connection => {
     const progress = connection.id === connProgress?.connectionId ? connProgress : null;
@@ -51,8 +51,8 @@ export default function Connections({ connections, tokens }: { connections: Conn
         </p>
       </TableCell>
       <TableCell>{connection.folderName || 'Untitled'}</TableCell>
-      <TableCell>{progress?.processedFile || connection.files.reduce((sum, file) => sum + file.totalPages, 0)}</TableCell>
-      <TableCell>{progress?.processedPage || connection.files.length}</TableCell>
+      <TableCell>{progress?.processedFile ?? connection.files.reduce((sum, file) => sum + file.totalPages, 0)}</TableCell>
+      <TableCell>{progress?.processedPage ?? connection.files.length}</TableCell>
       <TableCell>
         <span>{!isMounted ? "Loading..." : timeAgo(connection.createdAt)}</span>
       </TableCell>
