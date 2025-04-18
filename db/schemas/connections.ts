@@ -14,6 +14,7 @@ export const connectionEnum = pgEnum('connectors', [
   'GOOGLE_DRIVE',
   'DIRECT_UPLOAD',
   'DROPBOX',
+  'AWS'
 ]);
 
 export const connections = pgTable("connection", {

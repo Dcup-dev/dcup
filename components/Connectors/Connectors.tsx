@@ -3,6 +3,7 @@ import { FaGoogleDrive, FaDropbox } from "react-icons/fa";
 import { authGoogleDrive } from '@/fileProcessors/connectors/googleDrive';
 import { authDropbox } from '@/fileProcessors/connectors/dropbox';
 import { ConnectionBtn } from './ConnectionBtn';
+import { SiAwslambda } from 'react-icons/si';
 
 export const Connectors = async () => {
   const connectors = [
@@ -19,14 +20,14 @@ export const Connectors = async () => {
       icon: <FaDropbox className='w-6 h-6' />,
       description: 'Connect your Dropbox to access documents and files',
       link: authDropbox,
-    }
-    // {
-    //   id: 'aws',
-    //   name: 'AWS',
-    //   icon: <SiAwslambda className="w-6 h-6" />,
-    //   description: 'Integrate with AWS services and storage',
-    //   link: () => "/"
-    // },
+    },
+    {
+      id: 'aws',
+      name: 'AWS',
+      icon: <SiAwslambda className="w-6 h-6" />,
+      description: 'Integrate with AWS services and storage',
+      link: () => "/connection/new/aws"
+    },
     // {
     //   id: 'notion',
     //   name: 'Notion',

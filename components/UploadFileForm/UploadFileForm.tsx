@@ -1,7 +1,7 @@
 import { Button } from "@/components/ui/button"
 import { Label } from "@/components/ui/label"
 import { AlertCircle, Link, Loader2, UploadCloud, XCircleIcon } from "lucide-react"
-import { EMPTY_FORM_STATE, FormState } from "@/lib/zodErrorHandle"
+import { EMPTY_FORM_STATE } from "@/lib/zodErrorHandle"
 import { toast } from "@/hooks/use-toast"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
@@ -24,7 +24,6 @@ import {
 import { setConnectionConfig } from "@/actions/connctions/set"
 import { ChangeEvent, Dispatch, SetStateAction, useMemo, useRef, useState, useTransition } from "react"
 import { ConnectionQuery } from "@/app/(protected)/connections/page"
-import { updateConnectionConfig } from "@/actions/connctions/update"
 
 type TFileForm = {
   setOpen: Dispatch<SetStateAction<boolean>>;
@@ -34,25 +33,22 @@ type TFileForm = {
 export const UploadFileForm = ({ setOpen, connection }: TFileForm) => {
   const [links, setLinks] = useState<string[]>([]);
   const [files, setFiles] = useState<File[]>([]);
-  const [removedFiles, setRemovedFiles] = useState<string[]>([]);  
+  const [removedFiles, setRemovedFiles] = useState<string[]>([]);
   const [pending, startTransition] = useTransition();
 
   const handleUploadFiles = async (data: FormData) => {
     links.forEach((link) => data.append("links", link));
     files.forEach((file) => data.append("files", file));
     startTransition(async () => {
-      let res: FormState;
       try {
         if (connection) {
           data.set("service", "DIRECT_UPLOAD_UPDATE");
           data.set("connectionId", connection.id)
           removedFiles.forEach((fileName) => data.append("removedFiles", fileName));
-          res = await updateConnectionConfig(EMPTY_FORM_STATE, data)
         } else {
           data.set("service", "DIRECT_UPLOAD");
-          res = await setConnectionConfig(EMPTY_FORM_STATE, data);
         }
-
+        const res = await setConnectionConfig(EMPTY_FORM_STATE, data)
         if (res.status === "SUCCESS") {
           setLinks([]);
           setFiles([]);
@@ -76,16 +72,16 @@ export const UploadFileForm = ({ setOpen, connection }: TFileForm) => {
 
   return (
     <form action={handleUploadFiles}>
-        <div className="grid w-full max-w-sm items-center gap-1.5 pb-2">
-          <Label htmlFor="uploadName">Upload Name</Label>
-          <Input
-            id="uploadName"
-            name="uploadName"
-            defaultValue={connection ? connection.identifier : ""}
-            disabled={!!connection}
-            placeholder="Unique upload name"
-          />
-        </div>
+      <div className="grid w-full max-w-sm items-center gap-1.5 pb-2">
+        <Label htmlFor="uploadName">Upload Name</Label>
+        <Input
+          id="uploadName"
+          name="uploadName"
+          defaultValue={connection ? connection.identifier : ""}
+          disabled={!!connection}
+          placeholder="Unique upload name"
+        />
+      </div>
 
       <div>
         <label className="block text-sm font-medium">Metadata (JSON)</label>

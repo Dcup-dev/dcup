@@ -20,6 +20,9 @@ export async function newConnection(_: FormState, formData: FormData) {
       case "dropbox":
         redirectUrl = await authDropbox()
         break;
+      case "aws":
+        redirectUrl = "/authorized/callback/aws"
+        break;
       default:
         throw new Error("Unknown provider");
     }

@@ -33,6 +33,25 @@ export const ConfigConnection = ({ connection, directory, status, open, setOpen,
   const [isConfigSet, setIsConfigSet] = useState(connection.isConfigSet)
   const [pending, startTransition] = useTransition()
 
+  // Service-specific text configuration
+  const serviceLabels = {
+    AWS: {
+      folderLabel: "S3 Location",
+      selectButton: "Select Bucket & Folder",
+      placeholder: "No bucket selected",
+      error: "Please select an S3 bucket",
+      helpText: "Select an S3 bucket and optional folder prefix"
+    },
+    default: {
+      folderLabel: "Folder",
+      selectButton: "Select Folder",
+      placeholder: "No folder selected",
+      error: "Please select a folder",
+      helpText: ""
+    }
+  };
+  const getServiceLabel = (key: keyof typeof serviceLabels['AWS']) =>
+    connection.service === 'AWS' ? serviceLabels.AWS[key] : serviceLabels.default[key];
 
   const handleSetConfig = (data: FormData) => {
     data.set("connectionId", connection.id)
@@ -42,6 +61,7 @@ export const ConfigConnection = ({ connection, directory, status, open, setOpen,
     startTransition(async () => {
       const setConfig = async () => {
         try {
+          if (connection.service === 'AWS' && !directory.id?.split("/")[0]) throw new Error(getServiceLabel('error'));
           const res = await setConnectionConfig(EMPTY_FORM_STATE, data)
           if (res.status === 'SUCCESS') {
             setOpen(false)
@@ -102,15 +122,20 @@ export const ConfigConnection = ({ connection, directory, status, open, setOpen,
             <div className="flex items-center gap-2">
               <Input
                 value={directory?.name || connection.folderName || ""}
-                placeholder="No folder selected"
+                placeholder={getServiceLabel('placeholder')}
                 disabled={connection.isSyncing || connection.isConfigSet}
                 onClick={showPicker} type='button'
                 readOnly
               />
               <Button onClick={showPicker} type="button" disabled={connection.isSyncing || connection.isConfigSet}  >
-                Select Folder
+                {getServiceLabel('selectButton')}
               </Button>
             </div>
+            {connection.service === 'AWS' && (
+              <p className="text-xs text-muted-foreground mt-1">
+                {serviceLabels.AWS.helpText}
+              </p>
+            )}
           </div>
 
           <div>
