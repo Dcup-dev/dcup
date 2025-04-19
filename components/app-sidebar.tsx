@@ -4,7 +4,6 @@ import {
   Home,
   Plug,
   Key,
-  Github
 } from "lucide-react"
 
 import { NavMain } from "@/components/nav-main"
@@ -22,6 +21,7 @@ import {
 import { Logo } from "./Logo/logo"
 import { getServerSession } from "next-auth"
 import { authOptions } from "@/auth"
+import { FaGithub, FaSearch } from "react-icons/fa"
 
 const data = {
   navMain: [
@@ -44,6 +44,11 @@ const data = {
       icon: Key,
     },
     {
+      title: "Query",
+      url: "/query",
+      icon: FaSearch
+    },
+    {
       title: "Documentation",
       url: "https://dcup.dev/docs",
       icon: BookOpen,
@@ -58,7 +63,7 @@ const data = {
     {
       title: "Github",
       url: "https://github.com/dcup-dev/dcup",
-      icon: Github
+      icon: FaGithub
     }
   ],
 

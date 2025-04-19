@@ -96,55 +96,35 @@ const processFiles = async (filesContent: FileContent[], service: string, connec
       if (fileLimit && fileLimit > 0 && fileLimit === fileIndex) break;
       const baseMetadata = {
         _document_id: file.name,
-        _source: service,
         _metadata: {
           ...file.metadata,
+          source: service,
         },
       };
       for (const [pageIndex, page] of file.pages.entries()) {
         if (pageLimit && pageLimit > 0 && pageLimit === pageIndex) break;
-        try {
-          const textPoints = await processingTextPage(page.text, pageIndex, baseMetadata, splitter)
-          if (textPoints) {
-            allPoints.push(textPoints);
-            chunksId.push(textPoints.id)
-          }
-
-          const tablePoints = await processingTablePage(page.tables, pageIndex, baseMetadata)
-          if (tablePoints) {
-            allPoints.push(tablePoints)
-            chunksId.push(tablePoints.id)
-          }
-
-          processedAllPages += 1;
-          processedPage += 1;
-
-          await publishProgress({
-            connectionId,
-            processedPage: processedAllPages,
-            processedFile: fileIndex + 1,
-            lastAsync: now,
-            status: 'PROCESSING'
-          })
-
-        } catch (error: any) {
-          let errorMessage = "";
-          if (error instanceof Error) {
-            errorMessage = error.message;
-          } if (error.data) {
-            errorMessage = error.data
-          } else {
-            errorMessage = String(error);
-          }
-          await publishProgress({
-            connectionId: connectionId,
-            processedFile: fileIndex + 1,
-            processedPage: processedAllPages,
-            errorMessage: errorMessage,
-            lastAsync: now,
-            status: 'PROCESSING'
-          })
+        const textPoints = await processingTextPage(page.text, pageIndex, baseMetadata, splitter)
+        if (textPoints) {
+          allPoints.push(textPoints);
+          chunksId.push(textPoints.id)
         }
+
+        const tablePoints = await processingTablePage(page.tables, pageIndex, baseMetadata)
+        if (tablePoints) {
+          allPoints.push(tablePoints)
+          chunksId.push(tablePoints.id)
+        }
+
+        processedAllPages += 1;
+        processedPage += 1;
+
+        await publishProgress({
+          connectionId,
+          processedPage: processedAllPages,
+          processedFile: fileIndex + 1,
+          lastAsync: now,
+          status: 'PROCESSING'
+        })
       }
 
       completedFiles.push({
@@ -172,10 +152,6 @@ const processFiles = async (filesContent: FileContent[], service: string, connec
       )
 
     }
-    await databaseDrizzle
-      .update(connections)
-      .set({ lastSynced: now, isSyncing: false })
-      .where(eq(connections.id, connectionId))
 
     await publishProgress({
       connectionId: connectionId,
@@ -186,15 +162,27 @@ const processFiles = async (filesContent: FileContent[], service: string, connec
     })
 
   } catch (error: any) {
+    let errorMessage = "";
+    if (error instanceof Error) {
+      errorMessage = error.message;
+    } if (error.data) {
+      errorMessage = error.data
+    } else {
+      errorMessage = String(error);
+    }
     await publishProgress({
       connectionId: connectionId,
       processedFile: 0,
       processedPage: 0,
-      errorMessage: error.data,
+      errorMessage: errorMessage,
       lastAsync: now,
       status: 'FINISHED'
     })
   }
+  await databaseDrizzle
+    .update(connections)
+    .set({ lastSynced: now, isSyncing: false })
+    .where(eq(connections.id, connectionId))
 }
 
 const processingTextPage = async (pageText: string, pageIndex: number, baseMetadata: any, splitter: RecursiveCharacterTextSplitter) => {
@@ -247,8 +235,7 @@ const processingTextPage = async (pageText: string, pageIndex: number, baseMetad
 }
 
 const processingTablePage = async (tables: unknown[], pageIndex: number, baseMetadata: any) => {
-  const pageTables = tables.map(t => JSON.stringify(t)).join("\n-------------\n")
-
+  const pageTables = tables.map((t, i) => `_Table_${i + 1}:\n${JSON.stringify(t)}`).join(" ")
   const tableHash = generateHash(pageTables);
   const tableMetadata = {
     ...baseMetadata,

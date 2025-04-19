@@ -1,3 +1,4 @@
+import { authOptions } from '@/auth';
 import { databaseDrizzle } from '@/db';
 import { apiKeys, users } from '@/db/schemas/users';
 import { hashApiKey } from '@/lib/api_key';
@@ -5,6 +6,7 @@ import { expandQuery, generateHypotheticalAnswer, vectorizeText } from '@/openAi
 import { qdrant_collection_name, qdrantCLient } from '@/qdrant';
 import { RetrievalFilter } from '@/validations/retrievalsFilteringSchema'
 import { eq, sql } from 'drizzle-orm';
+import { getServerSession } from 'next-auth';
 import { NextRequest, NextResponse } from 'next/server'
 import { z } from 'zod'
 
@@ -32,7 +34,8 @@ export async function POST(request: NextRequest) {
     }
 
     const auth = request.headers.get("Authorization");
-    if (!auth || !auth.split("Bearer ")[1]) {
+    const bearer = auth?.split("Bearer ")[1]
+    if (!auth || !bearer) {
       return NextResponse.json(
         {
           code: "unauthorized",
@@ -42,13 +45,22 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const keyHashed = hashApiKey(auth.split("Bearer ")[1]);
-    const key = await databaseDrizzle
-      .select({ userId: apiKeys.userId })
-      .from(apiKeys)
-      .where(eq(apiKeys.apiKey, keyHashed))
-      .limit(1);
-    if (!key[0]?.userId) {
+    let userId: string | undefined;
+
+    if (bearer === "Dcup_Client") {
+      const session = await getServerSession(authOptions)
+      userId = session?.user.id
+    } else {
+      const keyHashed = hashApiKey(auth.split("Bearer ")[1]);
+      const key = await databaseDrizzle
+        .select({ userId: apiKeys.userId })
+        .from(apiKeys)
+        .where(eq(apiKeys.apiKey, keyHashed))
+        .limit(1);
+      userId = key[0].userId
+    }
+
+    if (!userId) {
       return NextResponse.json(
         {
           code: "forbidden",
@@ -62,7 +74,7 @@ export async function POST(request: NextRequest) {
       await databaseDrizzle
         .update(users)
         .set({ apiCalls: sql`${users.apiCalls} + 1` })
-        .where(eq(users.id, key[0].userId))
+        .where(eq(users.id, userId))
     } catch {
       return NextResponse.json(
         {
@@ -79,7 +91,7 @@ export async function POST(request: NextRequest) {
 
     const queryPoints = await qdrantCLient.search(qdrant_collection_name, {
       vector: vectors,
-      filter: { must: [{ nested: { key: "_metadata", filter: filter } }] },
+      filter: filter ? { must: [{ nested: { key: "_metadata", filter: filter}}] } : undefined,
       limit: rerank ? top_chunk * 2 : top_chunk,
       with_payload: true,
       with_vector: true
@@ -95,7 +107,6 @@ export async function POST(request: NextRequest) {
           document_name: payload._document_id,
           page_number: payload._page_number,
           chunk_number: payload._chunk_id,
-          source: payload._source,
           title: payload._title,
           summary: payload._summary,
           content: payload._content,
