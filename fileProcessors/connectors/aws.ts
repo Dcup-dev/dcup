@@ -76,7 +76,6 @@ export const readAWSFiles = async (
     return pdfFileProcessing;
 
   } catch (error: any) {
-    console.log(error)
     await publishProgress({
       connectionId: connectionId,
       processedFile: 0,

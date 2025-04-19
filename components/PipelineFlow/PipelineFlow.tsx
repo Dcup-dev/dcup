@@ -173,7 +173,7 @@ export default function PipelineFlow({ connections }: { connections: ConnectionQ
     id: `${conn.id}-to-app`,
     source: conn.isConfigSet ? conn.id : "1",
     target: 'app-logo',
-    type: "animatedSvgEdge",
+    type: conn.isSyncing ? "animatedSvgEdge" : undefined,
     data: {
       duration: 2,
       shape: "package",
