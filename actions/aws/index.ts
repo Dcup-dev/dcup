@@ -104,7 +104,6 @@ export async function loadBuckets(_: FormState, formData: FormData) {
     revalidatePath("/connections");
     return toFormState("SUCCESS", JSON.stringify(Buckets?.flatMap(b => b.Name!) || '[]') || "[]");
   } catch (e) {
-    console.log(e)
     return fromErrorToFormState(e);
   }
 }
