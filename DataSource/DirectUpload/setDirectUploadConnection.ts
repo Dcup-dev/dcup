@@ -20,7 +20,7 @@ const directUploadConfig = z.object({
         return z.NEVER
       }
     }),
-  pageLimit: z.string().nullable().transform((str, ctx): number | null => {
+  pageLimit: z.string().transform((str, ctx): number | null => {
     try {
       if (str) return parseInt(str)
       return null
@@ -33,6 +33,14 @@ const directUploadConfig = z.object({
     try {
       if (str) return parseInt(str)
       return null
+    } catch (error) {
+      ctx.addIssue({ code: 'invalid_date', message: "invalid page limit" })
+      return z.NEVER
+    }
+  }),
+  maxPages: z.string().transform((str, ctx): number => {
+    try {
+      return parseInt(str)
     } catch (error) {
       ctx.addIssue({ code: 'invalid_date', message: "invalid page limit" })
       return z.NEVER
@@ -76,7 +84,14 @@ const updateDirectUploadConfig = z.object({
       message: "Invalid File",
     })
   ),
-
+  maxPages: z.string().transform((str, ctx): number => {
+    try {
+      return parseInt(str)
+    } catch (error) {
+      ctx.addIssue({ code: 'invalid_date', message: "invalid page limit" })
+      return z.NEVER
+    }
+  }),
   links: z.array(z.string().min(5)),
   removedFiles: z.array(z.string().min(5))
 })
@@ -88,7 +103,8 @@ export const updateDirectUploadConnection = async (formData: FormData) => {
     metadata: formData.get("metadata") || "{}",
     files: formData.getAll("files") || [],
     links: formData.getAll("links") || [],
-    removedFiles: formData.getAll("removedFiles") || []
+    removedFiles: formData.getAll("removedFiles") || [],
+    maxPages: formData.get("maxPages")
   })
 
   if (!config.success) {
@@ -133,7 +149,7 @@ export const updateDirectUploadConnection = async (formData: FormData) => {
     metadata: config.data.metadata,
     files: await Promise.all(files),
     links: config.data.links,
-    pageLimit: null,
+    pageLimit: config.data.maxPages,
     fileLimit: null
   }
 }
@@ -146,6 +162,7 @@ export const setDirectUploadConnection = async (formData: FormData) => {
     metadata: formData.get("metadata") || "{}",
     pageLimit: formData.get("pageLimit"),
     documentLimit: formData.get("documentLimit"),
+    maxPages: formData.get("maxPages"),
     files: formData.getAll("files"),
     links: formData.getAll("links"),
   })
@@ -173,6 +190,8 @@ export const setDirectUploadConnection = async (formData: FormData) => {
     metadata: metadata,
     isConfigSet: true,
     isSyncing: true,
+    limitPages: pageLimit,
+    limitFiles: documentLimit,
   }).returning({ id: connections.id })
 
   const allFiles = files.map(async (file) => ({
@@ -189,7 +208,7 @@ export const setDirectUploadConnection = async (formData: FormData) => {
     metadata: metadata,
     files: await Promise.all(allFiles),
     links: links,
-    pageLimit: pageLimit,
+    pageLimit: config.data.maxPages,
     fileLimit: documentLimit
   }
 }

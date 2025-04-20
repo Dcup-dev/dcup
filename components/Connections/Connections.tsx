@@ -58,8 +58,8 @@ export default function Connections({ connections, tokens }: { connections: Conn
           </p>
         </TableCell>
         <TableCell>{connection.folderName || 'Untitled'}</TableCell>
-        <TableCell>{progress?.processedFile ?? connection.files.reduce((sum, file) => sum + file.totalPages, 0)}</TableCell>
-        <TableCell>{progress?.processedPage ?? connection.files.length}</TableCell>
+        <TableCell>{progress?.processedFile ?? connection.files.length}</TableCell>
+        <TableCell>{progress?.processedPage ?? connection.files.reduce((sum, file) => sum + file.totalPages, 0)}</TableCell>
         <TableCell>
           <span>{!isMounted ? "Loading..." : timeAgo(connection.createdAt)}</span>
         </TableCell>
@@ -97,10 +97,10 @@ const ConnectionStatus = ({ status, connection, errorMessage }: { status?: "PROC
       <TooltipTrigger>
         {status === 'PROCESSING' || (!status && connection.isSyncing) ? (
           <Pickaxe className="animate-bounce text-blue-500" />
-        ) : errorMessage ? (<X className="text-red-500" />): (<Check className={connection.isConfigSet || status ? 'text-green-500' : 'text-muted-foreground'} />)}
+        ) : errorMessage ? (<X className="text-red-500" />) : (<Check className={connection.isConfigSet || status ? 'text-green-500' : 'text-muted-foreground'} />)}
       </TooltipTrigger>
       <TooltipContent>
-        {status === 'FINISHED' || (!status && !connection.isSyncing) ?errorMessage ? "Sync Failed" : "Sync completed" : "Currently syncing"}
+        {status === 'FINISHED' || (!status && !connection.isSyncing) ? errorMessage ? "Sync Failed" : "Sync completed" : "Currently syncing"}
       </TooltipContent>
     </Tooltip>
   </TooltipProvider>)

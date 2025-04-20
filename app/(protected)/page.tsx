@@ -7,7 +7,6 @@ import { redirect } from 'next/navigation';
 import { ConnectionTable, ProcessedFilesTable } from "@/db/schemas/connections";
 import { getServiceIcon } from "@/lib/helepers";
 import { FaFilePdf } from "react-icons/fa";
-import { ApiUsageChart } from "@/components/ApiChart/ApiChart";
 import { TooltipContent, TooltipTrigger, Tooltip } from "@/components/ui/tooltip";
 import {
   Table,
@@ -17,6 +16,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table"
+import { SubscriptionCard } from "@/components/SubscriptionCard/SubscriptionCard";
 
 interface FileConnectionQuery extends ConnectionTable {
   files: ProcessedFilesTable[]
@@ -30,6 +30,7 @@ export default async function page() {
     where: (u, ops) => ops.eq(u.id, session.user.id!),
     columns: {
       apiCalls: true,
+      plan: true,
     },
     with: {
       connections: {
@@ -40,7 +41,11 @@ export default async function page() {
     }
   })
 
-  if (!user) return redirect("/login")
+  if (!user) return redirect("/api/auth/signout")
+
+  const totalPages = user.connections
+    .flatMap(conn => conn.files || [])
+    .reduce((sum, file) => sum + (file.totalPages || 0), 0);
 
   return (
     <div className="w-full flex flex-col p-4">
@@ -60,15 +65,21 @@ export default async function page() {
           </div>
         </div>
 
-        {/* API Usage Chart */}
+        {/* API Usage */}
         <div className="w-full xl:w-auto">
-          <ApiUsageChart apiUsage={user.apiCalls} />
+          <SubscriptionCard
+            plan={user.plan}
+            usage={{
+              connections: user.connections.length,
+              pages: totalPages,
+              retrievals: user.apiCalls,
+            }}
+          />
         </div>
       </div>
     </div>
   )
 }
-
 
 function FilesTable({ connections }: { connections: FileConnectionQuery[] }) {
   const allFiles = connections.flatMap(conn =>
@@ -85,7 +96,7 @@ function FilesTable({ connections }: { connections: FileConnectionQuery[] }) {
   )
 
   return (
-    <div className="relative overflow-hidden">
+    <div className="relative overflow-y-auto h-[450px]">
       <Table className="[&_td]:align-middle min-w-[700px] lg:min-w-0">
         <TableHeader className="bg-gray-50/50 dark:bg-gray-800/50">
           <TableRow className="hover:bg-transparent">

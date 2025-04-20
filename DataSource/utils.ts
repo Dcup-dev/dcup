@@ -30,6 +30,14 @@ export const connectionConfig = z.object({
       return z.NEVER
     }
   }),
+  maxPages: z.string().transform((str, ctx): number  => {
+    try {
+      return parseInt(str)
+    } catch (error) {
+      ctx.addIssue({ code: 'invalid_date', message: "invalid page limit" })
+      return z.NEVER
+    }
+  }),
   documentLimit: z.string().nullable().transform((str, ctx): number | null => {
     try {
       if (str) return parseInt(str)
