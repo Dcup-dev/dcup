@@ -1,4 +1,11 @@
 "use client"
+import { Button } from "../ui/button"
+import { FolderSync } from "lucide-react"
+import { useState, useTransition } from "react"
+import { toast } from "@/hooks/use-toast"
+import { EMPTY_FORM_STATE } from "@/lib/zodErrorHandle"
+import { ConnectionQuery } from "@/app/(protected)/connections/page"
+import { syncConnectionConfig } from "@/actions/connctions/sync"
 import {
   Dialog,
   DialogContent,
@@ -8,13 +15,6 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog"
-import { Button } from "../ui/button"
-import { FolderSync } from "lucide-react"
-import { useState, useTransition } from "react"
-import { toast } from "@/hooks/use-toast"
-import { EMPTY_FORM_STATE } from "@/lib/zodErrorHandle"
-import { ConnectionQuery } from "@/app/(protected)/connections/page"
-import { syncConnectionConfig } from "@/actions/connctions/sync"
 
 export const SyncConnection = ({ connection, status }: {
   connection: ConnectionQuery,
@@ -28,8 +28,6 @@ export const SyncConnection = ({ connection, status }: {
       try {
         const formData = new FormData();
         formData.set("connectionId", connection.id)
-        formData.set("pageLimit", connection.files.reduce((s, f) => s + f.totalPages, 0).toString())
-        formData.set("fileLimit", connection.files.length.toString())
         const res = await syncConnectionConfig(EMPTY_FORM_STATE, formData)
         if (res.status !== 'SUCCESS') {
           throw new Error(res.message)

@@ -2,10 +2,11 @@ import { authOptions } from '@/auth';
 import { databaseDrizzle } from '@/db';
 import { apiKeys, users } from '@/db/schemas/users';
 import { hashApiKey } from '@/lib/api_key';
+import { Plans } from '@/lib/Plans';
 import { expandQuery, generateHypotheticalAnswer, vectorizeText } from '@/openAi';
 import { qdrant_collection_name, qdrantCLient } from '@/qdrant';
 import { RetrievalFilter } from '@/validations/retrievalsFilteringSchema'
-import { eq, sql } from 'drizzle-orm';
+import { and, eq, sql } from 'drizzle-orm';
 import { getServerSession } from 'next-auth';
 import { NextRequest, NextResponse } from 'next/server'
 import { z } from 'zod'
@@ -69,20 +70,43 @@ export async function POST(request: NextRequest) {
         { status: 403 },
       );
     }
+    const user = await databaseDrizzle.query.users.findFirst({
+      where: (u, ops) => ops.eq(u.id, userId),
+      columns: {
+        plan: true,
+        apiCalls: true,
+      }
+    })
 
-    try {
-      await databaseDrizzle
-        .update(users)
-        .set({ apiCalls: sql`${users.apiCalls} + 1` })
-        .where(eq(users.id, userId))
-    } catch {
-      return NextResponse.json(
-        {
-          code: "forbidden",
-          message: "The requested resource was not found.",
-        },
-        { status: 403 },
+    if (!user) {
+      return NextResponse.json({
+        code: "User_Not_Found",
+        message: "Your account doesn’t exist. Please sign up or contact support."
+      }, { status: 404 });
+    }
+
+    const retrievalLimit = Plans[user.plan].retrievals;
+    const updated = await databaseDrizzle
+      .update(users)
+      .set({ apiCalls: sql`${users.apiCalls} + 1` })
+      .where(
+        and(
+          eq(users.id, userId),
+          sql`${users.apiCalls} < ${retrievalLimit}`
+        )
       )
+      .returning({ apiCalls: users.apiCalls })
+      .then(rows => rows[0]);
+
+    if (!updated) {
+      return NextResponse.json({
+        code: "Rate_Limit_Exceeded",
+        message: `You’ve used all ${retrievalLimit} API calls for your ${user.plan.toLowerCase()} plan this period. ` +
+          `Please upgrade to increase your limit.`
+      }, {
+        status: 429,
+        headers: { "Retry-After": "3600" } 
+      });
     }
 
     const { query, filter, top_chunk, rerank, min_score_threshold } = validation.data
@@ -91,7 +115,7 @@ export async function POST(request: NextRequest) {
 
     const queryPoints = await qdrantCLient.search(qdrant_collection_name, {
       vector: vectors,
-      filter: filter ? { must: [{ nested: { key: "_metadata", filter: filter}}] } : undefined,
+      filter: filter ? { must: [{ nested: { key: "_metadata", filter: filter } }] } : undefined,
       limit: rerank ? top_chunk * 2 : top_chunk,
       with_payload: true,
       with_vector: true

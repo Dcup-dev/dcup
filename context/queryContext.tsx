@@ -67,9 +67,8 @@ export function QueryProvider({ children }: { children: ReactNode }) {
             filter: cleanFilter
           })
         })
-
-        if (!response.ok) throw new Error('Search failed')
         const data = await response.json()
+        if (!response.ok) throw new Error(data.message)
         setResults(data.scored_chunks)
       } catch (err: any) {
         toast({

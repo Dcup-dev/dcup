@@ -76,11 +76,12 @@ export const connectionProcessFiles = async ({ connectionId, service, pageLimit,
   return processFiles(filesContent, service, connectionId, pageLimit, fileLimit)
 }
 
-const processFiles = async (filesContent: FileContent[], service: string, connectionId: string, pageLimit: number | null, fileLimit: number | null) => {
+const processFiles = async (filesContent: FileContent[], service: string, connectionId: string, pageLimit: number, fileLimit: number | null) => {
   const completedFiles: typeof processedFiles.$inferInsert[] = []
   const allPoints = [];
   let processedPage = 0;
   let processedAllPages = 0
+  let limits = pageLimit;
   const now = new Date()
 
   const splitter = new RecursiveCharacterTextSplitter({
@@ -91,7 +92,8 @@ const processFiles = async (filesContent: FileContent[], service: string, connec
   });
 
   try {
-    for (const [fileIndex, file] of filesContent.entries()) {
+    for (let fileIndex = 0; fileIndex < filesContent.length && limits > 0; fileIndex++) {
+      const file = filesContent[fileIndex]
       const chunksId = [];
       if (fileLimit && fileLimit > 0 && fileLimit === fileIndex) break;
       const baseMetadata = {
@@ -101,8 +103,9 @@ const processFiles = async (filesContent: FileContent[], service: string, connec
           source: service,
         },
       };
-      for (const [pageIndex, page] of file.pages.entries()) {
-        if (pageLimit && pageLimit > 0 && pageLimit === pageIndex) break;
+      for (let pageIndex = 0; pageIndex < file.pages.length && limits > 0; pageIndex++) {
+        const page = file.pages[pageIndex]
+        if (limits !== null && limits <= 0) break
         const textPoints = await processingTextPage(page.text, pageIndex, baseMetadata, splitter)
         if (textPoints) {
           allPoints.push(textPoints);
@@ -125,6 +128,7 @@ const processFiles = async (filesContent: FileContent[], service: string, connec
           lastAsync: now,
           status: 'PROCESSING'
         })
+        limits -= 1
       }
 
       completedFiles.push({
@@ -136,26 +140,9 @@ const processFiles = async (filesContent: FileContent[], service: string, connec
       processedPage = 0
     }
 
-    if (allPoints.length > 0) {
-      await qdrantCLient.upsert(qdrant_collection_name, {
-        points: allPoints,
-        wait: true
-      })
-
-      completedFiles.map(async (file) =>
-        await databaseDrizzle
-          .insert(processedFiles)
-          .values(file).onConflictDoUpdate({
-            target: [processedFiles.name, processedFiles.connectionId],
-            set: file
-          })
-      )
-
-    }
-
     await publishProgress({
       connectionId: connectionId,
-      processedFile: filesContent.length,
+      processedFile: completedFiles.length,
       processedPage: processedAllPages,
       lastAsync: now,
       status: 'FINISHED',
@@ -179,6 +166,22 @@ const processFiles = async (filesContent: FileContent[], service: string, connec
       status: 'FINISHED'
     })
   }
+  if (allPoints.length > 0) {
+    await qdrantCLient.upsert(qdrant_collection_name, {
+      points: allPoints,
+      wait: true
+    })
+
+    completedFiles.map(async (file) =>
+      await databaseDrizzle
+        .insert(processedFiles)
+        .values(file).onConflictDoUpdate({
+          target: [processedFiles.name, processedFiles.connectionId],
+          set: file
+        })
+    )
+  }
+
   await databaseDrizzle
     .update(connections)
     .set({ lastSynced: now, isSyncing: false })
@@ -199,24 +202,26 @@ const processingTextPage = async (pageText: string, pageIndex: number, baseMetad
       _hash: textHash,
     };
 
-    const existingPoints = await qdrantCLient.scroll(qdrant_collection_name, {
-      filter: {
-        must: [{ key: "_hash", match: { value: textHash } }]
-      },
-      limit: 1,
-      with_payload: true,
-      with_vector: true,
-    });
-    if (existingPoints.points.length > 0) {
-      return {
-        id: existingPoints.points[0].id,
-        vector: existingPoints.points[0].vector as number[],
-        payload: {
-          ...existingPoints.points[0].payload,
-          _metadata: baseMetadata._metadata
+    try {
+      const existingPoints = await qdrantCLient.scroll(qdrant_collection_name, {
+        filter: {
+          must: [{ key: "_hash", match: { value: textHash } }]
+        },
+        limit: 1,
+        with_payload: true,
+        with_vector: true,
+      });
+      if (existingPoints.points.length > 0) {
+        return {
+          id: existingPoints.points[0].id,
+          vector: existingPoints.points[0].vector as number[],
+          payload: {
+            ...existingPoints.points[0].payload,
+            _metadata: baseMetadata._metadata
+          }
         }
       }
-    }
+    } catch { }
 
     const textVectors = await vectorizeText(chunk);
     const { title, summary } = await getTitleAndSummary(chunk, JSON.stringify(textMetadata))
@@ -237,6 +242,7 @@ const processingTextPage = async (pageText: string, pageIndex: number, baseMetad
 const processingTablePage = async (tables: unknown[], pageIndex: number, baseMetadata: any) => {
   const pageTables = tables.map((t, i) => `_Table_${i + 1}:\n${JSON.stringify(t)}`).join(" ")
   const tableHash = generateHash(pageTables);
+  if (!pageTables) return;
   const tableMetadata = {
     ...baseMetadata,
     _page_number: pageIndex + 1,
@@ -245,24 +251,26 @@ const processingTablePage = async (tables: unknown[], pageIndex: number, baseMet
     _hash: tableHash,
   };
 
-  const existingPoints = await qdrantCLient.scroll(qdrant_collection_name, {
-    filter: {
-      must: [{ key: "_hash", match: { value: tableHash } }]
-    },
-    limit: 1,
-    with_payload: true,
-    with_vector: true,
-  });
-  if (existingPoints.points.length > 0) {
-    return {
-      id: existingPoints.points[0].id,
-      vector: existingPoints.points[0].vector as number[],
-      payload: {
-        ...existingPoints.points[0].payload,
-        _metadata: baseMetadata._metadata
+  try {
+    const existingPoints = await qdrantCLient.scroll(qdrant_collection_name, {
+      filter: {
+        must: [{ key: "_hash", match: { value: tableHash } }]
+      },
+      limit: 1,
+      with_payload: true,
+      with_vector: true,
+    });
+    if (existingPoints.points.length > 0) {
+      return {
+        id: existingPoints.points[0].id,
+        vector: existingPoints.points[0].vector as number[],
+        payload: {
+          ...existingPoints.points[0].payload,
+          _metadata: baseMetadata._metadata
+        }
       }
     }
-  }
+  } catch { }
 
   const tableVectors = await vectorizeText(pageTables);
   const { title, summary } = await getTitleAndSummary(pageTables, JSON.stringify(tableMetadata))

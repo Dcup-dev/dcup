@@ -14,7 +14,7 @@ export type SerializedFile = {
 };
 export type TQueue = {
   connectionId: string;
-  pageLimit: number | null,
+  pageLimit: number,
   fileLimit: number | null,
   files: SerializedFile[],
   links: string[],

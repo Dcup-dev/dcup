@@ -10,8 +10,6 @@ declare module "next-auth" {
       name?: string | null
       email?: string | null
       image?: string | null
-      plan?: "Free" | "Basic" | "Pro" | "Business" | "Enterprise"
-      volume?: number,
     };
   }
   interface User {
@@ -19,14 +17,10 @@ declare module "next-auth" {
     name?: string | null
     email?: string | null
     image?: string | null
-    plan?: "Free" | "Basic" | "Pro" | "Business" | "Enterprise"
-    volume?: number,
 
   }
   interface JWT {
     id?: string;
-    plan?: "Free" | "Basic" | "Pro" | "Business" | "Enterprise"
-    volume?: number,
   }
 
 }

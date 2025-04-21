@@ -20,10 +20,10 @@ type DropboxResponse = {
 
 export async function GET(request: Request) {
   try {
-    const sessRes = await tryAndCatch(getServerSession(authOptions));
-    if (sessRes.error) {
+    const session = await getServerSession(authOptions);
+    if (!session?.user.id) {
       return NextResponse.json(
-        { code: 'Unauthorized', message: sessRes.error.message },
+        { code: 'Unauthorized', message: "Unauthorized Request" },
         { status: 500 },
       );
     }
@@ -80,7 +80,7 @@ export async function GET(request: Request) {
       databaseDrizzle
         .insert(connections)
         .values({
-          userId: sessRes.data?.user.id!,
+          userId: session.user.id,
           identifier: email + shortId(10),
           service: 'DROPBOX',
           connectionMetadata: {
