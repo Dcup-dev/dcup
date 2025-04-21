@@ -7,27 +7,33 @@ export const Plans ={
     price: 0
   },
   BASIC: {
-    connections: 10000,
-    pages: 100,
-    retrievals: 500,
-    price: 50
+    connections: 10,
+    pages: 50,
+    retrievals: 250,
+    price: 24.99
   },
   PRO: {
-    connections: 100_000,
-    pages: 1_000,
-    retrievals: 5_000,
-    price: 100
+    connections:Infinity,
+    pages: 100,
+    retrievals: 500,
+    price: 49.99
   },
   BUSINESS: {
-    connections: 1_000_000,
-    pages: 10_000,
-    retrievals: 100_000,
-    price: 500,
+    connections: Infinity,
+    pages: 5_000,
+    retrievals: 10_000,
+    price: 99.99,
   },
   ENTERPRISE: {
-    connections: 1_000_000,
-    pages: 1_000_000,
-    retrievals: 1_000_000,
-    price: 1_000_000,
+    connections: Infinity,
+    pages: 10_000,
+    retrievals: Infinity,
+    price: 499.99,
+  },
+  OS: {
+    connections: Infinity,
+    pages: Infinity,
+    retrievals: Infinity,
+    price: 0,
   }
 }

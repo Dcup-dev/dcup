@@ -16,7 +16,6 @@ export async function setConnectionConfig(_: FormState, formData: FormData) {
   const session = await getServerSession(authOptions);
   const service = formData.get("service")
   const connectionId = formData.get("connectionId")
-  console.log({ connectionId })
   try {
     if (!session?.user?.id) throw new Error("forbidden");
     const user = await databaseDrizzle.query.users.findFirst({

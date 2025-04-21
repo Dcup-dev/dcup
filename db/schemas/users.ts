@@ -12,7 +12,7 @@ import { AdapterAccount } from "next-auth/adapters"
 import { connections } from "./connections";
 
 
-export const planEnum = pgEnum('plan', ["FREE", 'BASIC', 'PRO', 'BUSINESS', 'ENTERPRISE']);
+export const planEnum = pgEnum('plan', ["FREE", 'BASIC', 'PRO', 'BUSINESS', 'ENTERPRISE', 'OS']);
 export const users = pgTable("user", {
   id: text("id")
     .primaryKey()

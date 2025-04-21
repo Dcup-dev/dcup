@@ -29,6 +29,27 @@
       "when": 1745172781399,
       "tag": "0003_lucky_slyde",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1745212364097,
+      "tag": "0004_odd_blizzard",
+      "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1745212394541,
+      "tag": "0005_rare_lucky_pierre",
+      "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1745241704000,
+      "tag": "0006_gifted_sebastian_shaw",
+      "breakpoints": true
     }
   ]
 }

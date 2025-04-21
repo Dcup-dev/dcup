@@ -1,9 +1,9 @@
 import { Card, CardHeader, CardTitle, CardContent, CardFooter } from "@/components/ui/card"
 import { Progress } from "@/components/ui/progress"
 import { Badge } from "@/components/ui/badge"
-import { Button } from "@/components/ui/button"
-import { Zap, Database, FileText, Bolt, InfinityIcon } from "lucide-react"
+import { Database, FileText, Bolt, InfinityIcon } from "lucide-react"
 import { Plans } from "@/lib/Plans"
+import { SubscriptionDrawer } from "../SubscriptionDrawer/SubscriptionDrawer"
 
 export function SubscriptionCard({
   plan,
@@ -17,9 +17,7 @@ export function SubscriptionCard({
   }
 }) {
   const currentPlan = Plans[plan]
-  const isEnterprise = plan === 'ENTERPRISE'
-
-
+  const isOpenSource = plan === 'OS'
   const isFree = plan === 'FREE'
 
 
@@ -50,20 +48,19 @@ export function SubscriptionCard({
         <div className="flex justify-between items-center">
           <div>
             <CardTitle className="text-lg flex items-center gap-2 capitalize">
-              {plan.toLowerCase()} Plan
+              {isOpenSource ? "Open Source" : `${plan.toLowerCase()} Plan`}
               <Badge variant={isFree ? 'secondary' : 'default'}>
                 {isFree ? 'Current' : 'Active'}
               </Badge>
             </CardTitle>
             <p className="text-sm text-muted-foreground mt-1">
-              {!isFree && `$${currentPlan.price}/month`}
-              {isFree && 'Free forever'}
+              {isFree || isOpenSource ? 'Free forever' : `$${currentPlan.price}/month`}
             </p>
           </div>
           {!isFree && (
             <div className="flex items-center gap-1 text-sm bg-accent px-3 py-1 rounded-full">
               <InfinityIcon className="h-4 w-4" />
-              {isEnterprise ? 'Unlimited' : 'Scalable'}
+              {isOpenSource ? 'Unlimited' : 'Scalable'}
             </div>
           )}
         </div>
@@ -80,34 +77,20 @@ export function SubscriptionCard({
               <span className="font-medium text-foreground">
                 {metric.used.toLocaleString()}
                 <span className="text-muted-foreground font-normal">
-                  /{metric.total >= 1_000_000 ? '∞' : metric.total.toLocaleString()}
+                  /{metric.total === Infinity ? '∞' : metric.total.toLocaleString()}
                 </span>
               </span>
             </div>
             <Progress
               value={(metric.used / metric.total) * 100}
               className="h-2"
-            // indicatorClassName={
-            //   metric.used > metric.total ? 'bg-red-500' : 
-            //   isFree ? 'bg-gray-400' : 'bg-primary'
-            // }
             />
           </div>
         ))}
       </CardContent>
-
-      <CardFooter className="border-t pt-4">
-        <Button className="w-full" size="lg" variant={isFree ? 'default' : 'outline'}>
-          {isFree ? (
-            <>
-              <Zap className="mr-2 h-4 w-4" />
-              Upgrade Plan
-            </>
-          ) : (
-            'Manage Subscription'
-          )}
-        </Button>
-      </CardFooter>
+      {!isOpenSource && <CardFooter className="border-t pt-4">
+        <SubscriptionDrawer isFree={isFree} />
+      </CardFooter>}
     </Card>
   )
 }
