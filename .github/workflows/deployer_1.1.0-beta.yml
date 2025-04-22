@@ -33,6 +33,11 @@ jobs:
          NEXT_PUBLIC_PADDLE_PRO_PRICE_ID=${{ secrets.NEXT_PUBLIC_PADDLE_PRO_PRICE_ID }}
          NEXT_PUBLIC_PADDLE_SUCCESSURL=${{ secrets.NEXT_PUBLIC_PADDLE_SUCCESSURL }}
          NEXT_PUBLIC_PAYMENT=${{ secrets.NEXT_PUBLIC_PAYMENT }}
+         REDIS_DB_ADDRESS=localhost
+         REDIS_DB_PORT=6379
+         REDIS_DB_PASSWORD=
+         REDIS_DB_DATABASE=0
+         OPENAI_KEY="my key"
          EOF
    
       - name: Run Tests
@@ -48,14 +53,14 @@ jobs:
       - name: Build and Push Docker image
         run: |
           # Build Docker image and tag it with the current commit SHA
-          docker build -t ghcr.io/Dcup-dev/dcup:v1.1.0-beta .
+          docker build -t ghcr.io/dcup-dev/dcup:v1.1.0-beta .
         
           # Push the image to GitHub Container Registry
-          docker push ghcr.io/Dcup-dev/dcup:v1.1.0-beta
+          docker push ghcr.io/dcup-dev/dcup:v1.1.0-beta
         
           # Optionally, tag the image with the "latest" tag for easy access
-          docker tag ghcr.io/Dcup-dev/dcup:v1.1.0-beta ghcr.io/Dcup-dev/dcup:latest
-          docker push ghcr.io/Dcup-dev/dcup:latest
+          docker tag ghcr.io/dcup-dev/dcup:v1.1.0-beta ghcr.io/dcup-dev/dcup:latest
+          docker push ghcr.io/dcup-dev/dcup:latest
     
       - name: Logout from Docker
         run: docker logout ghcr.io  # Log out after pushing the image
