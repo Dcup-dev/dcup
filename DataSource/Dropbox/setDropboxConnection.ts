@@ -5,14 +5,15 @@ import { connectionConfig } from "../utils";
 
 
 export const setDropboxConnection = async (formData: FormData) => {
- const config = connectionConfig.safeParse({
+  const config = connectionConfig.safeParse({
     connectionId: formData.get("connectionId"),
-    identifier:formData.get("connectionName"),
+    identifier: formData.get("connectionName"),
     folderName: formData.get("folderName"),
     folderId: formData.get("folderId"),
     metadata: formData.get("metadata"),
     pageLimit: formData.get("pageLimit"),
     documentLimit: formData.get("documentLimit"),
+    maxPages: formData.get("maxPages"),
   })
 
   if (!config.success) {
@@ -34,12 +35,14 @@ export const setDropboxConnection = async (formData: FormData) => {
     metadata: config.data.metadata,
     isConfigSet: true,
     isSyncing: true,
+    limitFiles: config.data.documentLimit,
+    limitPages: config.data.pageLimit,
   }).where(eq(connections.id, config.data.connectionId))
 
   return {
     connectionId: config.data.connectionId,
     service: "DROPBOX",
-    pageLimit: config.data.pageLimit,
+    pageLimit: config.data.maxPages,
     fileLimit: config.data.documentLimit,
     metadata: config.data.metadata,
     files: [],

@@ -219,7 +219,7 @@ export const TableResults = ({ content }: { content: string }) => {
 
   return (
     <div className="space-y-6">
-      {tables.map((table, index) => !table  ? <p>{content}</p>:(
+      {tables.map((table, index) => !table  ? <p key={index}>{content}</p>:(
         <Card key={index} className="overflow-hidden">
           <CardHeader className="bg-muted/50 px-6 py-3">
             <CardTitle className="text-sm font-medium">

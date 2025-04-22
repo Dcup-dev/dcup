@@ -244,10 +244,13 @@ export async function PUT(request: NextRequest, { params }: Params) {
       const links = formData.getAll("links") || []
       const files = formData.getAll("files") || []
 
+      let error: Error | null = null;
       if (links.length > 0 || files.length > 0) {
-        var { error } = await tryAndCatch(directProcessFiles(filesConfig))
+        const {error:err}  = await tryAndCatch(directProcessFiles(filesConfig))
+        error = err;
       } else {
-        var { error } = await tryAndCatch(connectionProcessFiles(filesConfig))
+        const {error:err} = await tryAndCatch(connectionProcessFiles(filesConfig))
+        error = err
       }
 
       if (error) return NextResponse.json({

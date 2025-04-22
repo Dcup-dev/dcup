@@ -2,64 +2,82 @@
 import { authOptions } from "@/auth";
 import { databaseDrizzle } from "@/db";
 import { connections } from "@/db/schemas/connections";
+import { Plans } from "@/lib/Plans";
 import { fromErrorToFormState, toFormState } from "@/lib/zodErrorHandle";
 import { addToProcessFilesQueue } from "@/workers/queues/jobs/processFiles.job";
 import { eq } from "drizzle-orm";
 import { getServerSession } from "next-auth";
 import { revalidatePath } from "next/cache";
-import { z } from "zod"
-
-const syncConnectionSchema = z.object({
-  connectionId: z.string().min(2),
-  pageLimit: z.string().transform((str, ctx): number | null => {
-    try {
-      if (str) return parseInt(str)
-      return null
-    } catch (error) {
-      ctx.addIssue({ code: 'invalid_date', message: "invalid page limit" })
-      return z.NEVER
-    }
-  }).nullable(),
-  fileLimitd: z.string().nullable().transform((str, ctx): number | null => {
-    try {
-      if (str) return parseInt(str)
-      return null
-    } catch (error) {
-      ctx.addIssue({ code: 'invalid_date', message: "invalid page limit" })
-      return z.NEVER
-    }
-  }).nullable(),
-})
 
 type FormState = {
   message: string;
 };
 
+type Conn = {
+  id: string;
+  service: "GOOGLE_DRIVE" | "DIRECT_UPLOAD" | "DROPBOX" | "AWS";
+  metadata: string | null;
+  limitPages: number | null;
+  limitFiles: number | null;
+  files: {
+    totalPages: number;
+  }[];
+}
+
+
 export const syncConnectionConfig = async (_: FormState, formData: FormData) => {
   const session = await getServerSession(authOptions)
-
+  const connectionId = formData.get("connectionId")?.toString();
   try {
-    if (!session?.user?.email) throw new Error("forbidden");
-    const { connectionId, pageLimit, fileLimitd } = syncConnectionSchema.parse({
-      connectionId: formData.get("connectionId"),
-      pageLimit: formData.get("pageLimit"),
-      fileLimitd: formData.get("fileLimit")
+    if (!session?.user?.id || !connectionId) throw new Error("forbidden");
+
+    const user = await databaseDrizzle.query.users.findFirst({
+      where: (u, ops) => ops.eq(u.id, session.user.id!),
+      columns: {
+        plan: true
+      },
+      with: {
+        connections: {
+          columns: {
+            id: true,
+            metadata: true,
+            service: true,
+            limitFiles: true,
+            limitPages: true,
+          },
+          with: {
+            files: {
+              columns: {
+                totalPages: true,
+              }
+            }
+          }
+        }
+      }
     })
+    if (!user) throw new Error("no such account")
 
-    const conn = await databaseDrizzle.update(connections).set({
+    await databaseDrizzle.update(connections).set({
       isSyncing: true,
-    }).where(eq(connections.id, connectionId))
-      .returning({
-        metadata: connections.metadata,
-        service: connections.service,
-      })
+    }).where(eq(connections.id, connectionId));
 
+    const { currentConn, othersConn } = user.connections.reduce((acc, c) => {
+      if (c.id === connectionId) {
+        acc.currentConn = c;
+      } else {
+        acc.othersConn.push(c)
+      }
+      return acc;
+    }, { currentConn: null as Conn | null, othersConn: [] as Conn[] });
+
+    if (!currentConn) throw new Error("no such connection")
+ 
     await addToProcessFilesQueue({
       connectionId: connectionId,
-      service: conn[0].service,
-      metadata: conn[0].metadata || null,
-      pageLimit: pageLimit,
-      fileLimit: fileLimitd,
+      service: currentConn.service,
+      metadata: currentConn.metadata || null,
+      pageLimit: currentConn.limitPages ?? getLimits(user.plan, othersConn),
+      fileLimit: currentConn.limitFiles,
       files: [],
       links: []
     })
@@ -69,4 +87,12 @@ export const syncConnectionConfig = async (_: FormState, formData: FormData) => 
   } catch (e) {
     return fromErrorToFormState(e);
   }
+}
+
+const getLimits = (planKey: keyof typeof Plans, othersConn: Conn[]) => {
+  const plan = Plans[planKey]
+  const pageProcessed = othersConn
+    .flatMap(conn => conn.files || [])
+    .reduce((sum, file) => sum + (file.totalPages || 0), 0);
+  return plan.pages - pageProcessed;
 }

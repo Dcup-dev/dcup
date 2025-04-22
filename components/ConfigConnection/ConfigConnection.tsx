@@ -57,7 +57,7 @@ export const ConfigConnection = ({ connection, directory, status, open, setOpen,
     data.set("connectionId", connection.id)
     data.set("folderName", directory.name)
     data.set("service", connection.service)
-    directory?.id && data.set("folderId", directory.id)
+    if(directory?.id) data.set("folderId", directory.id)
     startTransition(async () => {
       const setConfig = async () => {
         try {

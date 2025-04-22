@@ -22,7 +22,10 @@ import { Logo } from "./Logo/logo"
 import { getServerSession } from "next-auth"
 import { authOptions } from "@/auth"
 import { FaGithub, FaSearch } from "react-icons/fa"
+import { RiBillLine } from "react-icons/ri"
+import { env } from "process"
 
+const isCloud = env.DCUP_ENV === 'CLOUD';
 const data = {
   navMain: [
     {
@@ -55,6 +58,13 @@ const data = {
     },
   ],
   navSecondary: [
+    ...(isCloud
+      ? [{
+        title: "Customer Portal",
+        url: env.PADDLE_CUSTOMER_PORTAL_URL!,
+        icon: RiBillLine
+      }]
+      : []),
     {
       title: "Support",
       url: "/contact",
@@ -66,7 +76,6 @@ const data = {
       icon: FaGithub
     }
   ],
-
 }
 
 export async function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {

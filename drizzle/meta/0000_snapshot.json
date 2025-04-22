@@ -1,5 +1,5 @@
 {
-  "id": "a450b04e-5579-4b30-a830-0b3c6e6df830",
+  "id": "92cd88fe-6dd0-4a94-8a81-2ddac86c8436",
   "prevId": "00000000-0000-0000-0000-000000000000",
   "version": "7",
   "dialect": "postgresql",
@@ -27,8 +27,8 @@
           "primaryKey": false,
           "notNull": true
         },
-        "email": {
-          "name": "email",
+        "identifier": {
+          "name": "identifier",
           "type": "text",
           "primaryKey": false,
           "notNull": true
@@ -51,13 +51,6 @@
           "primaryKey": false,
           "notNull": false,
           "default": "'*'"
-        },
-        "partition": {
-          "name": "partition",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true,
-          "default": "'default'"
         },
         "metadata": {
           "name": "metadata",
@@ -111,12 +104,11 @@
       },
       "compositePrimaryKeys": {},
       "uniqueConstraints": {
-        "connection_email_service_unique": {
-          "name": "connection_email_service_unique",
+        "connection_identifier_unique": {
+          "name": "connection_identifier_unique",
           "nullsNotDistinct": false,
           "columns": [
-            "email",
-            "service"
+            "identifier"
           ]
         }
       },
@@ -131,7 +123,7 @@
         "name": {
           "name": "name",
           "type": "text",
-          "primaryKey": true,
+          "primaryKey": false,
           "notNull": true
         },
         "connection_id": {
@@ -146,6 +138,12 @@
           "primaryKey": false,
           "notNull": true,
           "default": 0
+        },
+        "chunks_ids": {
+          "name": "chunks_ids",
+          "type": "text[]",
+          "primaryKey": false,
+          "notNull": true
         }
       },
       "indexes": {},
@@ -166,11 +164,12 @@
       },
       "compositePrimaryKeys": {},
       "uniqueConstraints": {
-        "pocessed_file_name_unique": {
-          "name": "pocessed_file_name_unique",
+        "pocessed_file_name_connection_id_unique": {
+          "name": "pocessed_file_name_connection_id_unique",
           "nullsNotDistinct": false,
           "columns": [
-            "name"
+            "name",
+            "connection_id"
           ]
         }
       },
@@ -505,14 +504,7 @@
           "typeSchema": "public",
           "primaryKey": false,
           "notNull": true,
-          "default": "'Free'"
-        },
-        "volume": {
-          "name": "volume",
-          "type": "bigint",
-          "primaryKey": false,
-          "notNull": true,
-          "default": 1048576
+          "default": "'FREE'"
         },
         "customer_id": {
           "name": "customer_id",
@@ -575,23 +567,20 @@
       "schema": "public",
       "values": [
         "GOOGLE_DRIVE",
-        "AWS",
-        "NOTION",
-        "SLACK",
-        "GMAIL",
-        "CONFLUENCE",
-        "DIRECT_UPLOAD"
+        "DIRECT_UPLOAD",
+        "DROPBOX",
+        "AWS"
       ]
     },
     "public.plan": {
       "name": "plan",
       "schema": "public",
       "values": [
-        "Free",
-        "Basic",
-        "Pro",
-        "Business",
-        "Enterprise"
+        "FREE",
+        "BASIC",
+        "PRO",
+        "BUSINESS",
+        "ENTERPRISE"
       ]
     }
   },

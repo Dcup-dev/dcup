@@ -30,6 +30,8 @@ export const connections = pgTable("connection", {
   connectionMetadata: jsonb("connection_metadata"),
   folderName: text("folder_name").default("*"),
   metadata: text("metadata"),
+  limitPages: integer("limit_pages"),
+  limitFiles: integer("limit_files"),
   lastSynced: timestamp("last_synced", { withTimezone: true }),
   isSyncing: boolean("is_syncing").default(false).notNull(),
   isConfigSet: boolean("is_config_set").default(false).notNull(),
