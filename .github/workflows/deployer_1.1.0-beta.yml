@@ -33,6 +33,11 @@ jobs:
          NEXT_PUBLIC_PADDLE_PRO_PRICE_ID=${{ secrets.NEXT_PUBLIC_PADDLE_PRO_PRICE_ID }}
          NEXT_PUBLIC_PADDLE_SUCCESSURL=${{ secrets.NEXT_PUBLIC_PADDLE_SUCCESSURL }}
          NEXT_PUBLIC_PAYMENT=${{ secrets.NEXT_PUBLIC_PAYMENT }}
+         REDIS_DB_ADDRESS=localhost
+         REDIS_DB_PORT=6379
+         REDIS_DB_PASSWORD=
+         REDIS_DB_DATABASE=0
+         OPENAI_KEY="my key"
          EOF
    
       - name: Run Tests
