@@ -18,14 +18,10 @@ const TermsPage: React.FC = () => {
         <section className="mb-8">
           <h2 className="mb-4 text-2xl font-semibold text-gray-700">1. Introduction</h2>
           <p className="mb-4 text-gray-600">
-            Welcome to Dcup Cloud! We provide a powerful, cloud-based service that helps you transform
-            unstructured documents into clean, structured JSON. By using Dcup Cloud, you agree to the following
-            Terms of Service and acknowledge our Privacy Policy.
+            Welcome to Dcup, the open-source Retrieval-Augmented Generation (RAG) platform.
           </p>
           <p className="text-gray-600">
-            Your privacy and data security are our top priorities. We do not store your uploaded files or URLs.
-            The only data we temporarily retain is the extracted result for caching purposes, which is automatically
-            deleted after 24 hours.
+            Your privacy and data security are our top priorities.
           </p>
         </section>
 
@@ -42,9 +38,6 @@ const TermsPage: React.FC = () => {
             <ul className="space-y-2">
               <li className="flex items-center text-gray-600">
                 <Check className="mr-2 h-5 w-5 text-green-500" /> Use the service only for lawful purposes.
-              </li>
-              <li className="flex items-center text-gray-600">
-                <Check className="mr-2 h-5 w-5 text-green-500" /> Not attempt to exploit, reverse-engineer, or overload the system.
               </li>
               <li className="flex items-center text-gray-600">
                 <Check className="mr-2 h-5 w-5 text-green-500" /> Respect API rate limits and fair usage policies.
@@ -113,15 +106,12 @@ const TermsPage: React.FC = () => {
                 <X className="mr-2 h-5 w-5 text-red-500" /> We do <strong>NOT</strong> store your uploaded files, documents, or URLs.
               </li>
               <li className="flex items-center text-gray-600">
-                <X className="mr-2 h-5 w-5 text-red-500" /> We do <strong>NOT</strong> permanently retain any input data after processing.
-              </li>
+                <X className="mr-2 h-5 w-5 text-red-500" /> We do <strong>NOT</strong>  collect, store, or share any personally identifiable information (PII) through our website or open-source platform.
+             </li>
               <li className="flex items-center text-gray-600">
                 <X className="mr-2 h-5 w-5 text-red-500" /> We do <strong>NOT</strong> access or use your data beyond the requested transformation process.
               </li>
             </ul>
-            <p className="mt-3 text-gray-600">
-              Once processing is complete, the raw files are immediately discarded. The structured results are cached for 24 hours for efficiency and then permanently deleted.
-            </p>
           </div>
 
           {/* 3.3 Security Measures */}
@@ -133,9 +123,6 @@ const TermsPage: React.FC = () => {
               </li>
               <li className="flex items-center text-gray-600">
                 <Lock className="mr-2 h-5 w-5 text-blue-500" /> Secure API authentication via Bearer Token (API Key).
-              </li>
-              <li className="flex items-center text-gray-600">
-                <Lock className="mr-2 h-5 w-5 text-blue-500" /> Automatic deletion of cached data after 24 hours.
               </li>
             </ul>
           </div>
@@ -170,7 +157,7 @@ const TermsPage: React.FC = () => {
           </h2>
           <p className="text-gray-600">
             Due to the nature of our cloud-based services, all purchases and subscriptions are <strong>non-refundable</strong>.
-            Since our platform provides instant access to API-based processing and document transformation, we cannot offer refunds
+            Since our platform provides instant access to API-based processing, we cannot offer refunds
             once a subscription or transaction is completed.
           </p>
           <p className="mt-3 text-gray-600">
