@@ -1,0 +1,61 @@
+name: Deploy Dcup-web v1.0.1
+
+on:
+  push:
+    branches:
+      - "v1.1.0-beta"
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '20'
+
+      - name: Install Dependencies
+        run: npm install
+        
+      - name: Generate Env File
+        run: |
+         cat <<EOF > .env
+         NEXT_PUBLIC_PADDLE_BASIC_PRICE_ID=${{ secrets.NEXT_PUBLIC_PADDLE_BASIC_PRICE_ID }}
+         NEXT_PUBLIC_PADDLE_BUSINESS_PRICE_ID=${{ secrets.NEXT_PUBLIC_PADDLE_BUSINESS_PRICE_ID }}
+         NEXT_PUBLIC_PADDLE_CLIENT_TOKEN=${{ secrets.NEXT_PUBLIC_PADDLE_CLIENT_TOKEN }}
+         NEXT_PUBLIC_PADDLE_CUSTOMER_PORTAL_URL=${{ secrets.NEXT_PUBLIC_PADDLE_CUSTOMER_PORTAL_URL }}
+         NEXT_PUBLIC_PADDLE_ENTERPRISE_PRICE_ID=${{ secrets.NEXT_PUBLIC_PADDLE_ENTERPRISE_PRICE_ID }}
+         NEXT_PUBLIC_PADDLE_ENV=${{ secrets.NEXT_PUBLIC_PADDLE_ENV }}
+         NEXT_PUBLIC_PADDLE_PRO_PRICE_ID=${{ secrets.NEXT_PUBLIC_PADDLE_PRO_PRICE_ID }}
+         NEXT_PUBLIC_PADDLE_SUCCESSURL=${{ secrets.NEXT_PUBLIC_PADDLE_SUCCESSURL }}
+         NEXT_PUBLIC_PAYMENT=${{ secrets.NEXT_PUBLIC_PAYMENT }}
+         EOF
+   
+      - name: Run Tests
+        run: npm test
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to GitHub Container Registry
+        run: echo ${{ secrets.CR_PAT }} | docker login ghcr.io -u ${{ github.actor }} --password-stdin
+      # Log in to GitHub Container Registry using your Personal Access Token (PAT)
+    
+      - name: Build and Push Docker image
+        run: |
+          # Build Docker image and tag it with the current commit SHA
+          docker build -t ghcr.io/Dcup-dev/dcup:v1.1.0-beta .
+        
+          # Push the image to GitHub Container Registry
+          docker push ghcr.io/Dcup-dev/dcup:v1.1.0-beta
+        
+          # Optionally, tag the image with the "latest" tag for easy access
+          docker tag ghcr.io/Dcup-dev/dcup:v1.1.0-beta ghcr.io/Dcup-dev/dcup:latest
+          docker push ghcr.io/Dcup-dev/dcup:latest
+    
+      - name: Logout from Docker
+        run: docker logout ghcr.io  # Log out after pushing the image
