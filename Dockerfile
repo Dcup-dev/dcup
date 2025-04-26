@@ -26,6 +26,7 @@ COPY docker-entrypoint.sh /usr/local/bin/
 # Make sure the entrypoint script is executable
 RUN chmod +x /usr/local/bin/docker-entrypoint.sh
 
+
 ENV OPENAI_API_KEY=openai-api-key-for-build
 ENV REDIS_HOST=just-for-build-only
 ENV REDIS_PORT=6379
