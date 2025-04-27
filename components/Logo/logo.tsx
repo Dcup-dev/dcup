@@ -1,11 +1,11 @@
 import Image from "next/image";
 import Link from "next/link";
 
-export const Logo = ({ href }: { href: string }) => {
+export const Logo = () => {
   return (
     <div className="group/logo">
       <Link
-        href={href}
+        href={"/"}
         className="flex items-center justify-center gap-3 hover:gap-4 transition-all duration-500 ease-out-expo"
       >
         <div className="relative transition-transform duration-500 hover:-rotate-[15deg] hover:scale-105">

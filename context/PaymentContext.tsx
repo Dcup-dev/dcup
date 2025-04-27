@@ -21,22 +21,17 @@ export const PaymentProvider = ({ children }: { children: ReactNode }) => {
   useEffect(() => {
     const loadPaddleScript = async () => {
       if (typeof window === "undefined") return;
-      return initializePaddleInstance();
+      return await initializePaddleInstance();
     };
 
     const initializePaddleInstance = async () => {
       try {
-        console.log({
-          environment: process.env.NEXT_PUBLIC_PADDLE_ENV as Environments,
-          token: process.env.NEXT_PUBLIC_PADDLE_CLIENT_TOKEN!,
-        })
         const paddleInstance = await initializePaddle({
           environment: process.env.NEXT_PUBLIC_PADDLE_ENV as Environments,
           token: process.env.NEXT_PUBLIC_PADDLE_CLIENT_TOKEN!,
         });
         setPaddle(paddleInstance);
       } catch (error) {
-        console.log({error})
       toast({
           title: "[BUG]: ❌ Paddle initialization failed",
           variant: "destructive",

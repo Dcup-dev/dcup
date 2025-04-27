@@ -38,7 +38,7 @@ export function LoginForm({
           if (res?.error) {
             router.push(`/login?error=${encodeURIComponent(res.error)}`);
           } else if (res?.ok) {
-            router.push("/dashboard");
+            router.push("/");
           }
         } catch {
           router.push(

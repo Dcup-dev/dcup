@@ -30,6 +30,8 @@ RUN set -a && \
     [ -f .env ] && . .env; \ 
     npm run build
 
+COPY .env .next/standalone/.env
+
 RUN cp -r public .next/standalone/ && cp -r .next/static .next/standalone/.next/
 
 # Set production environment variables
