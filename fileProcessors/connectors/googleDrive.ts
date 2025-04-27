@@ -101,8 +101,8 @@ export const readGoogleDriveFiles = async (
               alt: "media",
             }, { responseType: 'stream' });
 
-            const buf = await streamToBuffer(res.data);
-            const content = await processPdfBuffer(buf);
+            const blob = await streamToBlob(res.data);
+            const content = await processPdfBuffer(blob);
 
             const fileContent: FileContent = {
               name: file.name || "",
@@ -154,4 +154,9 @@ async function streamToBuffer(stream: Readable): Promise<Buffer> {
       reject(err);
     });
   });
+}
+
+async function streamToBlob(stream: Readable): Promise<Blob> {
+  const buffer = await streamToBuffer(stream);  // Convert stream to buffer
+  return new Blob([buffer]);  // Convert buffer to Blob
 }

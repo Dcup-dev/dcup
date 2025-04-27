@@ -28,7 +28,12 @@ services:
       - "6333:6333"
     volumes:
       - qdrant_data:/data
-
+  parser:
+    build:
+      context: ./svc_parser/
+      dockerfile: Dockerfile
+    ports:
+      - "9000:9000"
 volumes:
   postgres_data:
   redis_data:
