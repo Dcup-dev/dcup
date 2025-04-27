@@ -13,7 +13,6 @@ RUN apk add --no-cache libc6-compat python3 py3-pip
 WORKDIR /app
 
 COPY package.json package-lock.json* ./
-COPY scripts/ scripts/
 
 # Install Node dependencies (this runs your postinstall that creates the Python venv)
 RUN npm ci
