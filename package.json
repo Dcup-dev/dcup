@@ -3,7 +3,6 @@
   "version": "0.0.0",
   "private": true,
   "scripts": {
-    "postinstall": "python3 -m venv scripts/venv && scripts/venv/bin/pip install -r scripts/requirements.txt",
     "build": "next build",
     "dev": "next dev",
     "start": "next start",
