@@ -26,11 +26,9 @@ COPY docker-entrypoint.sh /usr/local/bin/
 RUN chmod +x /usr/local/bin/docker-entrypoint.sh
 
 
-ENV OPENAI_API_KEY=openai-api-key-for-build
-ENV REDIS_HOST=just-for-build-only
-ENV REDIS_PORT=6379
-
-RUN npm run build
+RUN set -a && \
+    [ -f .env ] && . .env; \ 
+    npm run build
 
 RUN cp -r public .next/standalone/ && cp -r .next/static .next/standalone/.next/
 
