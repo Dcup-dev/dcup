@@ -1,0 +1,16 @@
+services:
+  - type: web
+    name: dcup-web
+    runtime: docker
+    dockerContext: .
+    dockerfilePath: ./Dockerfile
+    httpPort: 8080
+  
+  - type: pserv
+    name: parser
+    runtime: docker
+    dockerContext: ./svc_parser
+    dockerfilePath: ./svc_parser/Dockerfile
+    httpPort: 9000
+    
+    
