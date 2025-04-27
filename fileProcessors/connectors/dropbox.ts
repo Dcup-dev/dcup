@@ -138,9 +138,8 @@ export const readDropboxFiles = async (
         },
       });
 
-      const fileStream = await response.arrayBuffer();
-      const buf = Buffer.from(fileStream);
-      const content = await processPdfBuffer(buf);
+      const blob = await response.blob();
+      const content = await processPdfBuffer(blob);
       const fileContent: FileContent = {
         name: file.name || "",
         pages: content,

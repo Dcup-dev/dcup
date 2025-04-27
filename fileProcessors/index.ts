@@ -27,7 +27,10 @@ export type PageContent = {
 export const directProcessFiles = async ({ files, metadata, service, connectionId, links, pageLimit, fileLimit }: TQueue) => {
   // Create promises for processing file URLs
   const filePromises = files.map(async (file) => {
-    const content = await processPdfBuffer(Buffer.from(file.content, 'base64'));
+    const arrayBuffer = Buffer.from(file.content, 'base64').buffer;
+
+    const content = await processPdfBuffer(new Blob([arrayBuffer]));
+
     return {
       name: file.name || "",
       pages: content,
