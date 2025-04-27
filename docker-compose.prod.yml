@@ -28,6 +28,12 @@ services:
       - "6333:6333"
     volumes:
       - qdrant_data:/data
+  parser:
+    build:
+      context: ./svc_parser/
+      dockerfile: Dockerfile
+    ports:
+      - "9000:9000"
   app:
     build:
       context: .
@@ -39,6 +45,7 @@ services:
       HOSTNAME: "0.0.0.0"
       DCUP_DOC_URL: https://dcup.dev/docs
       NEXTAUTH_URL: http://localhost:8080
+      DCUP_PARSER: http://parser:9000
       NEXTAUTH_SECRET: ${NEXTAUTH_SECRET}
       API_SECRET: ${API_SECRET}
 
@@ -74,6 +81,7 @@ services:
       - postgres
       - redis
       - qdrant
+      - parser
 
 volumes:
   postgres_data:

@@ -60,7 +60,7 @@ export const readAWSFiles = async (
 
       const response = await s3Client.send(getCommand);
       if (!response.Body) continue;
-      const buffer = await streamToBuffer(response.Body)
+      const buffer = await streamToBlob(response.Body)
       const content = await processPdfBuffer(buffer);
       const fileName = fileKey.split('/').pop() || fileKey;
 
@@ -104,4 +104,9 @@ async function streamToBuffer(stream: Readable): Promise<Buffer> {
       reject(err);
     });
   });
+}
+
+async function streamToBlob(stream: Readable): Promise<Blob> {
+  const buffer = await streamToBuffer(stream);  // Convert stream to buffer
+  return new Blob([buffer]);  // Convert buffer to Blob
 }
