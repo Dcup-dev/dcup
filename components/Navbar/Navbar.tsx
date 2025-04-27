@@ -25,7 +25,7 @@ export function Navbar() {
           <SheetContent>
             <SheetHeader>
               <SheetTitle asChild >
-                <Logo href="/" />
+                <Logo />
               </SheetTitle>
             </SheetHeader>
 
