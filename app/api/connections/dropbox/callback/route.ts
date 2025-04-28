@@ -102,7 +102,7 @@ export async function GET(request: Request) {
         { status: 500 }
       );
     }
-    return NextResponse.redirect(new URL('/connections', request.url));
+    return NextResponse.redirect(`${process.env.NEXTAUTH_URL}/connections`);
   } catch (error) {
     return NextResponse.json({ error: 'Failed to authenticate' }, { status: 500 });
   }
