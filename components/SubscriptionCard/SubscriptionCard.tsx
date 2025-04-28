@@ -1,14 +1,17 @@
+import Link from 'next/link'
 import { Card, CardHeader, CardTitle, CardContent, CardFooter } from "@/components/ui/card"
 import { Progress } from "@/components/ui/progress"
 import { Badge } from "@/components/ui/badge"
-import { Database, FileText, Bolt, InfinityIcon } from "lucide-react"
+import { Database, FileText, Bolt, InfinityIcon, Zap } from "lucide-react"
 import { Plans } from "@/lib/Plans"
-import { SubscriptionDrawer } from "../SubscriptionDrawer/SubscriptionDrawer"
+import { Button } from "../ui/button"
 
 export function SubscriptionCard({
+  userId,
   plan,
   usage
 }: {
+  userId: string,
   plan: keyof typeof Plans
   usage: {
     connections: number
@@ -89,7 +92,18 @@ export function SubscriptionCard({
         ))}
       </CardContent>
       {!isOpenSource && <CardFooter className="border-t pt-4">
-        <SubscriptionDrawer isFree={isFree} />
+        <Button className="w-full" size="lg" variant={isFree ? 'default' : 'outline'} asChild>
+          <Link href={`https://dcup.dev/buy/${userId}`} >
+            {isFree ? (
+              <>
+                <Zap className="mr-2 h-4 w-4" />
+                Upgrade Plan
+              </>
+            ) : (
+              'Buy More Credits'
+            )}
+          </Link>
+        </Button>
       </CardFooter>}
     </Card>
   )

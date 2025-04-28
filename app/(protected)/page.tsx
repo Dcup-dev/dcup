@@ -68,6 +68,7 @@ export default async function page() {
         {/* API Usage */}
         <div className="w-full xl:w-auto">
           <SubscriptionCard
+            userId={session.user.id!}
             plan={user.plan}
             usage={{
               connections: user.connections.length,
