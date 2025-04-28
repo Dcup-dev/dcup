@@ -83,7 +83,7 @@ export async function GET(request: Request) {
         { status: 500 },
       );
     }
-    return NextResponse.redirect(new URL('/connections', request.url));
+   return NextResponse.redirect(`${process.env.NEXTAUTH_URL}/connections`);
   } catch (error: any) {
     return NextResponse.json(
       { code: "internal_server_error", message: error.message },
