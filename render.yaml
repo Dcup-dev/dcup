@@ -4,13 +4,30 @@ services:
     runtime: docker
     dockerContext: .
     dockerfilePath: ./Dockerfile
-    httpPort: 8080
+    envVars:
+      - key: NEXT_PUBLIC_GOOGLE_CLIENT_ID
+        sync: false
+      - key: NEXT_PUBLIC_GOOGLE_API_KEY
+        sync: false
+      - key: NEXT_PUBLIC_PAYMENT
+        sync: false
+      - key: NEXT_PUBLIC_PADDLE_ENV
+        sync: false
+      - key: NEXT_PUBLIC_PADDLE_SUCCESSURL
+        sync: false
+      - key: NEXT_PUBLIC_PADDLE_CLIENT_TOKEN
+        sync: false
+      - key: NEXT_PUBLIC_PADDLE_BASIC_PRICE_ID
+        sync: false
+      - key: NEXT_PUBLIC_PADDLE_PRO_PRICE_ID
+        sync: false
+      - key: NEXT_PUBLIC_PADDLE_BUSINESS_PRICE_ID
+        sync: false
+      - key: NEXT_PUBLIC_PADDLE_ENTERPRISE_PRICE_ID
+        sync: false
   
   - type: pserv
     name: parser
     runtime: docker
     dockerContext: ./svc_parser
     dockerfilePath: ./svc_parser/Dockerfile
-    httpPort: 9000
-    
-    

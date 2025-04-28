@@ -13,7 +13,6 @@ RUN apk add --no-cache libc6-compat python3 py3-pip
 WORKDIR /app
 
 COPY package.json package-lock.json* ./
-COPY scripts/ scripts/
 
 # Install Node dependencies (this runs your postinstall that creates the Python venv)
 RUN npm ci
@@ -27,11 +26,11 @@ COPY docker-entrypoint.sh /usr/local/bin/
 RUN chmod +x /usr/local/bin/docker-entrypoint.sh
 
 
-ENV OPENAI_API_KEY=openai-api-key-for-build
-ENV REDIS_HOST=just-for-build-only
-ENV REDIS_PORT=6379
+RUN set -a && \
+    [ -f .env ] && . .env; \ 
+    npm run build
 
-RUN npm run build
+COPY .env .next/standalone/.env
 
 RUN cp -r public .next/standalone/ && cp -r .next/static .next/standalone/.next/
 

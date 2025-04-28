@@ -21,7 +21,7 @@ export const PaymentProvider = ({ children }: { children: ReactNode }) => {
   useEffect(() => {
     const loadPaddleScript = async () => {
       if (typeof window === "undefined") return;
-      return initializePaddleInstance();
+      return await initializePaddleInstance();
     };
 
     const initializePaddleInstance = async () => {
