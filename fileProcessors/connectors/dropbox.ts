@@ -23,7 +23,7 @@ export const authDropbox = async () => {
     'code',
     'offline',
     ["files.metadata.read", "files.content.read", "email", "openid", "account_info.read"]
-  )
+  ).then(authUrl => `${authUrl}&force_reapprove=true`);
   return authUrl.toString();
 }
 
