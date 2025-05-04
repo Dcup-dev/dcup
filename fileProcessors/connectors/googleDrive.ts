@@ -16,7 +16,7 @@ const googleDriveCredentials = z.object({
 })
 
 const googleDriveMetadata = z.object({
-  folderId: z.string().min(5),
+  folderId: z.string().min(2),
 })
 
 export const authGoogleDrive = () => {
