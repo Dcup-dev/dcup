@@ -1,7 +1,7 @@
 ---
 name: todo
 about: 'task to do '
-title: "[TODO]"
+title: ""
 labels: enhancement
 assignees: ''
 

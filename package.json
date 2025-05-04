@@ -5,8 +5,10 @@
   "scripts": {
     "build": "next build",
     "dev": "next dev",
+    "lint": "next lint",
     "start": "next start",
-    "test": "echo \"No tests yet\" && exit 0",
+    "test": "jest",
+    "test:watch": "jest --watch",
     "generate": "drizzle-kit generate",
     "pushdb": "drizzle-kit push --force"
   },
@@ -74,6 +76,10 @@
     "vaul": "^1.1.2"
   },
   "devDependencies": {
+    "@testing-library/dom": "^10.4.0",
+    "@testing-library/jest-dom": "^6.6.3",
+    "@testing-library/react": "^16.3.0",
+    "@types/jest": "^29.5.14",
     "@types/jsonwebtoken": "^9.0.8",
     "@types/mdx": "^2.0.13",
     "@types/node": "22.9.0",
@@ -85,8 +91,11 @@
     "drizzle-kit": "^0.30.2",
     "eslint": "^8",
     "eslint-config-next": "15.0.3",
+    "jest": "^29.7.0",
+    "jest-environment-jsdom": "^29.7.0",
     "postcss": "^8.4.48",
     "tailwindcss": "^3.4.14",
+    "ts-node": "^10.9.2",
     "tsx": "^4.19.2",
     "typescript": "^5.6.3"
   }
