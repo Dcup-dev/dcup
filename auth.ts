@@ -32,6 +32,12 @@ export const authOptions: NextAuthOptions = {
       }
       return session;
     },
+    jwt: async ({ user, token }) => {
+      if (user) {
+        token.id = user.id;
+      }
+      return token;
+    },
   },
   providers: [
     GoogleProvider({
