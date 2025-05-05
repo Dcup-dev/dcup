@@ -2,29 +2,75 @@ name: CI
 
 on:
   pull_request:
-    branches:
-      - main
+    branches: [ main ]
 
 jobs:
   verify:
-    name: Install → Build → Lint → Test
+    name: Install → Build → Lint → Unit Tests
     runs-on: ubuntu-latest
-   
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v3
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v3
         with:
-          node-version: '20'
-          cache: 'npm'
+          node-version: "20"
+          cache: npm
+      - run: npm ci
+      - run: npm run lint
+      - run: npm test
 
+  e2e:
+    name: E2E (Cypress via Docker + Next.js)
+    needs: verify
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      # 1) install JS deps so `next dev` exists:
       - name: Install dependencies
-        run: npm install
-      
-      - name: Lint (ESLint & Prettier)
-        run: npm run lint
+        run: npm ci
 
-      - name: Run Tests
-        run: npm test
+      # 2) generate a full .env before starting anything:
+      - name: Generate Env File
+        run: |
+         cat <<EOF > .env
+         REDIS_DB_ADDRESS=localhost
+         REDIS_DB_PORT=6379
+         REDIS_DB_PASSWORD=
+         REDIS_DB_DATABASE=0
+         OPENAI_KEY="my key"
+         NEXTAUTH_SECRET=tZuoxOlhNxw7Q/r3DCiuVKZJ7op1dX/XTLYqG3rEurA=
+         DRIZZLE_DATABASE_URL=postgres://postgres:root@localhost:5432/dcup
+         EOF
+
+      # 3) spin up your other services (redis, postgres, etc):
+      - name: Start services with Make
+        run: |
+          make docker-run &
+          sleep 10        # give containers time to initialize
+
+      # 4) start your Next.js app in dev mode
+      - name: Start Next.js
+        run: |
+          npm run dev &
+          sleep 10        # give Next.js time to boot
+
+      # 5) wait for both web & db ports
+      - name: Wait for HTTP & Postgres
+        run: |
+          npx wait-on http://localhost:3000
+          npx wait-on tcp:5432
+      
+      - name: set up DB
+        run: npm run generate && npm run pushdb
+
+      # 6) run Cypress
+      - name: Run Cypress E2E
+        env:
+          CYPRESS_baseUrl: http://localhost:3000
+        run: npx cypress run
+
+      # 7) teardown your Docker services
+      - name: Stop services
+        if: always()
+        run: make docker-down

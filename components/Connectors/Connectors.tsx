@@ -63,6 +63,7 @@ export const Connectors = async () => {
       {connectors.map(async (connector) => {
         return (
           <Card
+            data-test="connection-card"
             key={connector.id}
             className="p-6 hover:shadow-lg transition-shadow duration-200 w-full max-w-sm mx-auto"
           >
