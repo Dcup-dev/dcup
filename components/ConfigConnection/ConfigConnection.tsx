@@ -57,7 +57,7 @@ export const ConfigConnection = ({ connection, directory, status, open, setOpen,
     data.set("connectionId", connection.id)
     data.set("folderName", directory.name)
     data.set("service", connection.service)
-    if(directory?.id) data.set("folderId", directory.id)
+    if (directory?.id) data.set("folderId", directory.id)
     startTransition(async () => {
       const setConfig = async () => {
         try {
@@ -90,7 +90,7 @@ export const ConfigConnection = ({ connection, directory, status, open, setOpen,
 
   return (<Dialog open={open} onOpenChange={o => setOpen(o)} >
     <DialogTrigger asChild>
-      <Button size='sm' variant={isConfigSet ? 'ghost' : 'default'} disabled={status === 'PROCESSING' || (!status && connection.isSyncing)} onClick={() => setOpen(true)} >
+      <Button data-test={`btn-config-${connection.identifier}`} size='sm' variant={isConfigSet ? 'ghost' : 'default'} disabled={status === 'PROCESSING' || (!status && connection.isSyncing)} onClick={() => setOpen(true)} >
         <Settings2 />
         Configure
       </Button>
@@ -180,7 +180,7 @@ export const ConfigConnection = ({ connection, directory, status, open, setOpen,
 
         </div>
         <DialogFooter>
-          <Button disabled={pending} type="submit">
+          <Button disabled={pending} type="submit" data-test={`btn-config-connection`} >
             {pending ? (
               <>
                 {" "}
