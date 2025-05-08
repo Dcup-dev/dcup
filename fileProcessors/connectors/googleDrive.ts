@@ -28,7 +28,8 @@ export const authGoogleDrive = () => {
 
   const scopes = [
     'https://www.googleapis.com/auth/drive.readonly',
-    'https://www.googleapis.com/auth/userinfo.email',];
+    'https://www.googleapis.com/auth/userinfo.email',
+  ];
   const authUrl = oauth2Client.generateAuthUrl({
     access_type: 'offline',
     scope: scopes,
