@@ -1,4 +1,4 @@
 import { setupServer } from 'msw/node';
-import { handlers } from './handlers';
 
-export const mockServer = setupServer(...handlers);
+import { handlers, scenarios } from './handlers';
+export const mockServer = setupServer(...scenarios['zeroFile'], ...handlers);
