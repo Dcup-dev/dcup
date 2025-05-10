@@ -34,6 +34,7 @@ jobs:
       - name: Generate Env File
         run: |
          cat <<EOF > .env
+         APP_ENV=TEST
          REDIS_DB_ADDRESS=localhost
          REDIS_DB_PORT=6379
          REDIS_DB_PASSWORD=
