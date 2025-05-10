@@ -2,13 +2,13 @@ import { v4 as uuidv4 } from "uuid";
 import { encode } from "next-auth/jwt";
 import type { JWT } from "next-auth/jwt";
 
-Cypress.Commands.add("loginNextAuth", ({ id, name, email , image}) => {
+Cypress.Commands.add("loginNextAuth", ({ id, name, email, image }) => {
   Cypress.log({
     displayName: "NEXT-AUTH LOGIN",
     message: [`🔐 Authenticating | ${name}`],
   });
 
-  const now    = Math.floor(Date.now() / 1000);
+  const now = Math.floor(Date.now() / 1000);
   const expiry = now + 30 * 24 * 60 * 60; // 30 days
   const cookieName = "next-auth.session-token";
 
@@ -17,25 +17,23 @@ Cypress.Commands.add("loginNextAuth", ({ id, name, email , image}) => {
     id,
     name,
     email,
-    picture:image, 
-    iat:   now,
-    exp:   expiry,
-    jti:   uuidv4(),
+    picture: image,
+    iat: now,
+    exp: expiry,
+    jti: uuidv4(),
   };
 
   return cy
     .wrap(encode({ token: tokenPayload, secret: Cypress.env("NEXTAUTH_SECRET") }))
     .then((encrypted) => {
       return cy.setCookie(cookieName, encrypted as string, {
-        log:     false,
-        httpOnly:true,
-        path:    "/",
+        log: false,
+        httpOnly: true,
+        path: "/",
         expiry,
       });
     });
 });
-
-
 
 
 /// <reference types="cypress" />
@@ -68,7 +66,7 @@ Cypress.Commands.add("loginNextAuth", ({ id, name, email , image}) => {
 declare global {
   namespace Cypress {
     interface Chainable {
-      loginNextAuth({id, name, email, image}: {id:string, name:string, email:string,image:string}): Chainable<Cookie>
+      loginNextAuth({ id, name, email, image }: { id: string, name: string, email: string, image: string }): Chainable<Cookie>
       // login(email: string, password: string): Chainable<void>
       // drag(subject: string, options?: Partial<TypeOptions>): Chainable<Element>
       // dismiss(subject: string, options?: Partial<TypeOptions>): Chainable<Element>

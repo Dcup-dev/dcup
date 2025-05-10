@@ -50,7 +50,7 @@ export const DeleteConnection = ({ connection, status }: { connection: Connectio
     <Dialog open={open} onOpenChange={e => setOpen(e)} >
       <DialogTrigger asChild>
         <DialogTrigger asChild>
-          <Button size='sm' variant={'ghost'} disabled={status === 'PROCESSING' || (!status && connection.isSyncing)}>
+          <Button data-test={`btn-delete-${connection.identifier}`} size='sm' variant={'ghost'} disabled={status === 'PROCESSING' || (!status && connection.isSyncing)}>
             <Trash />
             Delete
           </Button>
@@ -65,7 +65,7 @@ export const DeleteConnection = ({ connection, status }: { connection: Connectio
           </DialogDescription>
         </DialogHeader>
         <DialogFooter >
-          <Button type="submit" variant='destructive' onClick={handleDeleteConnection} disabled={isPending} >
+          <Button data-test="delete-connection-btn" type="submit" variant='destructive' onClick={handleDeleteConnection} disabled={isPending} >
             {isPending && <Loader2 className="animate-spin" />}
             Delete Connection
           </Button>

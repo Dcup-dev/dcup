@@ -32,7 +32,7 @@ export const ConnectionBtn = ({ connection }: { connection: string }) => {
   }
 
   return (
-    <Button className="w-full" size='lg' onClick={handleConnection} disabled={isPending} >
+    <Button data-test={`btn-${connection}`} className="w-full" size='lg' onClick={handleConnection} disabled={isPending} >
       {isPending && <Loader2 className="animate-spin" />}
       Connect
     </Button>
