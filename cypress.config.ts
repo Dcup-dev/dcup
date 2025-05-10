@@ -43,6 +43,7 @@ export default defineConfig({
   },
   env: {
     APP_ENV: "TEST",
+    DCUP_PARSER: "http://localhost:9000",
     NEXT_PUBLIC_GOOGLE_CLIENT_ID: "xxxxxxxxx",
     GOOGLE_CLIENT_SECRET: "xxxxx",
     NEXT_PUBLIC_GOOGLE_API_KEY: "xxx",
