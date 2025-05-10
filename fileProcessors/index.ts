@@ -48,14 +48,6 @@ export const directProcessFiles = async ({ files, metadata, service, connectionI
     } as FileContent;
   });
 
-  await publishProgress({
-    connectionId: connectionId,
-    processedFile: 0,
-    processedPage: 0,
-    lastAsync: new Date(),
-    status: 'PROCESSING',
-  })
-
   const filesContent = await Promise.all([...filePromises, ...linkPromises]);
   return processFiles(filesContent, service, connectionId, pageLimit, fileLimit)
 }
@@ -65,7 +57,7 @@ export const connectionProcessFiles = async ({ connectionId, service, pageLimit,
   const connection = await databaseDrizzle.query.connections.findFirst({
     where: (c, ops) => ops.eq(c.id, connectionId)
   })
-  if (!connection) return;
+  if (!connection || !connection.isSyncing) return;
 
   await publishProgress({
     connectionId: connectionId,
