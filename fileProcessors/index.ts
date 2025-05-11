@@ -59,14 +59,6 @@ export const connectionProcessFiles = async ({ connectionId, service, pageLimit,
   })
   if (!connection || !connection.isSyncing) return;
 
-  await publishProgress({
-    connectionId: connectionId,
-    processedFile: 0,
-    processedPage: 0,
-    lastAsync: new Date(),
-    status: 'PROCESSING',
-  })
-
   const filesContent = await getFileContent(connection)
   return processFiles(filesContent, service, connectionId, pageLimit, fileLimit)
 }
@@ -78,6 +70,14 @@ const processFiles = async (filesContent: FileContent[], service: string, connec
   let processedAllPages = 0
   let limits = pageLimit;
   const now = new Date()
+
+  await publishProgress({
+    connectionId: connectionId,
+    processedFile: 0,
+    processedPage: 0,
+    lastAsync: now,
+    status: 'PROCESSING',
+  })
 
   const splitter = new RecursiveCharacterTextSplitter({
     chunkSize: 4096,
