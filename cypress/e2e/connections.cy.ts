@@ -105,7 +105,7 @@ describe('connect to google drive', () => {
           .get('textarea[name="metadata"]')
           .clear()
           .type('{"job": "my test files"}', { parseSpecialCharSequences: false })
-          .get('input[name="documentLimit"]')
+          .get('input[name="filestLimit"]')
           .type('2')
           .get('input[name="pageLimit"]')
           .type('5')
