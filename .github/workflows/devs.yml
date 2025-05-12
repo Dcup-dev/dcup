@@ -34,7 +34,7 @@ jobs:
       - name: Generate Env File
         run: |
          cat <<EOF > .env
-         APP_ENV=TEST
+         NEXT_PUBLIC_APP_ENV=TEST
          NEXTAUTH_URL=http://localhost:3000
          REDIS_DB_ADDRESS=localhost
          REDIS_DB_PORT=6379

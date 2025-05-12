@@ -8,6 +8,9 @@ import { getDropboxAuthorization, readDropboxFiles } from "./dropbox";
 import { setDropboxConnection } from "@/DataSource/Dropbox/setDropboxConnection";
 import { setAWSConnection } from "@/DataSource/Aws/setAwsConnection";
 import { readAWSFiles } from "./aws";
+import { databaseDrizzle } from "@/db";
+import { calculateRemainingPages, Plans } from "@/lib/Plans";
+import { shortId } from "@/lib/utils";
 
 export const getConnectionToken = async (connection: ConnectionTable) => {
   switch (connection.service) {
@@ -21,7 +24,7 @@ export const getConnectionToken = async (connection: ConnectionTable) => {
     case "DIRECT_UPLOAD":
       return "DIRECT_UPLOAD"
     case "AWS":
-    return "AWS"
+      return "AWS"
     default:
       break;
   }
@@ -41,6 +44,56 @@ export const getFileContent = async ({ service, id, metadata, connectionMetadata
 }
 
 export const setConnectionToProcess = async (formData: FormData): Promise<TQueue> => {
+  const userId = formData.get("userId")!
+  const service = formData.get("service")
+  const connectionId = formData.get("connectionId")
+
+  const user = await databaseDrizzle.query.users.findFirst({
+    where: (u, ops) => ops.eq(u.id, userId.toString()),
+    columns: {
+      plan: true,
+      email: true,
+    },
+    with: {
+      connections: {
+        columns: {
+          id: true,
+        },
+        with: {
+          files: {
+            columns: {
+              totalPages: true,
+            }
+          }
+        }
+      }
+    }
+  })
+  if (!user) throw new Error("no such account")
+  const plan = Plans[user.plan]
+  if (service !== "DIRECT_UPLOAD" && service !== "DIRECT_UPLOAD_UPDATE") {
+    const used = user.connections.length;
+    if (used >= plan.connections) {
+      throw new Error(
+        `You’ve reached your connection limit for the ${user.plan.toLowerCase()} plan (` +
+        `${used}/${plan.connections}). ` +
+        `To add more connections, please upgrade your subscription.`
+      );
+    }
+  }
+  const pageLimit = formData.get("pageLimit")
+  const remainingPages = calculateRemainingPages(plan, user.connections,
+    connectionId?.toString(),
+    pageLimit?.toString())
+
+  if (isFinite(remainingPages)) {
+    formData.set("pageLimit", remainingPages.toString())
+  }
+  if (!formData.get("identifier")) {
+    const email = user.email?.split('@')[0] ?? 'unknown';
+    formData.set("identifier", email + shortId())
+  }
+
   switch (formData.get("service")) {
     case "GOOGLE_DRIVE":
       return await setGoogleDriveConnection(formData)

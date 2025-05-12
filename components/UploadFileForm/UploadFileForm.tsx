@@ -73,10 +73,10 @@ export const UploadFileForm = ({ setOpen, connection }: TFileForm) => {
   return (
     <form action={handleUploadFiles}>
       <div className="grid w-full max-w-sm items-center gap-1.5 pb-2">
-        <Label htmlFor="uploadName">Upload Name</Label>
+        <Label htmlFor="identifier">Upload Name</Label>
         <Input
-          id="uploadName"
-          name="uploadName"
+          id="identifier"
+          name="identifier"
           defaultValue={connection ? connection.identifier : ""}
           disabled={!!connection}
           placeholder="Unique upload name"
@@ -119,7 +119,7 @@ export const UploadFileForm = ({ setOpen, connection }: TFileForm) => {
       </div>
 
       <DialogFooter>
-        <Button disabled={pending} type="submit">
+        <Button disabled={pending} type="submit" data-test="btn-upload" >
           {pending ? (
             <>
               <Loader2 className="mr-2 h-4 w-4 animate-spin" />
@@ -212,6 +212,8 @@ export const DataInput = ({ files, setFiles, links, setLinks, currentFiles, remo
     validateLinks(newLinks);
   };
 
+  const env = process.env.NEXT_PUBLIC_APP_ENV;
+
   return (
     <div className="flex-1 flex flex-col h-full">
       <Tabs defaultValue="file" className="w-full h-full flex flex-col">
@@ -249,11 +251,12 @@ export const DataInput = ({ files, setFiles, links, setLinks, currentFiles, remo
                 <p className="text-sm text-gray-500 mb-4">or</p>
                 <input
                   type="file"
+                  name="fileUpload"
                   ref={inputFile}
                   multiple
                   accept="application/pdf"
                   onChange={addNewFile}
-                  className="hidden"
+                  className={env === 'TEST' ? "block" : "hidden"}
                   id="file-upload"
                 />
                 <Label htmlFor="file-upload" asChild>
@@ -268,6 +271,7 @@ export const DataInput = ({ files, setFiles, links, setLinks, currentFiles, remo
                     {allFiles.map(fileName => (
                       <div key={fileName} className="flex items-center gap-2 text-sm text-gray-600">
                         <XCircleIcon
+                          data-test={`btn-remove-${fileName}`}
                           className="h-5 w-5 text-red-500 cursor-pointer"
                           onClick={() => removeFiles(fileName)}
                         />

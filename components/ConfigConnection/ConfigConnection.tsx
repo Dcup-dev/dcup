@@ -166,8 +166,8 @@ export const ConfigConnection = ({ connection, directory, status, open, setOpen,
           <div>
             <label className="block text-sm font-medium">Document Limit</label>
             <Input
-              name='documentLimit'
-              id='documentLimit'
+              name='fileLimit'
+              id='fileLimit'
               disabled={connection.isSyncing || connection.isConfigSet}
               type="number"
               defaultValue={connection.files.length !== 0 ? connection.files.length : undefined}

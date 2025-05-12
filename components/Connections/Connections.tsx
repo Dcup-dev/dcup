@@ -82,7 +82,6 @@ export default function Connections({ connections, tokens }: { connections: Conn
           </Alert>
         </TableCell>}
       </TableRow>)
-
   });
 }
 

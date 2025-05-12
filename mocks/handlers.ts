@@ -1,4 +1,4 @@
-import { http, HttpResponse, } from 'msw'
+import { http, HttpResponse } from 'msw'
 const mockDriveFiles = [
   {
     id: '1',
@@ -35,6 +35,43 @@ export const scenarios = {
 }
 
 export const handlers = [
+  http.post("https://models.inference.ai.azure.com/embeddings", () => {
+    return HttpResponse.json({
+      data: [
+        {
+          embedding: Array(1536).fill(0),
+          index: 0,
+        },
+      ],
+      model: "text-embedding-3-small",
+      object: 'list',
+    })
+  }),
+  http.post("https://models.inference.ai.azure.com/chat/completions", () => {
+    return HttpResponse.json({
+      id: 'chatcmpl-mock-id',
+      object: 'chat.completion',
+      choices: [
+        {
+          message: {
+            role: 'assistant',
+            content: JSON.stringify({
+              title: 'Mock Title',
+              summary: 'Mock Summary based on document chunk.',
+            }),
+          },
+          finish_reason: 'stop',
+          index: 0,
+        },
+      ],
+      model: 'gpt-4o-mini',
+      usage: {
+        prompt_tokens: 10,
+        completion_tokens: 10,
+        total_tokens: 20,
+      },
+    })
+  }),
   http.get("https://www.googleapis.com/drive/v3/files/:fileId", ({ params }) => {
     const fileId = params.fileId;
     const file = mockDriveFiles.find((f) => f.id === fileId);

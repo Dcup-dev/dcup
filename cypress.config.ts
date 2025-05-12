@@ -1,15 +1,54 @@
 import { defineConfig } from "cypress";
 import { databaseDrizzle } from "./db";
-import { users } from "./db/schemas/users";
+import { apiKeys, users } from "./db/schemas/users";
 import * as dotenv from "dotenv";
 import { eq } from "drizzle-orm";
+import { apiKeyGenerator, hashApiKey } from "./lib/api_key";
+import { QdrantClient } from "@qdrant/js-client-rest";
 dotenv.config({ path: ".env" });
+
+const qdrant_collection_name = "documents"
+const qdrantCLient = new QdrantClient({ url: process.env.QDRANT_DB_URL!, apiKey: process.env.QDRANT_DB_KEY });
 
 export default defineConfig({
   chromeWebSecurity: false,
+  watchForFileChanges: false,
   e2e: {
     setupNodeEvents(on) {
       on("task", {
+        async deleteCollection() {
+          return await qdrantCLient.deleteCollection(qdrant_collection_name)
+        },
+        async getPointsById({ chunkIds }: { chunkIds: string[] }) {
+          return await qdrantCLient.retrieve(qdrant_collection_name, {
+            ids: chunkIds,
+            with_payload: true,
+          })
+        },
+        async createApiKey({ id }: { id: string }) {
+          const apiKey = apiKeyGenerator()
+          const hashedKey = hashApiKey(apiKey);
+
+          await databaseDrizzle.insert(apiKeys).values({
+            userId: id,
+            name: "test_API",
+            generatedTime: new Date(),
+            apiKey: hashedKey,
+          });
+          return apiKey
+        },
+        async uploadFile({ key, form }) {
+          const response = await fetch('http://localhost:3000/api/upload', {
+            method: 'POST',
+            headers: {
+              Authorization: `Bearer ${key}`,
+            },
+            body: form,
+          });
+          const result = await response.json();
+          return { status: response.status, body: result };
+        },
+
         async addNewUser({ email, name, image, plan }) {
           await databaseDrizzle
             .insert(users)
@@ -26,15 +65,23 @@ export default defineConfig({
           await databaseDrizzle.delete(users).where(eq(users.email, email))
           return { email }
         },
-
         async getConnection({ email }) {
-          const user = await databaseDrizzle.query.users.findFirst({
-            where: (u, ops) => ops.eq(u.email, email),
-            with: {
-              connections: true,
+          while (true) {
+            const user = await databaseDrizzle.query.users.findFirst({
+              where: (u, ops) => ops.eq(u.email, email),
+              with: {
+                connections: {
+                  where: (c, ops) => ops.eq(c.isSyncing, false),
+                  with: {
+                    files: true,
+                  }
+                }
+              }
+            })
+            if (user?.connections && user.connections.length > 0) {
+              return { conns: user.connections }
             }
-          })
-          return { conns: user?.connections }
+          }
         }
       }
       )
@@ -42,7 +89,7 @@ export default defineConfig({
     baseUrl: "http://localhost:3000",
   },
   env: {
-    APP_ENV: "TEST",
+    NEXT_PUBLIC_APP_ENV: "TEST",
     DCUP_PARSER: "http://localhost:9000",
     NEXT_PUBLIC_GOOGLE_CLIENT_ID: "xxxxxxxxx",
     GOOGLE_CLIENT_SECRET: "xxxxx",

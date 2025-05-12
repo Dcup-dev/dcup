@@ -53,22 +53,20 @@ export const directProcessFiles = async ({ files, metadata, service, connectionI
 }
 
 export const connectionProcessFiles = async ({ connectionId, service, pageLimit, fileLimit }: TQueue) => {
-
   const connection = await databaseDrizzle.query.connections.findFirst({
     where: (c, ops) => ops.eq(c.id, connectionId)
   })
   if (!connection || !connection.isSyncing) return;
-
   const filesContent = await getFileContent(connection)
   return processFiles(filesContent, service, connectionId, pageLimit, fileLimit)
 }
 
-const processFiles = async (filesContent: FileContent[], service: string, connectionId: string, pageLimit: number, fileLimit: number | null) => {
+const processFiles = async (filesContent: FileContent[], service: string, connectionId: string, pageLimit: number | null, fileLimit: number | null) => {
   const completedFiles: typeof processedFiles.$inferInsert[] = []
   const allPoints = [];
   let processedPage = 0;
   let processedAllPages = 0
-  let limits = pageLimit;
+  let limits = pageLimit ?? Infinity;
   const now = new Date()
 
   await publishProgress({
@@ -90,7 +88,7 @@ const processFiles = async (filesContent: FileContent[], service: string, connec
     for (let fileIndex = 0; fileIndex < filesContent.length && limits > 0; fileIndex++) {
       const file = filesContent[fileIndex]
       const chunksId = [];
-      if (fileLimit && fileLimit > 0 && fileLimit === fileIndex) break;
+      if (fileLimit !== null && fileLimit > 0 && fileIndex >= fileLimit) break;
       const baseMetadata = {
         _document_id: file.name,
         _metadata: {
@@ -100,7 +98,7 @@ const processFiles = async (filesContent: FileContent[], service: string, connec
       };
       for (let pageIndex = 0; pageIndex < file.pages.length && limits > 0; pageIndex++) {
         const page = file.pages[pageIndex]
-        if (limits !== null && limits <= 0) break
+        if (limits <= 0) break;
         const textPoints = await processingTextPage(page.text, pageIndex, baseMetadata, splitter)
         if (textPoints) {
           allPoints.push(textPoints);
@@ -167,16 +165,16 @@ const processFiles = async (filesContent: FileContent[], service: string, connec
       wait: true
     })
 
-    completedFiles.map(async (file) =>
+    for (let file of completedFiles) {
       await databaseDrizzle
         .insert(processedFiles)
-        .values(file).onConflictDoUpdate({
+        .values(file)
+        .onConflictDoUpdate({
           target: [processedFiles.name, processedFiles.connectionId],
           set: file
         })
-    )
+    }
   }
-
   await databaseDrizzle
     .update(connections)
     .set({ lastSynced: now, isSyncing: false })
