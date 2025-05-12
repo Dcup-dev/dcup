@@ -11,8 +11,7 @@ export const setGoogleDriveConnection = async (formData: FormData) => {
     folderId: formData.get("folderId"),
     metadata: formData.get("metadata"),
     pageLimit: formData.get("pageLimit"),
-    documentLimit: formData.get("documentLimit"),
-    maxPages: formData.get("maxPages")
+    fileLimit: formData.get("fileLimit"),
   })
 
   if (!config.success) {
@@ -33,7 +32,7 @@ export const setGoogleDriveConnection = async (formData: FormData) => {
     } : undefined,
     metadata: config.data.metadata,
     limitPages: config.data.pageLimit,
-    limitFiles: config.data.documentLimit,
+    limitFiles: config.data.fileLimit,
     isConfigSet: true,
     isSyncing: true,
   }).where(eq(connections.id, config.data.connectionId))
@@ -41,8 +40,8 @@ export const setGoogleDriveConnection = async (formData: FormData) => {
   return {
     connectionId: config.data.connectionId,
     service: "GOOGLE_DRIVE",
-    pageLimit: config.data.maxPages,
-    fileLimit: config.data.documentLimit,
+    pageLimit: config.data.pageLimit,
+    fileLimit: config.data.fileLimit,
     metadata: config.data.metadata,
     files: [],
     links: []

@@ -12,8 +12,7 @@ export const setAWSConnection = async (formData: FormData) => {
     folderId: formData.get("folderId"),
     metadata: formData.get("metadata"),
     pageLimit: formData.get("pageLimit"),
-    documentLimit: formData.get("documentLimit"),
-    maxPages: formData.get("maxPages")
+    fileLimit: formData.get("fileLimit"),
   })
 
   if (!config.success) {
@@ -36,14 +35,14 @@ export const setAWSConnection = async (formData: FormData) => {
     isConfigSet: true,
     isSyncing: true,
     limitPages:config.data.pageLimit,
-    limitFiles: config.data.documentLimit,
+    limitFiles: config.data.fileLimit,
   }).where(eq(connections.id, config.data.connectionId))
 
   return {
     connectionId: config.data.connectionId,
     service: "AWS",
-    pageLimit: config.data.maxPages,
-    fileLimit: config.data.documentLimit,
+    pageLimit: config.data.pageLimit || Infinity,
+    fileLimit: config.data.fileLimit,
     metadata: config.data.metadata,
     files: [],
     links: []
