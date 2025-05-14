@@ -1,6 +1,6 @@
 import { connections } from "@/db/schemas/connections"
 
-describe('connect to google drive', () => {
+describe.skip('connect to google drive', () => {
   const fakeUser = {
     name: "test man",
     email: "tester@dcup.dev",

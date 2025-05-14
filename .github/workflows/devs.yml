@@ -44,6 +44,18 @@ jobs:
          OPENAI_KEY="my key"
          NEXTAUTH_SECRET=tZuoxOlhNxw7Q/r3DCiuVKZJ7op1dX/XTLYqG3rEurA=
          DRIZZLE_DATABASE_URL=postgres://postgres:root@localhost:5432/dcup
+         NODE_ENV=production
+         OPENAI_ENDPOINT=https://models.inference.ai.azure.com
+         OPENAI_EMBEDDINGS_MODEL=text-embedding-3-small
+         OPENAI_AGENT_MODEL=gpt-4o-mini
+         QDRANT_DB_URL=http://localhost:6333
+         NEXT_PUBLIC_GOOGLE_CLIENT_ID=
+         GOOGLE_CLIENT_SECRET=
+         NEXT_PUBLIC_GOOGLE_API_KEY=
+         AUTH_GITHUB_ID=
+         AUTH_GITHUB_SECRET=
+         API_SECRET=xOAsKzZlYeGqaLiZNv6esJ
+         API_ACCESS_SECRET=fafkldsajfkldsjfoajFDIOASJFOfdlfja
          EOF
 
       # 3) spin up your other services (redis, postgres, etc):
