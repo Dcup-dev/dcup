@@ -17,12 +17,9 @@ jobs:
       - run: npm ci
       - run: npm run lint
       - run: npm test
-
   e2e:
     name: E2E (Cypress via Docker + Next.js)
-    needs: verify
     runs-on: ubuntu-latest
-
     steps:
       - uses: actions/checkout@v4
 
@@ -31,17 +28,17 @@ jobs:
 
       - name: Generate Env File
         run: |
-         cat <<EOF > .env
-         NEXT_PUBLIC_APP_ENV=TEST
-         NEXTAUTH_URL=http://localhost:3000
-         REDIS_DB_ADDRESS=localhost
-         REDIS_DB_PORT=6379
-         REDIS_DB_PASSWORD=
-         REDIS_DB_DATABASE=0
-         OPENAI_KEY="my key"
-         NEXTAUTH_SECRET=tZuoxOlhNxw7Q/r3DCiuVKZJ7op1dX/XTLYqG3rEurA=
-         DRIZZLE_DATABASE_URL=postgres://postgres:root@localhost:5432/dcup
-         EOF
+          cat <<EOF > .env
+          NEXT_PUBLIC_APP_ENV=TEST
+          NEXTAUTH_URL=http://localhost:3000
+          REDIS_DB_ADDRESS=localhost
+          REDIS_DB_PORT=6379
+          REDIS_DB_PASSWORD=
+          REDIS_DB_DATABASE=0
+          OPENAI_KEY="my key"
+          NEXTAUTH_SECRET=tZuoxOlhNxw7Q/r3DCiuVKZJ7op1dX/XTLYqG3rEurA=
+          DRIZZLE_DATABASE_URL=postgres://postgres:root@localhost:5432/dcup
+          EOF
 
       - name: Start services with Make
         run: |
@@ -52,6 +49,27 @@ jobs:
         run: |
           npm run dev &
           sleep 10
+
+      - name: Check which service is not running
+        run: |
+          echo "Checking Next.js (http://localhost:3000)..."
+          curl --fail http://localhost:3000 || echo "Next.js is not responding"
+
+          echo "Checking Postgres (tcp:5432)..."
+          nc -z localhost 5432 || echo "Postgres is not running"
+
+          echo "Checking Redis (tcp:6379)..."
+          nc -z localhost 6379 || echo "Redis is not running"
+
+          echo "Checking Qdrant (http://localhost:6333/healthz)..."
+          curl --fail http://localhost:6333/healthz || echo "Qdrant is not responding"
+
+          echo "Checking Parser (http://localhost:9000)..."
+          curl --fail http://localhost:9000 || echo "Parser is not responding"
+
+      - name: Show Docker logs
+        if: failure()
+        run: docker-compose logs
 
       - name: Wait for services
         run: |
