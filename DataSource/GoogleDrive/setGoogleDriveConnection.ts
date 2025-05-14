@@ -6,7 +6,7 @@ import { connectionConfig } from "../utils";
 export const setGoogleDriveConnection = async (formData: FormData) => {
   const config = connectionConfig.safeParse({
     connectionId: formData.get("connectionId"),
-    identifier: formData.get("connectionName"),
+    identifier: formData.get("identifier"),
     folderName: formData.get("folderName"),
     folderId: formData.get("folderId"),
     metadata: formData.get("metadata"),

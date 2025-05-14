@@ -57,6 +57,20 @@
       "when": 1746522968523,
       "tag": "0007_orange_multiple_man",
       "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "7",
+      "when": 1747164308474,
+      "tag": "0008_spooky_tarantula",
+      "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "7",
+      "when": 1747198120772,
+      "tag": "0009_regular_hydra",
+      "breakpoints": true
     }
   ]
 }

@@ -78,7 +78,6 @@ export const UploadFileForm = ({ setOpen, connection }: TFileForm) => {
           id="identifier"
           name="identifier"
           defaultValue={connection ? connection.identifier : ""}
-          disabled={!!connection}
           placeholder="Unique upload name"
         />
       </div>
@@ -89,7 +88,7 @@ export const UploadFileForm = ({ setOpen, connection }: TFileForm) => {
           id="metadata"
           name="metadata"
           placeholder='{"company": "dcup"}'
-          defaultValue={"{}"}
+          defaultValue={connection?.metadata ?? ""}
           className="max-h-10"
         />
       </div>

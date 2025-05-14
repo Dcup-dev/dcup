@@ -58,6 +58,7 @@ export const setConnectionToProcess = async (formData: FormData): Promise<TQueue
       connections: {
         columns: {
           id: true,
+          limitPages: true,
         },
         with: {
           files: {
@@ -81,7 +82,13 @@ export const setConnectionToProcess = async (formData: FormData): Promise<TQueue
       );
     }
   }
+
   const pageLimit = formData.get("pageLimit")
+  if (!pageLimit && service === 'DIRECT_UPLOAD_UPDATE') {
+    const connection = user.connections.find(conn => conn.id === connectionId)
+    if (connection && connection.limitPages) formData.set("pageLimit", connection.limitPages.toString())
+  }
+
   const remainingPages = calculateRemainingPages(plan, user.connections,
     connectionId?.toString(),
     pageLimit?.toString())

@@ -16,6 +16,17 @@ export default defineConfig({
   e2e: {
     setupNodeEvents(on) {
       on("task", {
+        async createCollection() {
+          try {
+            const { collections } = await qdrantCLient.getCollections();
+            if (!collections.find(col => col.name === qdrant_collection_name)) {
+              await qdrantCLient.createCollection(qdrant_collection_name, {
+                vectors: { size: 1536, distance: 'Cosine' },
+              });
+            }
+          } catch { }
+          return null
+        },
         async deleteCollection() {
           return await qdrantCLient.deleteCollection(qdrant_collection_name)
         },
@@ -24,6 +35,14 @@ export default defineConfig({
             ids: chunkIds,
             with_payload: true,
           })
+        },
+        async getPointsNumberByFileName({ fileName }: { fileName: string }) {
+          const existingPoints = await qdrantCLient.scroll(qdrant_collection_name, {
+            filter: {
+              must: [{ key: "_document_id", match: { value: fileName } }]
+            },
+          });
+          return existingPoints.points.length
         },
         async createApiKey({ id }: { id: string }) {
           const apiKey = apiKeyGenerator()
@@ -64,6 +83,21 @@ export default defineConfig({
         async deleteUser({ email }) {
           await databaseDrizzle.delete(users).where(eq(users.email, email))
           return { email }
+        },
+        async getConnections({ email }) {
+          const user = await databaseDrizzle.query.users.findFirst({
+            where: (u, ops) => ops.eq(u.email, email),
+            with: {
+              connections: {
+                where: (c, ops) => ops.eq(c.isSyncing, false),
+                with: {
+                  files: true,
+                }
+              }
+            }
+          })
+
+          return { conns: user?.connections || [] }
         },
         async getConnection({ email }) {
           while (true) {

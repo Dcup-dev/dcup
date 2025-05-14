@@ -7,7 +7,7 @@ import { connectionConfig } from "../utils";
 export const setDropboxConnection = async (formData: FormData) => {
   const config = connectionConfig.safeParse({
     connectionId: formData.get("connectionId"),
-    identifier: formData.get("connectionName"),
+    identifier: formData.get("identifier"),
     folderName: formData.get("folderName"),
     folderId: formData.get("folderId"),
     metadata: formData.get("metadata"),
@@ -41,7 +41,7 @@ export const setDropboxConnection = async (formData: FormData) => {
   return {
     connectionId: config.data.connectionId,
     service: "DROPBOX",
-    pageLimit: config.data.pageLimit || Infinity,
+    pageLimit: config.data.pageLimit,
     fileLimit: config.data.fileLimit,
     metadata: config.data.metadata,
     files: [],

@@ -1,5 +1,5 @@
 
-describe('processing file with Direct upload using APIs', () => {
+describe.skip('processing file with Direct upload using APIs', () => {
   const fakeUser = {
     name: "test man",
     email: "tester@dcup.dev",

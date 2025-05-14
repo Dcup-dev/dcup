@@ -53,14 +53,23 @@ const directUploadConfig = z.object({
 
 const updateDirectUploadConfig = z.object({
   connectionId: z.string().min(5),
-  metadata: z.string()
-    .transform((str, ctx): string => {
+  pageLimit: z.string().nullable().transform((str, ctx): number | null => {
+    try {
+      if (str) return parseInt(str)
+      return null
+    } catch (error) {
+      ctx.addIssue({ code: 'invalid_date', message: "invalid page limit" })
+      return z.NEVER
+    }
+  }),
+  identifier: z.string().min(2).optional(),
+  metadata: z.string().optional()
+    .transform((str, ctx): string | undefined => {
       try {
         if (str) {
           JSON.parse(str)
           return str
         }
-        return "{}"
       } catch (e) {
         ctx.addIssue({ code: 'custom', message: 'Invalid JSON' })
         return z.NEVER
@@ -76,15 +85,6 @@ const updateDirectUploadConfig = z.object({
       message: "Invalid File",
     })
   ),
-  pageLimit: z.string().nullable().transform((str, ctx): number | null => {
-    try {
-      if (str) return parseInt(str)
-      return null
-    } catch (error) {
-      ctx.addIssue({ code: 'invalid_date', message: "invalid page limit" })
-      return z.NEVER
-    }
-  }),
   links: z.array(z.string().min(5)),
   removedFiles: z.array(z.string().min(5))
 })
@@ -92,6 +92,7 @@ const updateDirectUploadConfig = z.object({
 export const updateDirectUploadConnection = async (formData: FormData) => {
   const config = updateDirectUploadConfig.safeParse({
     connectionId: formData.get("connectionId"),
+    identifier: formData.get("identifier"),
     metadata: formData.get("metadata") || "{}",
     files: formData.getAll("files") || [],
     links: formData.getAll("links") || [],
@@ -110,6 +111,13 @@ export const updateDirectUploadConnection = async (formData: FormData) => {
   }
 
   const connectionChunksIds: { chunksIds: string[] }[] = [];
+
+  await databaseDrizzle
+    .update(connections)
+    .set({
+      metadata: config.data.metadata,
+      identifier: config.data.identifier
+    }).where(eq(connections.id, config.data.connectionId))
 
   for (const fileName of config.data.removedFiles) {
     const files = await databaseDrizzle
@@ -138,7 +146,7 @@ export const updateDirectUploadConnection = async (formData: FormData) => {
   return {
     connectionId: config.data.connectionId,
     service: "DIRECT_UPLOAD",
-    metadata: config.data.metadata,
+    metadata: config.data.metadata ?? "{}",
     files: await Promise.all(files),
     links: config.data.links,
     pageLimit: config.data.pageLimit,
