@@ -17,77 +17,64 @@ jobs:
       - run: npm ci
       - run: npm run lint
       - run: npm test
+
   e2e:
     name: E2E (Cypress via Docker + Next.js)
+    needs: verify
     runs-on: ubuntu-latest
+
     steps:
       - uses: actions/checkout@v4
 
+      # 1) install JS deps so `next dev` exists:
       - name: Install dependencies
         run: npm ci
 
+      # 2) generate a full .env before starting anything:
       - name: Generate Env File
         run: |
-          cat <<EOF > .env
-          DCUP_PARSER=http://localhost:9000
-          NEXT_PUBLIC_APP_ENV=TEST
-          NEXTAUTH_URL=http://localhost:3000
-          REDIS_DB_ADDRESS=localhost
-          REDIS_DB_PORT=6379
-          REDIS_DB_PASSWORD=
-          REDIS_DB_DATABASE=0
-          OPENAI_KEY="my key"
-          NEXTAUTH_SECRET=tZuoxOlhNxw7Q/r3DCiuVKZJ7op1dX/XTLYqG3rEurA=
-          DRIZZLE_DATABASE_URL=postgres://postgres:root@localhost:5432/dcup
-          EOF
+         cat <<EOF > .env 
+         NEXT_PUBLIC_APP_ENV=TEST
+         DCUP_PARSER=http://localhost:9000
+         NEXTAUTH_URL=http://localhost:3000
+         REDIS_DB_ADDRESS=localhost
+         REDIS_DB_PORT=6379
+         REDIS_DB_PASSWORD=
+         REDIS_DB_DATABASE=0
+         OPENAI_KEY="my key"
+         NEXTAUTH_SECRET=tZuoxOlhNxw7Q/r3DCiuVKZJ7op1dX/XTLYqG3rEurA=
+         DRIZZLE_DATABASE_URL=postgres://postgres:root@localhost:5432/dcup
+         EOF
 
+      # 3) spin up your other services (redis, postgres, etc):
       - name: Start services with Make
         run: |
           make docker-run &
-          sleep 10
+          sleep 10        # give containers time to initialize
 
+      # 4) start your Next.js app in dev mode
       - name: Start Next.js
         run: |
           npm run dev &
-          sleep 10
+          sleep 10        # give Next.js time to boot
 
-      - name: Check which service is not running
-        run: |
-          echo "Checking Next.js (http://localhost:3000)..."
-          curl --fail http://localhost:3000 || echo "Next.js is not responding"
-
-          echo "Checking Postgres (tcp:5432)..."
-          nc -z localhost 5432 || echo "Postgres is not running"
-
-          echo "Checking Redis (tcp:6379)..."
-          nc -z localhost 6379 || echo "Redis is not running"
-
-          echo "Checking Qdrant (http://localhost:6333/healthz)..."
-          curl --fail http://localhost:6333/healthz || echo "Qdrant is not responding"
-
-          echo "Checking Parser (http://localhost:9000)..."
-          curl --fail http://localhost:9000 || echo "Parser is not responding"
-
-      - name: Show Docker logs
-        if: failure()
-        run: docker-compose logs
-
-      - name: Wait for services
+      # 5) wait for both web & db ports
+      - name: Wait for HTTP & Postgres
         run: |
           npx wait-on http://localhost:3000
           npx wait-on tcp:5432
-          npx wait-on tcp:6379
-          npx wait-on http://localhost:6333/healthz
-          npx wait-on http://localhost:9000
-
-      - name: Set up DB
+          npx wait-on tcp:6333
+      
+      - name: set up DB
         run: npm run generate && npm run pushdb
 
+      # 6) run Cypress
       - name: Run Cypress E2E
         env:
           CYPRESS_baseUrl: http://localhost:3000
         run: npx cypress run
 
+      # 7) teardown your Docker services
       - name: Stop services
         if: always()
         run: make docker-down
