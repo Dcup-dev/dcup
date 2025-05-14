@@ -62,6 +62,7 @@ jobs:
         run: |
           npx wait-on http://localhost:3000
           npx wait-on tcp:5432
+          npx wait-on tcp:6333
       
       - name: set up DB
         run: npm run generate && npm run pushdb
