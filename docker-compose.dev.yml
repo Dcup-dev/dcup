@@ -15,6 +15,11 @@ services:
     restart: unless-stopped
     ports:
       - "${REDIS_DB_PORT:-6379}:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 1s
+      timeout: 3s
+      retries: 30
     volumes:
       - redis_data:/data
   qdrant:
