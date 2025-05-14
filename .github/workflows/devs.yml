@@ -26,11 +26,9 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      # 1) install JS deps so `next dev` exists:
       - name: Install dependencies
         run: npm ci
 
-      # 2) generate a full .env before starting anything:
       - name: Generate Env File
         run: |
          cat <<EOF > .env
@@ -45,35 +43,32 @@ jobs:
          DRIZZLE_DATABASE_URL=postgres://postgres:root@localhost:5432/dcup
          EOF
 
-      # 3) spin up your other services (redis, postgres, etc):
       - name: Start services with Make
         run: |
           make docker-run &
-          sleep 10        # give containers time to initialize
+          sleep 10
 
-      # 4) start your Next.js app in dev mode
       - name: Start Next.js
         run: |
           npm run dev &
-          sleep 10        # give Next.js time to boot
+          sleep 10
 
-      # 5) wait for both web & db ports
-      - name: Wait for HTTP & Postgres
+      - name: Wait for services
         run: |
           npx wait-on http://localhost:3000
           npx wait-on tcp:5432
-          npx wait-on tcp:6333
-      
-      - name: set up DB
+          npx wait-on tcp:6379
+          npx wait-on http://localhost:6333/healthz
+          npx wait-on http://localhost:9000
+
+      - name: Set up DB
         run: npm run generate && npm run pushdb
 
-      # 6) run Cypress
       - name: Run Cypress E2E
         env:
           CYPRESS_baseUrl: http://localhost:3000
         run: npx cypress run
 
-      # 7) teardown your Docker services
       - name: Stop services
         if: always()
         run: make docker-down
