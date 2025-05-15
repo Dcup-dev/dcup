@@ -109,10 +109,10 @@ export const ConfigConnection = ({ connection, directory, status, open, setOpen,
       <form action={handleSetConfig}>
         <div className="grid gap-4 py-4">
           <div className="grid w-full max-w-sm items-center gap-1.5">
-            <Label htmlFor="connectionName">Connection Name</Label>
+            <Label htmlFor="identifier">Connection Name</Label>
             <Input
-              id="connectionName"
-              name="connectionName"
+              id="identifier"
+              name="identifier"
               defaultValue={connection ? connection.identifier : ""}
               placeholder="Unique connection name"
             />
@@ -166,8 +166,8 @@ export const ConfigConnection = ({ connection, directory, status, open, setOpen,
           <div>
             <label className="block text-sm font-medium">Document Limit</label>
             <Input
-              name='documentLimit'
-              id='documentLimit'
+              name='fileLimit'
+              id='fileLimit'
               disabled={connection.isSyncing || connection.isConfigSet}
               type="number"
               defaultValue={connection.files.length !== 0 ? connection.files.length : undefined}

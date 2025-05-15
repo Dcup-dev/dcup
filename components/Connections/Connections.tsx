@@ -49,7 +49,7 @@ export default function Connections({ connections, tokens }: { connections: Conn
         <TableCell className="flex flex-col gap-2">
           <div className="flex items-center gap-2">
             {getServiceIcon(connection.service)}
-            <span className="capitalize">
+            <span data-test="service" className="capitalize">
               {connection.service.toLowerCase().replace('_', ' ')}
             </span>
           </div>
@@ -57,9 +57,9 @@ export default function Connections({ connections, tokens }: { connections: Conn
             {connection.identifier}
           </p>
         </TableCell>
-        <TableCell>{connection.folderName || 'Untitled'}</TableCell>
-        <TableCell>{progress?.processedFile ?? connection.files.length}</TableCell>
-        <TableCell>{progress?.processedPage ?? connection.files.reduce((sum, file) => sum + file.totalPages, 0)}</TableCell>
+        <TableCell data-test="folderName" >{connection.folderName || 'Untitled'}</TableCell>
+        <TableCell data-test="processedFile" >{progress?.processedFile ?? connection.files.length}</TableCell>
+        <TableCell data-test="processedPage" >{progress?.processedPage ?? connection.files.reduce((sum, file) => sum + file.totalPages, 0)}</TableCell>
         <TableCell>
           <span>{!isMounted ? "Loading..." : timeAgo(connection.createdAt)}</span>
         </TableCell>
@@ -82,7 +82,6 @@ export default function Connections({ connections, tokens }: { connections: Conn
           </Alert>
         </TableCell>}
       </TableRow>)
-
   });
 }
 

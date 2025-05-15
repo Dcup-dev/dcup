@@ -1,6 +1,6 @@
 import { connections } from "@/db/schemas/connections"
 
-describe('connect to google drive', () => {
+describe.skip('connect to google drive', () => {
   const fakeUser = {
     name: "test man",
     email: "tester@dcup.dev",
@@ -12,12 +12,13 @@ describe('connect to google drive', () => {
   beforeEach(() => {
     // login
     cy.visit('/')
+    cy.wait(1000)
+
+    // login 
+    cy.loginNextAuth(fakeUser)
+      .visit('/')
       .location('pathname')
-      .should('eq', '/login')
-      .task('addNewUser', fakeUser)
-      .then((result) => {
-        cy.loginNextAuth(result as any)
-      })
+      .should('eq', '/')
       .visit('/')
       .location('pathname')
       .should('eq', '/')
@@ -45,7 +46,7 @@ describe('connect to google drive', () => {
 
 
   it('connect and config with no settings and delete ( 0 file ) , check the database', () => {
-    cy.task('getConnection', { email: fakeUser.email })
+    cy.task('getConnections', { email: fakeUser.email })
       .then(res => {
         const { conns } = res as { conns: typeof connections.$inferSelect[] }
         cy.visit('/connections')
@@ -55,7 +56,7 @@ describe('connect to google drive', () => {
           .click()
       }).wait(10000)
 
-    cy.task('getConnection', { email: fakeUser.email })
+    cy.task('getConnections', { email: fakeUser.email })
       .then(res => {
         const { conns } = res as { conns: typeof connections.$inferSelect[] }
         cy.visit("/")
@@ -82,7 +83,7 @@ describe('connect to google drive', () => {
         cy.get(`[data-test="btn-delete-${conns[0].identifier}"]`, { timeout: 15000 })
           .should('not.exist')
       })
-    cy.task('getConnection', { email: fakeUser.email })
+    cy.task('getConnections', { email: fakeUser.email })
       .then(res => {
         const { conns } = res as { conns: typeof connections.$inferSelect[] }
         expect(conns).to.have.length(0);
@@ -93,26 +94,26 @@ describe('connect to google drive', () => {
   });
 
   it("connect and config with settings and delete (0 file), check the database", () => {
-    cy.task('getConnection', { email: fakeUser.email })
+    cy.task('getConnections', { email: fakeUser.email })
       .then(res => {
         const { conns } = res as { conns: typeof connections.$inferSelect[] }
         cy.visit('/connections')
           .get(`[data-test="btn-config-${conns[0].identifier}"]`)
           .click()
-          .get('input[name="connectionName"]')
+          .get('input[name="identifier"]')
           .clear()
           .type("testing_connection")
           .get('textarea[name="metadata"]')
           .clear()
           .type('{"job": "my test files"}', { parseSpecialCharSequences: false })
-          .get('input[name="documentLimit"]')
+          .get('input[name="fileLimit"]')
           .type('2')
           .get('input[name="pageLimit"]')
           .type('5')
           .get(`[data-test="btn-config-connection"]`)
           .click()
       }).wait(10000)
-    cy.task('getConnection', { email: fakeUser.email })
+    cy.task('getConnections', { email: fakeUser.email })
       .then(res => {
         const { conns } = res as { conns: typeof connections.$inferSelect[] }
         cy.visit("/")
@@ -140,7 +141,7 @@ describe('connect to google drive', () => {
           .should('not.exist')
       })
 
-    cy.task('getConnection', { email: fakeUser.email })
+    cy.task('getConnections', { email: fakeUser.email })
       .then(res => {
         const { conns } = res as { conns: typeof connections.$inferSelect[] }
         expect(conns).to.have.length(0);

@@ -14,7 +14,7 @@ export type SerializedFile = {
 };
 export type TQueue = {
   connectionId: string;
-  pageLimit: number,
+  pageLimit: number| null,
   fileLimit: number | null,
   files: SerializedFile[],
   links: string[],
@@ -36,8 +36,8 @@ const processfilesQueue = new Queue(processFilesJobName, {
 });
 
 new Worker(processFilesJobName, async ({ data }) => {
-  const { links, files }: TQueue = data
-  if (links.length > 0 || files.length > 0) {
+  const { service }: TQueue = data
+  if (service === "DIRECT_UPLOAD") {
     await directProcessFiles(data)
   } else {
     await connectionProcessFiles(data)
