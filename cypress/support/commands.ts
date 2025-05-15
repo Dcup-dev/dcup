@@ -73,6 +73,46 @@ Cypress.Commands.add("checkIndexedFiles", ({ conn, files }) => {
   })
 })
 
+type UploadRequest = {
+  fileName?: string,
+  links?: string[],
+  pageLimit?: string,
+  metadata?: string,
+  identifier?: string,
+  apiKey: string,
+  url?: string,
+  method?: string,
+  response: {
+    code: string,
+    message: string
+  }
+}
+Cypress.Commands.add("uploadFileWithApi", ({ fileName, apiKey, url, method, links, response, metadata, identifier, pageLimit }) => {
+  cy.fixture(fileName ?? "sample.pdf", 'base64').then(base64pdf => {
+    cy.window().then(win => {
+      const buffer = Buffer.from(base64pdf, 'base64')
+      const formData = new win.FormData()
+      fileName && formData.append('files', new Blob([buffer], { type: 'application/pdf' }), fileName)
+      links?.map(link => formData.append("links", link))
+      metadata && formData.set("metadata", metadata)
+      identifier && formData.set("identifier", identifier)
+      pageLimit && formData.set('pageLimit', pageLimit)
+      return win.fetch(url ?? '/api/upload', {
+        method: method ?? 'POST',
+        headers: {
+          Authorization: `Bearer ${apiKey}`
+        },
+        body: formData
+      })
+    }).then(res => {
+      expect(res.status).to.equal(200)
+      return res.json()
+    }).then(body => {
+      expect(body.code).eq(response.code)
+      expect(body.message).eq(response.message)
+    })
+  })
+})
 
 /// <reference types="cypress" />
 // ***********************************************
@@ -107,6 +147,7 @@ declare global {
       loginNextAuth({ name, email, image }: { name: string, email: string, image: string }): Chainable<Cookie>
       uploadFiles({ files }: { files: string[] }): Chainable<void>
       checkIndexedFiles({ conn, files }: { conn: FileConnectionQuery, files: { name: string, totalPages: number }[] }): Chainable<void>
+      uploadFileWithApi({ fileName, apiKey, response, url }: UploadRequest): Chainable<void>
       // login(email: string, password: string): Chainable<void>
       // drag(subject: string, options?: Partial<TypeOptions>): Chainable<Element>
       // dismiss(subject: string, options?: Partial<TypeOptions>): Chainable<Element>

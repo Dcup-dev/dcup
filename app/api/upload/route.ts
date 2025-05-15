@@ -38,12 +38,12 @@ export async function POST(request: NextRequest) {
       message: errorConfig.message,
     }, { status: 400 })
 
-    if (wait === "true") {
+    if (wait === "true" || wait === null) {
       const { error } = await tryAndCatch(directProcessFiles(filesConfig))
       if (error) return NextResponse.json({
-        code: "internal_server_error",
+        code: "bad_request",
         message: error.message
-      }, { status: 500 });
+      }, { status: 400 });
 
       return NextResponse.json({
         code: "ok",
