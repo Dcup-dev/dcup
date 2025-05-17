@@ -30,11 +30,9 @@ export const metadata: Metadata = {
 };
 
 if (process.env.NEXT_PUBLIC_APP_ENV === 'TEST') {
-  if (!(global as any).__MSW_SERVER_STARTED__) {
-    console.log('🔧 MSW mock server starting...');
-    mockServer.listen();
-    (global as any).__MSW_SERVER_STARTED__ = true;
-  }
+  console.log('🔧🔧🔧 MSW mock server starting...🔧🔧🔧');
+  mockServer.listen();
+  (global as any).__MSW_SERVER_STARTED__ = true;
 }
 
 export default async function Layout({ children }: { children: ReactNode }) {

@@ -32,6 +32,7 @@ type ConnectionProps = {
 export const ConfigConnection = ({ connection, directory, status, open, setOpen, showPicker }: ConnectionProps) => {
   const [isConfigSet, setIsConfigSet] = useState(connection.isConfigSet)
   const [pending, startTransition] = useTransition()
+  const isTest = process.env.NEXT_PUBLIC_APP_ENV === 'TEST'
 
   // Service-specific text configuration
   const serviceLabels = {
@@ -55,9 +56,15 @@ export const ConfigConnection = ({ connection, directory, status, open, setOpen,
 
   const handleSetConfig = (data: FormData) => {
     data.set("connectionId", connection.id)
-    data.set("folderName", directory.name)
     data.set("service", connection.service)
+
     if (directory?.id) data.set("folderId", directory.id)
+    if (isTest) {
+      const folderName = data.get("folderName")
+      data.set("folderId", folderName || "")
+    } else {
+      data.set("folderName", directory.name)
+    }
     startTransition(async () => {
       const setConfig = async () => {
         try {
@@ -121,11 +128,12 @@ export const ConfigConnection = ({ connection, directory, status, open, setOpen,
             <label className="block text-sm font-medium">Folder</label>
             <div className="flex items-center gap-2">
               <Input
-                value={directory?.name || connection.folderName || ""}
+                name='folderName'
+                value={isTest ? undefined : directory?.name || connection.folderName || ""}
                 placeholder={getServiceLabel('placeholder')}
-                disabled={connection.isSyncing || connection.isConfigSet}
-                onClick={showPicker} type='button'
-                readOnly
+                onClick={isTest ? undefined : showPicker}
+                type={isTest ? 'text' : 'button'}
+                readOnly={!isTest}
               />
               <Button onClick={showPicker} type="button" disabled={connection.isSyncing || connection.isConfigSet}  >
                 {getServiceLabel('selectButton')}

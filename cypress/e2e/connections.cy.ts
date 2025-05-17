@@ -1,6 +1,6 @@
 import { connections } from "@/db/schemas/connections"
 
-describe.skip('connect to google drive', () => {
+describe('connect to google drive', () => {
   const fakeUser = {
     name: "test man",
     email: "tester@dcup.dev",
@@ -45,7 +45,7 @@ describe.skip('connect to google drive', () => {
   })
 
 
-  it('connect and config with no settings and delete ( 0 file ) , check the database', () => {
+  it.only('connect and config with no settings and delete ( 0 file ) , check the database', () => {
     cy.task('getConnections', { email: fakeUser.email })
       .then(res => {
         const { conns } = res as { conns: typeof connections.$inferSelect[] }

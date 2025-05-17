@@ -11,9 +11,9 @@ const qdrant_collection_name = "documents"
 const qdrantCLient = new QdrantClient({ url: process.env.QDRANT_DB_URL!, apiKey: process.env.QDRANT_DB_KEY });
 
 export default defineConfig({
-    retries: {
-      runMode: 2,
-      openMode: 0
+  retries: {
+    runMode: 2,
+    openMode: 0
   },
   chromeWebSecurity: false,
   watchForFileChanges: false,

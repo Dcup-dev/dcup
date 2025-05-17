@@ -53,7 +53,7 @@ Cypress.Commands.add("uploadFiles", ({ files }) => {
     .click({ force: true })
 })
 
-Cypress.Commands.add("checkIndexedFiles", ({ conn, files }) => {
+Cypress.Commands.add("checkIndexedFiles", ({ conn, files, source }) => {
   Cypress.log({
     displayName: "INDEX Files",
     message: files.map(f => `name:${f.name}, totalPages: ${f.totalPages}`),
@@ -67,7 +67,7 @@ Cypress.Commands.add("checkIndexedFiles", ({ conn, files }) => {
       expect(ps.length).eq(conn.files[index].chunksIds.length)
       ps.map(p => {
         expect(p.payload._document_id).eq(file.name)
-        expect(p.payload._metadata.source).eq('DIRECT_UPLOAD')
+        expect(p.payload._metadata.source).eq( source ?? 'DIRECT_UPLOAD')
       })
     })
   })
@@ -141,12 +141,14 @@ Cypress.Commands.add("uploadFileWithApi", ({ fileName, apiKey, url, method, link
 // -- This will overwrite an existing command --
 // Cypress.Commands.overwrite('visit', (originalFn, url, options) => { ... })
 //
+//
+//
 declare global {
   namespace Cypress {
     interface Chainable {
       loginNextAuth({ name, email, image }: { name: string, email: string, image: string }): Chainable<Cookie>
       uploadFiles({ files }: { files: string[] }): Chainable<void>
-      checkIndexedFiles({ conn, files }: { conn: FileConnectionQuery, files: { name: string, totalPages: number }[] }): Chainable<void>
+      checkIndexedFiles({ conn, files, source }: { conn: FileConnectionQuery, files: { name: string, totalPages: number }[], source?:string }): Chainable<void>
       uploadFileWithApi({ fileName, apiKey, response, url }: UploadRequest): Chainable<void>
       // login(email: string, password: string): Chainable<void>
       // drag(subject: string, options?: Partial<TypeOptions>): Chainable<Element>

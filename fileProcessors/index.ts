@@ -6,11 +6,10 @@ import { getTitleAndSummary, vectorizeText } from "@/openAi";
 import { qdrant_collection_name, qdrantCLient } from "@/qdrant";
 import { publishProgress } from "@/events";
 import { connections, processedFiles } from "@/db/schemas/connections";
-import { eq } from "drizzle-orm";
+import { and, eq } from "drizzle-orm";
 import { getFileContent } from "./connectors";
 import { processPdfLink, processPdfBuffer } from "./Files/pdf";
 import { TQueue } from "@/workers/queues/jobs/processFiles.job";
-
 
 export type FileContent = {
   name: string,
@@ -83,9 +82,28 @@ export const directProcessFiles = async ({ files, metadata, service, connectionI
 export const connectionProcessFiles = async ({ connectionId, service, pageLimit, fileLimit }: TQueue) => {
   const connection = await databaseDrizzle.query.connections.findFirst({
     where: (c, ops) => ops.eq(c.id, connectionId),
+    with: {
+      files: true,
+    }
   })
   if (!connection) return;
   const filesContent = await getFileContent(connection)
+
+  const newFileNames = new Set(filesContent.map(f => f.name));
+  const filesToRemove = connection.files.filter(f => !newFileNames.has(f.name));
+
+  for (const file of filesToRemove) {
+    await databaseDrizzle
+      .delete(processedFiles)
+      .where(and(
+        eq(processedFiles.connectionId, connection.id),
+        eq(processedFiles.name, file.name)
+      ))
+
+    await qdrantCLient.delete(qdrant_collection_name, {
+      points: file.chunksIds,
+    })
+  }
   return processFiles(filesContent, service, connectionId, pageLimit, fileLimit, 0, 0)
 }
 

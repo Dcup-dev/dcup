@@ -3,7 +3,6 @@ import { connections } from "@/db/schemas/connections";
 import { eq } from "drizzle-orm";
 import { connectionConfig } from "../utils";
 
-
 export const setDropboxConnection = async (formData: FormData) => {
   const config = connectionConfig.safeParse({
     connectionId: formData.get("connectionId"),
