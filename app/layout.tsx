@@ -31,7 +31,9 @@ export const metadata: Metadata = {
 
 if (process.env.NEXT_PUBLIC_APP_ENV === 'TEST') {
   console.log('🔧🔧🔧 MSW mock server starting...🔧🔧🔧');
-  mockServer.listen();
+  mockServer.listen({
+    onUnhandledRequest: 'bypass',
+  });
   (global as any).__MSW_SERVER_STARTED__ = true;
 }
 

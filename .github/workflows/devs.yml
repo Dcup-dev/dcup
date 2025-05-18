@@ -37,6 +37,8 @@ jobs:
          NEXT_PUBLIC_APP_ENV=TEST
          DCUP_PARSER=http://localhost:9000
          NEXTAUTH_URL=http://localhost:3000
+         DROPBOX_CLIENT_ID=xxxxxxx
+         DROPBOX_CLIENT_SECRET=xxxxx
          REDIS_DB_ADDRESS=localhost
          REDIS_DB_PORT=6379
          REDIS_DB_PASSWORD=
