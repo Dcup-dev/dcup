@@ -1,6 +1,6 @@
 {
   "name": "dcup",
-  "version": "0.0.0",
+  "version": "1.1.2-beta",
   "private": true,
   "scripts": {
     "build": "next build",
