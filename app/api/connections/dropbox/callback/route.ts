@@ -104,6 +104,6 @@ export async function GET(request: Request) {
     }
     return NextResponse.redirect(`${process.env.NEXTAUTH_URL}/connections`);
   } catch (error) {
-    return NextResponse.json({ error: 'Failed to authenticate' }, { status: 500 });
+    return NextResponse.json({ error: 'Failed to authenticate' }, { status: 401 });
   }
 }

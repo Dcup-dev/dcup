@@ -26,19 +26,15 @@ export const authOptions: NextAuthOptions = {
     session: async ({ session, token }) => {
       if (session) {
         session.user.id = token.id as string;
+        session.user.name = token.name as string;
+        session.user.email = token.email as string;
+        session.user.image = token.picture as string
       }
       return session;
     },
     jwt: async ({ user, token }) => {
       if (user) {
         token.id = user.id;
-      } else {
-        const dbUser = await databaseDrizzle.query.users.findFirst({
-          where: (u, opt) => opt.eq(u.id, token.id as string),
-        });
-        if (dbUser) {
-          token.plan = dbUser.plan;
-        }
       }
       return token;
     },

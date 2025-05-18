@@ -1,32 +1,31 @@
 import { Card } from '../ui/card'
 import { FaGoogleDrive, FaDropbox } from "react-icons/fa";
-import { authGoogleDrive } from '@/fileProcessors/connectors/googleDrive';
-import { authDropbox } from '@/fileProcessors/connectors/dropbox';
 import { ConnectionBtn } from './ConnectionBtn';
 import { SiAwslambda } from 'react-icons/si';
 
+const isCloud = process.env.DCUP_ENV === 'CLOUD';
+
 export const Connectors = async () => {
   const connectors = [
-    {
-      id: 'google-drive',
-      name: 'Google Drive',
-      icon: <FaGoogleDrive className="w-6 h-6" />,
-      description: 'Connect your Google Drive to access documents and files',
-      link: authGoogleDrive,
-    },
+    ...(!isCloud ? [
+      {
+        id: 'google-drive',
+        name: 'Google Drive',
+        icon: <FaGoogleDrive className="w-6 h-6" />,
+        description: 'Connect your Google Drive to access documents and files',
+      },
+    ] : []),
     {
       id: "dropbox",
       name: "Dropbox",
       icon: <FaDropbox className='w-6 h-6' />,
       description: 'Connect your Dropbox to access documents and files',
-      link: authDropbox,
     },
     {
       id: 'aws',
       name: 'AWS',
       icon: <SiAwslambda className="w-6 h-6" />,
       description: 'Integrate with AWS services and storage',
-      link: () => "/connection/new/aws"
     },
     // {
     //   id: 'notion',
@@ -63,6 +62,7 @@ export const Connectors = async () => {
       {connectors.map(async (connector) => {
         return (
           <Card
+            data-test="connection-card"
             key={connector.id}
             className="p-6 hover:shadow-lg transition-shadow duration-200 w-full max-w-sm mx-auto"
           >

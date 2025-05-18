@@ -6,11 +6,10 @@ import { getTitleAndSummary, vectorizeText } from "@/openAi";
 import { qdrant_collection_name, qdrantCLient } from "@/qdrant";
 import { publishProgress } from "@/events";
 import { connections, processedFiles } from "@/db/schemas/connections";
-import { eq } from "drizzle-orm";
+import { and, eq } from "drizzle-orm";
 import { getFileContent } from "./connectors";
 import { processPdfLink, processPdfBuffer } from "./Files/pdf";
 import { TQueue } from "@/workers/queues/jobs/processFiles.job";
-
 
 export type FileContent = {
   name: string,
@@ -28,9 +27,7 @@ export const directProcessFiles = async ({ files, metadata, service, connectionI
   // Create promises for processing file URLs
   const filePromises = files.map(async (file) => {
     const arrayBuffer = Buffer.from(file.content, 'base64').buffer;
-
     const content = await processPdfBuffer(new Blob([arrayBuffer]));
-
     return {
       name: file.name || "",
       pages: content,
@@ -48,57 +45,104 @@ export const directProcessFiles = async ({ files, metadata, service, connectionI
     } as FileContent;
   });
 
-  await publishProgress({
-    connectionId: connectionId,
-    processedFile: 0,
-    processedPage: 0,
-    lastAsync: new Date(),
-    status: 'PROCESSING',
-  })
-
   const filesContent = await Promise.all([...filePromises, ...linkPromises]);
-  return processFiles(filesContent, service, connectionId, pageLimit, fileLimit)
-}
-
-export const connectionProcessFiles = async ({ connectionId, service, pageLimit, fileLimit }: TQueue) => {
-
+  const filesNames = filesContent.map(f => f.name)
   const connection = await databaseDrizzle.query.connections.findFirst({
-    where: (c, ops) => ops.eq(c.id, connectionId)
+    where: (c, ops) => ops.eq(c.id, connectionId),
+    with: {
+      files: {
+        where: (f, ops) => ops.notInArray(f.name, filesNames),
+        columns: {
+          totalPages: true,
+        }
+      }
+    }
   })
   if (!connection) return;
 
-  await publishProgress({
-    connectionId: connectionId,
-    processedFile: 0,
-    processedPage: 0,
-    lastAsync: new Date(),
-    status: 'PROCESSING',
-  })
+  const currentPagesCount = connection?.files.reduce((sum, f) => f.totalPages + sum, 0) ?? 0
+  if (pageLimit && pageLimit < currentPagesCount) {
+    await databaseDrizzle
+      .update(connections)
+      .set({ isSyncing: false })
+      .where(eq(connections.id, connectionId))
 
-  const filesContent = await getFileContent(connection)
-  return processFiles(filesContent, service, connectionId, pageLimit, fileLimit)
+    await publishProgress({
+      connectionId: connectionId,
+      processedFile: connection.files.length,
+      processedPage: currentPagesCount,
+      lastAsync: new Date(),
+      status: 'FINISHED',
+    })
+    return;
+  }
+  return await processFiles(filesContent, service, connectionId, pageLimit, fileLimit, currentPagesCount, connection.files.length)
 }
 
-const processFiles = async (filesContent: FileContent[], service: string, connectionId: string, pageLimit: number, fileLimit: number | null) => {
+export const connectionProcessFiles = async ({ connectionId, service, pageLimit, fileLimit }: TQueue) => {
+  const connection = await databaseDrizzle.query.connections.findFirst({
+    where: (c, ops) => ops.eq(c.id, connectionId),
+    with: {
+      files: true,
+    }
+  })
+  if (!connection) return;
+  const filesContent = await getFileContent(connection)
+
+  const newFileNames = new Set(filesContent.map(f => f.name));
+  const filesToRemove = connection.files.filter(f => !newFileNames.has(f.name));
+
+  for (const file of filesToRemove) {
+    await databaseDrizzle
+      .delete(processedFiles)
+      .where(and(
+        eq(processedFiles.connectionId, connection.id),
+        eq(processedFiles.name, file.name)
+      ))
+
+    await qdrantCLient.delete(qdrant_collection_name, {
+      points: file.chunksIds,
+    })
+  }
+  // check the limits 
+  const currentPagesCount = connection?.files.reduce((sum, f) => f.totalPages + sum, 0) ?? 0
+  if (pageLimit && pageLimit < currentPagesCount) {
+    await databaseDrizzle
+      .update(connections)
+      .set({ isSyncing: false })
+      .where(eq(connections.id, connectionId))
+
+    await publishProgress({
+      connectionId: connectionId,
+      processedFile: connection.files.length,
+      processedPage: currentPagesCount,
+      lastAsync: new Date(),
+      status: 'FINISHED',
+    })
+    return;
+  }
+  return processFiles(filesContent, service, connectionId, pageLimit, fileLimit, 0, 0)
+}
+
+const processFiles = async (filesContent: FileContent[], service: string, connectionId: string, pageLimit: number | null, fileLimit: number | null, currentPagesCount: number, currentFileCount: number) => {
   const completedFiles: typeof processedFiles.$inferInsert[] = []
   const allPoints = [];
   let processedPage = 0;
-  let processedAllPages = 0
-  let limits = pageLimit;
+  let processedAllPages = currentPagesCount;
+  let limits = pageLimit ? pageLimit - currentPagesCount : Infinity;
   const now = new Date()
-
-  const splitter = new RecursiveCharacterTextSplitter({
-    chunkSize: 4096,
-    chunkOverlap: Math.floor(4096 * 0.15),
-    keepSeparator: true,
-    separators: ["\n\n## ", "\n\n# ", "\n\n", "\n", ". ", "! ", "? ", " "],
-  });
-
   try {
+    const splitter = new RecursiveCharacterTextSplitter({
+      chunkSize: 4096,
+      chunkOverlap: Math.floor(4096 * 0.15),
+      keepSeparator: true,
+      separators: ["\n\n## ", "\n\n# ", "\n\n", "\n", ". ", "! ", "? ", " "],
+    });
+
     for (let fileIndex = 0; fileIndex < filesContent.length && limits > 0; fileIndex++) {
       const file = filesContent[fileIndex]
       const chunksId = [];
-      if (fileLimit && fileLimit > 0 && fileLimit === fileIndex) break;
+      if (fileLimit !== null && fileLimit > 0 && fileIndex >= fileLimit) break;
       const baseMetadata = {
         _document_id: file.name,
         _metadata: {
@@ -108,7 +152,7 @@ const processFiles = async (filesContent: FileContent[], service: string, connec
       };
       for (let pageIndex = 0; pageIndex < file.pages.length && limits > 0; pageIndex++) {
         const page = file.pages[pageIndex]
-        if (limits !== null && limits <= 0) break
+        if (limits <= 0) break;
         const textPoints = await processingTextPage(page.text, pageIndex, baseMetadata, splitter)
         if (textPoints) {
           allPoints.push(textPoints);
@@ -143,52 +187,51 @@ const processFiles = async (filesContent: FileContent[], service: string, connec
       processedPage = 0
     }
 
+    if (allPoints.length > 0) {
+      await qdrantCLient.upsert(qdrant_collection_name, {
+        points: allPoints,
+        wait: true
+      })
+
+      for (let file of completedFiles) {
+        await databaseDrizzle
+          .insert(processedFiles)
+          .values(file)
+          .onConflictDoUpdate({
+            target: [processedFiles.name, processedFiles.connectionId],
+            set: file
+          })
+      }
+    }
+
+    await databaseDrizzle
+      .update(connections)
+      .set({
+        lastSynced: now,
+        isSyncing: false,
+      })
+      .where(eq(connections.id, connectionId))
+
     await publishProgress({
       connectionId: connectionId,
-      processedFile: completedFiles.length,
+      processedFile: completedFiles.length + currentFileCount,
       processedPage: processedAllPages,
       lastAsync: now,
       status: 'FINISHED',
     })
 
   } catch (error: any) {
-    let errorMessage = "";
-    if (error instanceof Error) {
-      errorMessage = error.message;
-    } if (error.data) {
-      errorMessage = error.data
-    } else {
-      errorMessage = String(error);
-    }
+    const errorMessage = error instanceof Error ? error.message : error.data ? error.data : String(error);
     await publishProgress({
       connectionId: connectionId,
-      processedFile: 0,
-      processedPage: 0,
+      processedFile: completedFiles.length + currentFileCount,
+      processedPage: processedAllPages,
       errorMessage: errorMessage,
       lastAsync: now,
       status: 'FINISHED'
     })
+    throw error
   }
-  if (allPoints.length > 0) {
-    await qdrantCLient.upsert(qdrant_collection_name, {
-      points: allPoints,
-      wait: true
-    })
-
-    completedFiles.map(async (file) =>
-      await databaseDrizzle
-        .insert(processedFiles)
-        .values(file).onConflictDoUpdate({
-          target: [processedFiles.name, processedFiles.connectionId],
-          set: file
-        })
-    )
-  }
-
-  await databaseDrizzle
-    .update(connections)
-    .set({ lastSynced: now, isSyncing: false })
-    .where(eq(connections.id, connectionId))
 }
 
 const processingTextPage = async (pageText: string, pageIndex: number, baseMetadata: any, splitter: RecursiveCharacterTextSplitter) => {

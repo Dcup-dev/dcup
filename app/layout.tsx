@@ -4,6 +4,7 @@ import { Inter } from 'next/font/google';
 import type { ReactNode } from 'react';
 import type { Metadata } from "next";
 import { Toaster } from '@/components/ui/toaster';
+import { mockServer } from '@/mocks/server';
 
 const inter = Inter({
   subsets: ['latin'],
@@ -15,7 +16,7 @@ export const metadata: Metadata = {
   metadataBase: new URL("https://dcup.dev"),
   openGraph: {
     title: "Dcup",
-    description:"Dcup",
+    description: "Dcup",
     url: "https://dcup.dev",
     siteName: "Dcup",
     locale: "en_US",
@@ -27,6 +28,14 @@ export const metadata: Metadata = {
     description: "Dcup"
   },
 };
+
+if (process.env.NEXT_PUBLIC_APP_ENV === 'TEST') {
+  console.log('🔧🔧🔧 MSW mock server starting...🔧🔧🔧');
+  mockServer.listen({
+    onUnhandledRequest: 'bypass',
+  });
+  (global as any).__MSW_SERVER_STARTED__ = true;
+}
 
 export default async function Layout({ children }: { children: ReactNode }) {
   return (

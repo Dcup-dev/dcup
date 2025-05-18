@@ -32,6 +32,7 @@ type ConnectionProps = {
 export const ConfigConnection = ({ connection, directory, status, open, setOpen, showPicker }: ConnectionProps) => {
   const [isConfigSet, setIsConfigSet] = useState(connection.isConfigSet)
   const [pending, startTransition] = useTransition()
+  const isTest = process.env.NEXT_PUBLIC_APP_ENV === 'TEST'
 
   // Service-specific text configuration
   const serviceLabels = {
@@ -55,9 +56,15 @@ export const ConfigConnection = ({ connection, directory, status, open, setOpen,
 
   const handleSetConfig = (data: FormData) => {
     data.set("connectionId", connection.id)
-    data.set("folderName", directory.name)
     data.set("service", connection.service)
-    if(directory?.id) data.set("folderId", directory.id)
+
+    if (directory?.id) data.set("folderId", directory.id)
+    if (isTest) {
+      const folderName = data.get("folderName")
+      data.set("folderId", folderName || "")
+    } else {
+      data.set("folderName", directory.name)
+    }
     startTransition(async () => {
       const setConfig = async () => {
         try {
@@ -90,7 +97,7 @@ export const ConfigConnection = ({ connection, directory, status, open, setOpen,
 
   return (<Dialog open={open} onOpenChange={o => setOpen(o)} >
     <DialogTrigger asChild>
-      <Button size='sm' variant={isConfigSet ? 'ghost' : 'default'} disabled={status === 'PROCESSING' || (!status && connection.isSyncing)} onClick={() => setOpen(true)} >
+      <Button data-test={`btn-config-${connection.identifier}`} size='sm' variant={isConfigSet ? 'ghost' : 'default'} disabled={status === 'PROCESSING' || (!status && connection.isSyncing)} onClick={() => setOpen(true)} >
         <Settings2 />
         Configure
       </Button>
@@ -109,10 +116,10 @@ export const ConfigConnection = ({ connection, directory, status, open, setOpen,
       <form action={handleSetConfig}>
         <div className="grid gap-4 py-4">
           <div className="grid w-full max-w-sm items-center gap-1.5">
-            <Label htmlFor="connectionName">Connection Name</Label>
+            <Label htmlFor="identifier">Connection Name</Label>
             <Input
-              id="connectionName"
-              name="connectionName"
+              id="identifier"
+              name="identifier"
               defaultValue={connection ? connection.identifier : ""}
               placeholder="Unique connection name"
             />
@@ -121,11 +128,12 @@ export const ConfigConnection = ({ connection, directory, status, open, setOpen,
             <label className="block text-sm font-medium">Folder</label>
             <div className="flex items-center gap-2">
               <Input
-                value={directory?.name || connection.folderName || ""}
+                name='folderName'
+                value={isTest ? undefined : directory?.name || connection.folderName || ""}
                 placeholder={getServiceLabel('placeholder')}
-                disabled={connection.isSyncing || connection.isConfigSet}
-                onClick={showPicker} type='button'
-                readOnly
+                onClick={isTest ? undefined : showPicker}
+                type={isTest ? 'text' : 'button'}
+                readOnly={!isTest}
               />
               <Button onClick={showPicker} type="button" disabled={connection.isSyncing || connection.isConfigSet}  >
                 {getServiceLabel('selectButton')}
@@ -166,8 +174,8 @@ export const ConfigConnection = ({ connection, directory, status, open, setOpen,
           <div>
             <label className="block text-sm font-medium">Document Limit</label>
             <Input
-              name='documentLimit'
-              id='documentLimit'
+              name='fileLimit'
+              id='fileLimit'
               disabled={connection.isSyncing || connection.isConfigSet}
               type="number"
               defaultValue={connection.files.length !== 0 ? connection.files.length : undefined}
@@ -180,7 +188,7 @@ export const ConfigConnection = ({ connection, directory, status, open, setOpen,
 
         </div>
         <DialogFooter>
-          <Button disabled={pending} type="submit">
+          <Button disabled={pending} type="submit" data-test={`btn-config-connection`} >
             {pending ? (
               <>
                 {" "}

@@ -18,7 +18,6 @@ export const DataSource = ({ connection, token, status }: { connection: Connecti
       </>
     case "DIRECT_UPLOAD":
       return <>
-        {connection.isConfigSet && <SyncConnection connection={connection} status={status} />}
         <UpdateConfigDirect connection={connection} status={status} />
         <DeleteConnection connection={connection} status={status} />
       </>

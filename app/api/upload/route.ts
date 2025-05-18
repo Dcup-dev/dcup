@@ -1,10 +1,10 @@
-import { setDirectUploadConnection } from "@/DataSource/DirectUpload/setDirectUploadConnection";
 import { directProcessFiles } from "@/fileProcessors";
 import { checkAuth } from "@/lib/api_key";
 import { tryAndCatch } from "@/lib/try-catch";
 import { addToProcessFilesQueue } from "@/workers/queues/jobs/processFiles.job";
 import { NextRequest, NextResponse } from "next/server";
 import { APIError } from "@/lib/APIError";
+import { setConnectionToProcess } from "@/fileProcessors/connectors";
 
 export async function POST(request: NextRequest) {
   const wait = request.nextUrl.searchParams.get("wait")
@@ -27,22 +27,23 @@ export async function POST(request: NextRequest) {
     }, { status: 400 })
 
     formData.set("userId", userId)
+    formData.set("service", "DIRECT_UPLOAD")
     const {
       data: filesConfig,
       error: errorConfig
-    } = await tryAndCatch(setDirectUploadConnection(formData))
+    } = await tryAndCatch(setConnectionToProcess(formData))
 
     if (errorConfig) return NextResponse.json({
       code: "bad_request",
       message: errorConfig.message,
     }, { status: 400 })
 
-    if (wait === "true") {
+    if (wait === "true" || wait === null) {
       const { error } = await tryAndCatch(directProcessFiles(filesConfig))
       if (error) return NextResponse.json({
-        code: "internal_server_error",
+        code: "bad_request",
         message: error.message
-      }, { status: 500 });
+      }, { status: 400 });
 
       return NextResponse.json({
         code: "ok",

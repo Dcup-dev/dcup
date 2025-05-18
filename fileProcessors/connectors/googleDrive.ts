@@ -16,7 +16,7 @@ const googleDriveCredentials = z.object({
 })
 
 const googleDriveMetadata = z.object({
-  folderId: z.string().min(5),
+  folderId: z.string().min(2),
 })
 
 export const authGoogleDrive = () => {
@@ -28,7 +28,8 @@ export const authGoogleDrive = () => {
 
   const scopes = [
     'https://www.googleapis.com/auth/drive.readonly',
-    'https://www.googleapis.com/auth/userinfo.email',];
+    'https://www.googleapis.com/auth/userinfo.email',
+  ];
   const authUrl = oauth2Client.generateAuthUrl({
     access_type: 'offline',
     scope: scopes,

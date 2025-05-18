@@ -1,12 +1,16 @@
 {
   "name": "dcup",
-  "version": "0.0.0",
+  "version": "1.1.2-beta",
   "private": true,
   "scripts": {
     "build": "next build",
     "dev": "next dev",
+    "lint": "next lint",
     "start": "next start",
-    "test": "echo \"No tests yet\" && exit 0",
+    "test": "jest",
+    "cypress:open": "cypress open",
+    "cypress:run": "cypress run",
+    "test:watch": "jest --watch",
     "generate": "drizzle-kit generate",
     "pushdb": "drizzle-kit push --force"
   },
@@ -50,6 +54,7 @@
     "drizzle-orm": "^0.38.4",
     "dropbox": "^10.34.0",
     "emailjs": "^4.0.3",
+    "form-data": "^4.0.2",
     "framer-motion": "^12.2.0",
     "immer": "^10.1.1",
     "ioredis": "^5.5.0",
@@ -74,6 +79,11 @@
     "vaul": "^1.1.2"
   },
   "devDependencies": {
+    "@testing-library/cypress": "^10.0.3",
+    "@testing-library/dom": "^10.4.0",
+    "@testing-library/jest-dom": "^6.6.3",
+    "@testing-library/react": "^16.3.0",
+    "@types/jest": "^29.5.14",
     "@types/jsonwebtoken": "^9.0.8",
     "@types/mdx": "^2.0.13",
     "@types/node": "22.9.0",
@@ -82,11 +92,18 @@
     "@types/react-dom": "^18.3.1",
     "@types/react-syntax-highlighter": "^15.5.13",
     "autoprefixer": "^10.4.20",
+    "cypress": "^14.3.2",
+    "cypress-social-logins": "^1.14.2",
+    "cypress-v10-preserve-cookie": "^1.2.1",
     "drizzle-kit": "^0.30.2",
     "eslint": "^8",
     "eslint-config-next": "15.0.3",
+    "jest": "^29.7.0",
+    "jest-environment-jsdom": "^29.7.0",
+    "msw": "^2.7.6",
     "postcss": "^8.4.48",
     "tailwindcss": "^3.4.14",
+    "ts-node": "^10.9.2",
     "tsx": "^4.19.2",
     "typescript": "^5.6.3"
   }

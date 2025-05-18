@@ -16,7 +16,7 @@ export const SetNewConfigDirect = () => {
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button>Upload Files</Button>
+        <Button data-test={"btn-upload-files"}>Upload Files</Button>
       </DialogTrigger>
       <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>

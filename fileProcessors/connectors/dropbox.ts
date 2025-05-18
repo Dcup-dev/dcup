@@ -45,8 +45,6 @@ export const getDropboxAuthorization = async (credentials: unknown, connectionId
     process.env.DROPBOX_CLIENT_ID!,
     process.env.DROPBOX_CLIENT_SECRET!)
 
-
-
   const oauth2Client = new DropboxAuth({
     clientId: process.env.DROPBOX_CLIENT_ID,
     clientSecret: process.env.DROPBOX_CLIENT_SECRET,
