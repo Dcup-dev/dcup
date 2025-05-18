@@ -3,14 +3,18 @@ import { FaGoogleDrive, FaDropbox } from "react-icons/fa";
 import { ConnectionBtn } from './ConnectionBtn';
 import { SiAwslambda } from 'react-icons/si';
 
+const isCloud = process.env.DCUP_ENV === 'CLOUD';
+
 export const Connectors = async () => {
   const connectors = [
-    {
-      id: 'google-drive',
-      name: 'Google Drive',
-      icon: <FaGoogleDrive className="w-6 h-6" />,
-      description: 'Connect your Google Drive to access documents and files',
-    },
+    ...(!isCloud ? [
+      {
+        id: 'google-drive',
+        name: 'Google Drive',
+        icon: <FaGoogleDrive className="w-6 h-6" />,
+        description: 'Connect your Google Drive to access documents and files',
+      },
+    ] : []),
     {
       id: "dropbox",
       name: "Dropbox",
