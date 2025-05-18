@@ -10,9 +10,9 @@ describe('connect to google drive', () => {
   }
 
   beforeEach(() => {
-    // login
     cy.visit('/')
     cy.wait(1000)
+    cy.task("createCollection")
 
     // login 
     cy.loginNextAuth(fakeUser)
@@ -42,10 +42,11 @@ describe('connect to google drive', () => {
 
   afterEach(() => {
     cy.task('deleteUser', { email: fakeUser.email })
+    cy.task("deleteCollection")
   })
 
 
-  it.only('connect and config with no settings and delete ( 0 file ) , check the database', () => {
+  it('connect and config with no settings and delete ( 0 file ) , check the database', () => {
     cy.task('getConnections', { email: fakeUser.email })
       .then(res => {
         const { conns } = res as { conns: typeof connections.$inferSelect[] }

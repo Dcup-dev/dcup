@@ -84,7 +84,8 @@ export const setConnectionToProcess = async (formData: FormData): Promise<TQueue
   }
 
   const pageLimit = formData.get("pageLimit")
-  if (!pageLimit && service === 'DIRECT_UPLOAD_UPDATE') {
+
+  if (!pageLimit) {
     const connection = user.connections.find(conn => conn.id === connectionId)
     if (connection && connection.limitPages) formData.set("pageLimit", connection.limitPages.toString())
   }

@@ -104,6 +104,23 @@ export const connectionProcessFiles = async ({ connectionId, service, pageLimit,
       points: file.chunksIds,
     })
   }
+  // check the limits 
+  const currentPagesCount = connection?.files.reduce((sum, f) => f.totalPages + sum, 0) ?? 0
+  if (pageLimit && pageLimit < currentPagesCount) {
+    await databaseDrizzle
+      .update(connections)
+      .set({ isSyncing: false })
+      .where(eq(connections.id, connectionId))
+
+    await publishProgress({
+      connectionId: connectionId,
+      processedFile: connection.files.length,
+      processedPage: currentPagesCount,
+      lastAsync: new Date(),
+      status: 'FINISHED',
+    })
+    return;
+  }
   return processFiles(filesContent, service, connectionId, pageLimit, fileLimit, 0, 0)
 }
 

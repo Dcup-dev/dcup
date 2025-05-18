@@ -250,9 +250,8 @@ describe("Direct Upload UI", () => {
     cy.get('[data-test="folderName"]').should('contain.text', "*")
     cy.get('[data-test="processedFile"]').should('contain.text', 1)
     cy.get('[data-test="processedPage"]').should('contain.text', 2)
-
-    // remove the only pdf file 
-    // with 3 pages and now we have space it should processed smail one
+   
+    // remove the only stored pdf file  
     cy.get('[data-test="btn-config"]')
       .click()
 

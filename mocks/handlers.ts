@@ -15,13 +15,13 @@ export const handlers = [
     // resolve it under cypress/fixtures
     const fullPath = path.resolve(process.cwd(), 'cypress', 'fixtures', filename)
     const buffer = fs.readFileSync(fullPath)
-
-    return HttpResponse.arrayBuffer(buffer, {
+   const uint8 = new Uint8Array(buffer)  
+    const arrayBuffer = uint8.buffer
+    return HttpResponse.arrayBuffer(arrayBuffer, {
       headers: {
         'Content-Type': 'application/pdf'
       },
     })
-
   }),
   http.post("https://api.dropboxapi.com/2/files/list_folder", async (res) => {
     const body = (await res.request.json()) as DropboxFile

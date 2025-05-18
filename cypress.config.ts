@@ -12,7 +12,7 @@ const qdrantCLient = new QdrantClient({ url: process.env.QDRANT_DB_URL!, apiKey:
 
 export default defineConfig({
   retries: {
-    runMode: 2,
+    runMode: 3,
     openMode: 0
   },
   chromeWebSecurity: false,
