@@ -5,7 +5,7 @@ LABEL org.opencontainers.image.source="https://github.com/Dcup-dev/dcup"
 LABEL org.opencontainers.image.description="Dcup RAG-as-a-Service platform"
 LABEL org.opencontainers.image.licenses="GPL-3.0"
 LABEL org.opencontainers.image.title="Dcup RAG-as-a-Service"
-LABEL org.opencontainers.image.version="v1.1.0-beta"
+LABEL org.opencontainers.image.version="v1.1.2-beta"
 LABEL org.opencontainers.image.authors="Ali Amer <aliamer19ali@gmail.com>"
 # Install required OS packages including Python
 RUN apk add --no-cache libc6-compat python3 py3-pip
