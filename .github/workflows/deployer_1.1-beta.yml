@@ -1,9 +1,9 @@
-name: Deploy Dcup-web v1.0.1
+name: Deploy Dcup-web v1.1
 
 on:
   push:
     branches:
-      - "v1.1.0-beta"
+      - "v1.1"
 
 jobs:
   build-and-deploy:
