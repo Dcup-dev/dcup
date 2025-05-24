@@ -1,4 +1,4 @@
-import { Queue, Worker } from "bullmq";
+import { Queue, Worker, Job } from "bullmq";
 import { redisConnection } from "../../redis";
 import { defaultQueueConfig } from "../config";
 import { connectionProcessFiles, directProcessFiles } from "@/fileProcessors";
@@ -14,17 +14,12 @@ export type SerializedFile = {
 };
 export type TQueue = {
   connectionId: string;
-  pageLimit: number| null,
+  pageLimit: number | null,
   fileLimit: number | null,
   files: SerializedFile[],
   links: string[],
   service: string,
   metadata: string | null,
-};
-
-
-export const addToProcessFilesQueue = (data: TQueue) => {
-  return processfilesQueue.add(processFilesJobName, data)
 };
 
 const processfilesQueue = new Queue(processFilesJobName, {
@@ -35,13 +30,35 @@ const processfilesQueue = new Queue(processFilesJobName, {
   }
 });
 
-new Worker(processFilesJobName, async ({ data }) => {
-  const { service }: TQueue = data
+
+new Worker(processFilesJobName, async (job: Job) => {
+  const isCancelled = async () =>
+    (await redisConnection.get(`cancel-job:${job.id}`)) === '1';
+
+  const { service }: TQueue = job.data
   if (service === "DIRECT_UPLOAD") {
-    await directProcessFiles(data)
+    await processWithCancellation(directProcessFiles, job, isCancelled)
   } else {
-    await connectionProcessFiles(data)
+    await processWithCancellation(connectionProcessFiles, job, isCancelled);
   }
+
+   await redisConnection.del(`cancel-job:${job.id}`);
 }, {
   connection: redisConnection
 });
+
+export const addToProcessFilesQueue = async (data: TQueue) => {
+  const newJob = await processfilesQueue.add(processFilesJobName, data)
+  return newJob.id
+};
+
+/**
+ * Wraps a processing function to inject cancellation checks.
+ */
+async function processWithCancellation(
+  f: (data: any, checkCancel: () => Promise<boolean>) => Promise<void>,
+  job: Job,
+  checkCancel: () => Promise<boolean>
+) {
+  await f(job.data, checkCancel);
+}

@@ -71,6 +71,20 @@
       "when": 1747198120772,
       "tag": "0009_regular_hydra",
       "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "7",
+      "when": 1748097253159,
+      "tag": "0010_red_reptil",
+      "breakpoints": true
+    },
+    {
+      "idx": 11,
+      "version": "7",
+      "when": 1748097469946,
+      "tag": "0011_keen_night_nurse",
+      "breakpoints": true
     }
   ]
 }

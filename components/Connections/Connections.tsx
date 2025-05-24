@@ -19,9 +19,11 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip"
+import { useRouter } from "next/navigation";
 
 export default function Connections({ connections, tokens }: { connections: ConnectionQuery[], tokens: ConnectionToken }) {
   const [isMounted, setIsMounted] = useState(false)
+  const route = useRouter()
   const [connProgress, setConnProgress] = useState<ConnectionProgress | null>(null);
 
   useEffect(() => {
@@ -40,6 +42,12 @@ export default function Connections({ connections, tokens }: { connections: Conn
     return () => eventSource.close()
 
   }, [])
+
+  useEffect(() => {
+    if (connProgress?.status === 'FINISHED') {
+      route.refresh();
+    }
+  }, [connProgress]);
 
   return connections.map(connection => {
     const progress = connection.id === connProgress?.connectionId ? connProgress : null;
