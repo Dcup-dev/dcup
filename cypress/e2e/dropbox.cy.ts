@@ -509,4 +509,56 @@ describe("Dropbox connection UI Testing", () => {
         expect(points).eq(0)
       })
   })
+
+  it('should handle processing cancellation with progress preservation', () => {
+
+    cy.task('getConnections', { email: fakeUser.email })
+      .then(res => {
+        const { conns } = res as { conns: ConnectionTable[] }
+        cy.get(`[data-test="btn-config-${conns[0].identifier}"]`)
+          .click()
+          .get('input[name="folderName"]')
+          .clear()
+          .type('_TEST_/invo.pdf/sample.pdf')
+          .get(`[data-test="btn-config-connection"]`)
+          .click()
+      })
+    cy.wait(1000)
+
+    const targetState = { file: 1, page: 2 }
+    let found = false
+
+    const checkProgress = (retries = 0) => {
+      cy.get('[data-test="processedFile"]').invoke('text').then(fileText => {
+        cy.get('[data-test="processedPage"]').invoke('text').then(pageText => {
+          const currentFile = parseInt(fileText)
+          const currentPage = parseInt(pageText)
+
+          if (currentFile >= targetState.file && currentPage >= targetState.page) {
+            found = true
+            cy.get('[data-test="stop-connection"]').click()
+            return
+          }
+
+          if (!found) {
+            cy.wait(1000) // Check every 500ms
+            checkProgress(retries + 1)
+          }
+        })
+      })
+    }
+    checkProgress()
+
+    // UI assertions
+    cy.get('[data-test="processedFile"]').should('contain', targetState.file)
+    cy.get('[data-test="processedPage"]').should('contain', targetState.page)
+
+    cy.task("getConnection", { email: fakeUser.email })
+      .then(({ conns }: any) => {
+        const conn = (conns as FileConnectionQuery[])[0]
+        expect(conn.limitPages).to.be.null
+        expect(conn.limitFiles).to.be.null
+        cy.checkIndexedFiles({ conn, source: "DROPBOX", files: [{ name: "invo.pdf", totalPages: 2 }, { name: "sample.pdf", totalPages: 0 }] })
+      })
+  })
 })

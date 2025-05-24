@@ -85,6 +85,8 @@ export async function DELETE(request: NextRequest, { params }: Params) {
       where: (c, ops) => ops.and(ops.eq(c.userId, userId), ops.eq(c.id, id)),
       columns: {
         id: true,
+        isSyncing: true,
+        jobId: true,
       },
     })
 
@@ -93,6 +95,16 @@ export async function DELETE(request: NextRequest, { params }: Params) {
         code: "unauthorized",
         message: "Connection not found or access denied",
       }, { status: 403 })
+    }
+
+    if (connection.isSyncing || connection.jobId) {
+      return NextResponse.json(
+        {
+          code: 'processing_in_progress',
+          message: 'Cannot delete while files are being processed. Please cancel the active processing operation first.'
+        },
+        { status: 409 }
+      )
     }
     const filesToDelete = validation.data.file
       ? [validation.data.file]

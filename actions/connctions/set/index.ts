@@ -1,5 +1,7 @@
 "use server"
 import { authOptions } from "@/auth";
+import { databaseDrizzle } from "@/db";
+import { connections } from "@/db/schemas/connections";
 import { setConnectionToProcess } from "@/fileProcessors/connectors";
 import { fromErrorToFormState, toFormState } from "@/lib/zodErrorHandle";
 import { addToProcessFilesQueue } from "@/workers/queues/jobs/processFiles.job";
@@ -17,7 +19,10 @@ export async function setConnectionConfig(_: FormState, formData: FormData) {
 
     formData.set("userId", session.user.id)
     const config = await setConnectionToProcess(formData)
-    await addToProcessFilesQueue(config)
+    const jobId = await addToProcessFilesQueue(config)
+    await databaseDrizzle.update(connections).set({
+      jobId: jobId
+    })
     revalidatePath("/connections");
     return toFormState("SUCCESS", "start processing");
   } catch (e) {
