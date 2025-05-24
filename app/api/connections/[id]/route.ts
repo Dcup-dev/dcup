@@ -107,7 +107,10 @@ export async function DELETE(request: NextRequest, { params }: Params) {
     const { id } = await params
     const { data: conn, error: deleteError } = await tryAndCatch(databaseDrizzle.query.connections.findFirst({
       where: (conn, ops) => ops.and(ops.eq(conn.id, id), ops.eq(conn.userId, userId)),
-      columns: {},
+      columns: {
+        jobId: true,
+        isSyncing: true,
+      },
       with: {
         files: {
           columns: {
@@ -136,16 +139,25 @@ export async function DELETE(request: NextRequest, { params }: Params) {
       )
     }
 
+    if (conn.isSyncing || conn.jobId) {
+      return NextResponse.json(
+        {
+          code: 'processing_in_progress',
+          message: 'Cannot delete while files are being processed. Please cancel the active processing operation first.'
+        },
+        { status: 409 }
+      )
+    }
     for (const { chunksIds } of conn.files) {
-      await qdrantCLient.delete(qdrant_collection_name, {
+      await tryAndCatch(qdrantCLient.delete(qdrant_collection_name, {
         points: chunksIds,
         wait: wait === "true",
-      })
+      }))
     }
 
-    await databaseDrizzle
+    await tryAndCatch(databaseDrizzle
       .delete(connections)
-      .where(eq(connections.id, id))
+      .where(eq(connections.id, id)))
 
     return NextResponse.json({
       code: "ok",
@@ -246,10 +258,10 @@ export async function PUT(request: NextRequest, { params }: Params) {
 
       let error: Error | null = null;
       if (links.length > 0 || files.length > 0) {
-        const {error:err}  = await tryAndCatch(directProcessFiles(filesConfig))
+        const { error: err } = await tryAndCatch(directProcessFiles(filesConfig))
         error = err;
       } else {
-        const {error:err} = await tryAndCatch(connectionProcessFiles(filesConfig))
+        const { error: err } = await tryAndCatch(connectionProcessFiles(filesConfig))
         error = err
       }
 

@@ -23,7 +23,7 @@ export type PageContent = {
   tables: unknown[]
 }
 
-export const directProcessFiles = async ({ files, metadata, service, connectionId, links, pageLimit, fileLimit }: TQueue) => {
+export const directProcessFiles = async ({ files, metadata, service, connectionId, links, pageLimit, fileLimit }: TQueue, checkCancel?: () => Promise<boolean>) => {
   // Create promises for processing file URLs
   const filePromises = files.map(async (file) => {
     const arrayBuffer = Buffer.from(file.content, 'base64').buffer;
@@ -64,7 +64,7 @@ export const directProcessFiles = async ({ files, metadata, service, connectionI
   if (pageLimit && pageLimit < currentPagesCount) {
     await databaseDrizzle
       .update(connections)
-      .set({ isSyncing: false })
+      .set({ isSyncing: false, jobId: null })
       .where(eq(connections.id, connectionId))
 
     await publishProgress({
@@ -76,10 +76,10 @@ export const directProcessFiles = async ({ files, metadata, service, connectionI
     })
     return;
   }
-  return await processFiles(filesContent, service, connectionId, pageLimit, fileLimit, currentPagesCount, connection.files.length)
+  return await processFiles(filesContent, service, connectionId, pageLimit, fileLimit, currentPagesCount, connection.files.length, checkCancel)
 }
 
-export const connectionProcessFiles = async ({ connectionId, service, pageLimit, fileLimit }: TQueue) => {
+export const connectionProcessFiles = async ({ connectionId, service, pageLimit, fileLimit }: TQueue, checkCancel?: () => Promise<boolean>) => {
   const connection = await databaseDrizzle.query.connections.findFirst({
     where: (c, ops) => ops.eq(c.id, connectionId),
     with: {
@@ -109,7 +109,7 @@ export const connectionProcessFiles = async ({ connectionId, service, pageLimit,
   if (pageLimit && pageLimit < currentPagesCount) {
     await databaseDrizzle
       .update(connections)
-      .set({ isSyncing: false })
+      .set({ isSyncing: false, jobId: null })
       .where(eq(connections.id, connectionId))
 
     await publishProgress({
@@ -121,15 +121,18 @@ export const connectionProcessFiles = async ({ connectionId, service, pageLimit,
     })
     return;
   }
-  return processFiles(filesContent, service, connectionId, pageLimit, fileLimit, 0, 0)
+  return processFiles(filesContent, service, connectionId, pageLimit, fileLimit, 0, 0, checkCancel)
 }
 
-const processFiles = async (filesContent: FileContent[], service: string, connectionId: string, pageLimit: number | null, fileLimit: number | null, currentPagesCount: number, currentFileCount: number) => {
+const delay = (ms: number) => new Promise(res => setTimeout(res, ms))
+
+const processFiles = async (filesContent: FileContent[], service: string, connectionId: string, pageLimit: number | null, fileLimit: number | null, currentPagesCount: number, currentFileCount: number, checkCancel?: () => Promise<boolean>) => {
   const completedFiles: typeof processedFiles.$inferInsert[] = []
   const allPoints = [];
   let processedPage = 0;
   let processedAllPages = currentPagesCount;
   let limits = pageLimit ? pageLimit - currentPagesCount : Infinity;
+  let shouldCancel = false;
   const now = new Date()
   try {
     const splitter = new RecursiveCharacterTextSplitter({
@@ -138,8 +141,7 @@ const processFiles = async (filesContent: FileContent[], service: string, connec
       keepSeparator: true,
       separators: ["\n\n## ", "\n\n# ", "\n\n", "\n", ". ", "! ", "? ", " "],
     });
-
-    for (let fileIndex = 0; fileIndex < filesContent.length && limits > 0; fileIndex++) {
+    fileLoop: for (let fileIndex = 0; fileIndex < filesContent.length && limits > 0; fileIndex++) {
       const file = filesContent[fileIndex]
       const chunksId = [];
       if (fileLimit !== null && fileLimit > 0 && fileIndex >= fileLimit) break;
@@ -151,8 +153,14 @@ const processFiles = async (filesContent: FileContent[], service: string, connec
         },
       };
       for (let pageIndex = 0; pageIndex < file.pages.length && limits > 0; pageIndex++) {
+        if (checkCancel && await checkCancel()) {
+          shouldCancel = true;
+          break;
+        }
+        await delay(1000)
+
         const page = file.pages[pageIndex]
-        if (limits <= 0) break;
+        if (limits <= 0 || shouldCancel) break;
         const textPoints = await processingTextPage(page.text, pageIndex, baseMetadata, splitter)
         if (textPoints) {
           allPoints.push(textPoints);
@@ -185,6 +193,7 @@ const processFiles = async (filesContent: FileContent[], service: string, connec
         chunksIds: chunksId as string[],
       })
       processedPage = 0
+      if (limits <= 0 || shouldCancel) break fileLoop;
     }
 
     if (allPoints.length > 0) {
@@ -209,6 +218,7 @@ const processFiles = async (filesContent: FileContent[], service: string, connec
       .set({
         lastSynced: now,
         isSyncing: false,
+        jobId: null,
       })
       .where(eq(connections.id, connectionId))
 

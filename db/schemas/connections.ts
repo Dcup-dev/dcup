@@ -34,6 +34,7 @@ export const connections = pgTable("connection", {
   limitFiles: integer("limit_files"),
   lastSynced: timestamp("last_synced", { withTimezone: true }),
   isSyncing: boolean("is_syncing").default(false).notNull(),
+  jobId: text("job_id"),
   isConfigSet: boolean("is_config_set").default(false).notNull(),
   createdAt: timestamp("createdAt", { withTimezone: true }).notNull().defaultNow(),
 })

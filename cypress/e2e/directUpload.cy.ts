@@ -250,7 +250,7 @@ describe("Direct Upload UI", () => {
     cy.get('[data-test="folderName"]').should('contain.text', "*")
     cy.get('[data-test="processedFile"]').should('contain.text', 1)
     cy.get('[data-test="processedPage"]').should('contain.text', 2)
-   
+
     // remove the only stored pdf file  
     cy.get('[data-test="btn-config"]')
       .click()
@@ -444,6 +444,50 @@ describe("Direct Upload UI", () => {
         expect(points).eq(0)
       })
   })
+
+  it('should handle processing cancellation with progress preservation', () => {
+
+    cy.uploadFiles({ files: ['invo.pdf', "sample.pdf"] })
+    cy.wait(1000)
+
+    const targetState = { file: 1, page: 2 }
+    let found = false
+
+    const checkProgress = (retries = 0) => {
+      cy.get('[data-test="processedFile"]').invoke('text').then(fileText => {
+        cy.get('[data-test="processedPage"]').invoke('text').then(pageText => {
+          const currentFile = parseInt(fileText)
+          const currentPage = parseInt(pageText)
+
+          if (currentFile >= targetState.file && currentPage >= targetState.page) {
+            found = true
+            cy.get('[data-test="stop-connection"]').click()
+            return
+          }
+
+          if (!found) {
+            cy.wait(1000) // Check every 500ms
+            checkProgress(retries + 1)
+          }
+        })
+      })
+    }
+    checkProgress()
+
+    // UI assertions
+    cy.get('[data-test="processedFile"]').should('contain', targetState.file)
+    cy.get('[data-test="processedPage"]').should('contain', targetState.page)
+
+    cy.task("getConnection", { email: fakeUser.email })
+      .then(({ conns }: any) => {
+        const conn = (conns as FileConnectionQuery[])[0]
+        expect(conn.service).eq("DIRECT_UPLOAD")
+        expect(conn.metadata).eq("{}")
+        expect(conn.limitPages).to.be.null
+        expect(conn.limitFiles).to.be.null
+        cy.checkIndexedFiles({ conn, files: [{ name: "invo.pdf", totalPages: 2 }, { name: "sample.pdf", totalPages: 0 }] })
+      })
+  })
 })
 
 describe("Direct Upload API", () => {
@@ -607,6 +651,7 @@ describe("Direct Upload API", () => {
         })
     })
   })
+
   it('should enforce page limits during file operations and maintain constraints', () => {
     // Upload 1 pdf  with 3 pages, it should process only 2 
     cy.task('addNewUser', fakeUser).then(user => {

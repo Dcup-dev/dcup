@@ -57,10 +57,6 @@ export const syncConnectionConfig = async (_: FormState, formData: FormData) => 
     })
     if (!user) throw new Error("no such account")
 
-    await databaseDrizzle.update(connections).set({
-      isSyncing: true,
-    }).where(eq(connections.id, connectionId));
-
     const { currentConn, othersConn } = user.connections.reduce((acc, c) => {
       if (c.id === connectionId) {
         acc.currentConn = c;
@@ -71,8 +67,7 @@ export const syncConnectionConfig = async (_: FormState, formData: FormData) => 
     }, { currentConn: null as Conn | null, othersConn: [] as Conn[] });
 
     if (!currentConn) throw new Error("no such connection")
- 
-    await addToProcessFilesQueue({
+    const jobId = await addToProcessFilesQueue({
       connectionId: connectionId,
       service: currentConn.service,
       metadata: currentConn.metadata || null,
@@ -81,6 +76,10 @@ export const syncConnectionConfig = async (_: FormState, formData: FormData) => 
       files: [],
       links: []
     })
+    await databaseDrizzle.update(connections).set({
+      isSyncing: true,
+      jobId: jobId
+    }).where(eq(connections.id, connectionId));
 
     revalidatePath("/connections");
     return toFormState("SUCCESS", "start processing");
