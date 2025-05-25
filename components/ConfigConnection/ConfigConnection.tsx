@@ -97,7 +97,7 @@ export const ConfigConnection = ({ connection, directory, status, open, setOpen,
 
   return (<Dialog open={open} onOpenChange={o => setOpen(o)} >
     <DialogTrigger asChild>
-      <Button data-test={`btn-config-${connection.identifier}`} size='sm' variant={isConfigSet ? 'ghost' : 'default'} disabled={status === 'PROCESSING' || (!status && connection.isSyncing)} onClick={() => setOpen(true)} >
+      <Button data-test={`btn-config-${connection.identifier}`} size='sm' variant={isConfigSet ? 'ghost' : 'default'} disabled={status === 'PROCESSING' || (!status && !!connection.jobId)} onClick={() => setOpen(true)} >
         <Settings2 />
         Configure
       </Button>
@@ -135,7 +135,7 @@ export const ConfigConnection = ({ connection, directory, status, open, setOpen,
                 type={isTest ? 'text' : 'button'}
                 readOnly={!isTest}
               />
-              <Button onClick={showPicker} type="button" disabled={connection.isSyncing || connection.isConfigSet}  >
+              <Button onClick={showPicker} type="button" disabled={!!connection.jobId || connection.isConfigSet}  >
                 {getServiceLabel('selectButton')}
               </Button>
             </div>
@@ -161,7 +161,7 @@ export const ConfigConnection = ({ connection, directory, status, open, setOpen,
             <Input
               type="number"
               name='pageLimit'
-              disabled={connection.isSyncing || connection.isConfigSet}
+              disabled={!!connection.jobId || connection.isConfigSet}
               id='pageLimit'
               defaultValue={connection.files.reduce((s, f) => s + f.totalPages, 0) !== 0 ? connection.files.reduce((s, f) => s + f.totalPages, 0) : undefined}
               placeholder="Enter page limit"
@@ -176,7 +176,7 @@ export const ConfigConnection = ({ connection, directory, status, open, setOpen,
             <Input
               name='fileLimit'
               id='fileLimit'
-              disabled={connection.isSyncing || connection.isConfigSet}
+              disabled={!!connection.jobId || connection.isConfigSet}
               type="number"
               defaultValue={connection.files.length !== 0 ? connection.files.length : undefined}
               placeholder="Enter document limit"

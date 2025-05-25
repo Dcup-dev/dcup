@@ -35,8 +35,8 @@ export async function POST(request: NextRequest, { params }: Params) {
         id: true,
         service: true,
         isConfigSet: true,
-        isSyncing: true,
-        metadata: true
+        metadata: true,
+        jobId:true,
       },
       with: {
         files: {
@@ -75,7 +75,7 @@ export async function POST(request: NextRequest, { params }: Params) {
         { status: 400 },
       )
     }
-    if (conn.isSyncing) {
+    if (conn.jobId) {
       return NextResponse.json(
         {
           code: 'already_syncing',

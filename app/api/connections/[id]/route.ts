@@ -5,7 +5,7 @@ import { APIError } from "@/lib/APIError";
 import { databaseDrizzle } from "@/db";
 import { eq } from "drizzle-orm";
 import { connections } from "@/db/schemas/connections";
-import { qdrant_collection_name, qdrantCLient } from "@/qdrant";
+import { qdrant_collection_name, qdrantClient } from "@/qdrant";
 import { setConnectionToProcess } from "@/fileProcessors/connectors";
 import { connectionProcessFiles, directProcessFiles } from "@/fileProcessors";
 import { addToProcessFilesQueue } from "@/workers/queues/jobs/processFiles.job";
@@ -109,12 +109,12 @@ export async function DELETE(request: NextRequest, { params }: Params) {
       where: (conn, ops) => ops.and(ops.eq(conn.id, id), ops.eq(conn.userId, userId)),
       columns: {
         jobId: true,
-        isSyncing: true,
       },
       with: {
         files: {
           columns: {
-            chunksIds: true
+            chunksIds: true,
+            name: true,
           }
         }
       }
@@ -139,7 +139,7 @@ export async function DELETE(request: NextRequest, { params }: Params) {
       )
     }
 
-    if (conn.isSyncing || conn.jobId) {
+    if (conn.jobId) {
       return NextResponse.json(
         {
           code: 'processing_in_progress',
@@ -148,10 +148,16 @@ export async function DELETE(request: NextRequest, { params }: Params) {
         { status: 409 }
       )
     }
-    for (const { chunksIds } of conn.files) {
-      await tryAndCatch(qdrantCLient.delete(qdrant_collection_name, {
+    for (const { chunksIds, name } of conn.files) {
+      await tryAndCatch(qdrantClient.delete(qdrant_collection_name, {
         points: chunksIds,
         wait: wait === "true",
+        filter: {
+          must: [
+            { key: "_document_id", match: { value: name } },
+            { key: "_userId", match: { value: userId } },
+          ]
+        }
       }))
     }
 
@@ -190,9 +196,9 @@ export async function PUT(request: NextRequest, { params }: Params) {
     const { data: conn, error: queryError } = await tryAndCatch(databaseDrizzle.query.connections.findFirst({
       where: (conn, ops) => ops.and(ops.eq(conn.id, id), ops.eq(conn.userId, userId)),
       columns: {
-        isSyncing: true,
         service: true,
         folderName: true,
+        jobId: true,
       }
     }))
     if (queryError) {
@@ -215,7 +221,7 @@ export async function PUT(request: NextRequest, { params }: Params) {
       )
     }
 
-    if (conn.isSyncing) {
+    if (conn.jobId) {
       return NextResponse.json(
         {
           code: 'already_syncing',

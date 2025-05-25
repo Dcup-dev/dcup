@@ -4,7 +4,7 @@ import { apiKeys, users } from '@/db/schemas/users';
 import { hashApiKey } from '@/lib/api_key';
 import { Plans } from '@/lib/Plans';
 import { expandQuery, generateHypotheticalAnswer, vectorizeText } from '@/openAi';
-import { qdrant_collection_name, qdrantCLient } from '@/qdrant';
+import { qdrant_collection_name, qdrantClient } from '@/qdrant';
 import { RetrievalFilter } from '@/validations/retrievalsFilteringSchema'
 import { and, eq, sql } from 'drizzle-orm';
 import { getServerSession } from 'next-auth';
@@ -105,17 +105,22 @@ export async function POST(request: NextRequest) {
           `Please upgrade to increase your limit.`
       }, {
         status: 429,
-        headers: { "Retry-After": "3600" } 
+        headers: { "Retry-After": "3600" }
       });
     }
 
     const { query, filter, top_chunk, rerank, min_score_threshold } = validation.data
     const queries = await expandQuery(query)
     const vectors = await vectorizeText(queries)
-
-    const queryPoints = await qdrantCLient.search(qdrant_collection_name, {
+    const queryPoints = await qdrantClient.search(qdrant_collection_name, {
       vector: vectors,
-      filter: filter ? { must: [{ nested: { key: "_metadata", filter: filter } }] } : undefined,
+      filter: filter ? {
+        must: [
+          { nested: { key: "_metadata", filter: filter } },
+          { key: "_userId", match: { value: userId } }
+        ]
+      } :
+        { must: [{ key: "_userId", match: { value: userId } }] },
       limit: rerank ? top_chunk * 2 : top_chunk,
       with_payload: true,
       with_vector: true

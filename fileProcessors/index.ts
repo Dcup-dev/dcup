@@ -3,13 +3,14 @@ import { databaseDrizzle } from "@/db";
 import { RecursiveCharacterTextSplitter } from "@langchain/textsplitters";
 import { v4 as uuidv4 } from 'uuid';
 import { getTitleAndSummary, vectorizeText } from "@/openAi";
-import { qdrant_collection_name, qdrantCLient } from "@/qdrant";
+import { qdrant_collection_name, qdrantClient } from "@/qdrant";
 import { publishProgress } from "@/events";
 import { connections, processedFiles } from "@/db/schemas/connections";
 import { and, eq } from "drizzle-orm";
 import { getFileContent } from "./connectors";
 import { processPdfLink, processPdfBuffer } from "./Files/pdf";
 import { TQueue } from "@/workers/queues/jobs/processFiles.job";
+import { tryAndCatch } from "@/lib/try-catch";
 
 export type FileContent = {
   name: string,
@@ -64,7 +65,7 @@ export const directProcessFiles = async ({ files, metadata, service, connectionI
   if (pageLimit && pageLimit < currentPagesCount) {
     await databaseDrizzle
       .update(connections)
-      .set({ isSyncing: false, jobId: null })
+      .set({ jobId: null })
       .where(eq(connections.id, connectionId))
 
     await publishProgress({
@@ -76,7 +77,7 @@ export const directProcessFiles = async ({ files, metadata, service, connectionI
     })
     return;
   }
-  return await processFiles(filesContent, service, connectionId, pageLimit, fileLimit, currentPagesCount, connection.files.length, checkCancel)
+  return await processFiles(connection.userId, filesContent, service, connectionId, pageLimit, fileLimit, currentPagesCount, connection.files.length, checkCancel)
 }
 
 export const connectionProcessFiles = async ({ connectionId, service, pageLimit, fileLimit }: TQueue, checkCancel?: () => Promise<boolean>) => {
@@ -100,16 +101,22 @@ export const connectionProcessFiles = async ({ connectionId, service, pageLimit,
         eq(processedFiles.name, file.name)
       ))
 
-    await qdrantCLient.delete(qdrant_collection_name, {
+    await tryAndCatch(qdrantClient.delete(qdrant_collection_name, {
       points: file.chunksIds,
-    })
+      filter: {
+        must: [
+          { key: "_document_id", match: { value: file.name } },
+          { key: "_userId", match: { value: connection.userId } }
+        ]
+      }
+    }))
   }
   // check the limits 
   const currentPagesCount = connection?.files.reduce((sum, f) => f.totalPages + sum, 0) ?? 0
   if (pageLimit && pageLimit < currentPagesCount) {
     await databaseDrizzle
       .update(connections)
-      .set({ isSyncing: false, jobId: null })
+      .set({ jobId: null })
       .where(eq(connections.id, connectionId))
 
     await publishProgress({
@@ -121,12 +128,10 @@ export const connectionProcessFiles = async ({ connectionId, service, pageLimit,
     })
     return;
   }
-  return processFiles(filesContent, service, connectionId, pageLimit, fileLimit, 0, 0, checkCancel)
+  return processFiles(connection.userId, filesContent, service, connectionId, pageLimit, fileLimit, 0, 0, checkCancel)
 }
 
-const delay = (ms: number) => new Promise(res => setTimeout(res, ms))
-
-const processFiles = async (filesContent: FileContent[], service: string, connectionId: string, pageLimit: number | null, fileLimit: number | null, currentPagesCount: number, currentFileCount: number, checkCancel?: () => Promise<boolean>) => {
+const processFiles = async (userId: string, filesContent: FileContent[], service: string, connectionId: string, pageLimit: number | null, fileLimit: number | null, currentPagesCount: number, currentFileCount: number, checkCancel?: () => Promise<boolean>) => {
   const completedFiles: typeof processedFiles.$inferInsert[] = []
   const allPoints = [];
   let processedPage = 0;
@@ -147,6 +152,7 @@ const processFiles = async (filesContent: FileContent[], service: string, connec
       if (fileLimit !== null && fileLimit > 0 && fileIndex >= fileLimit) break;
       const baseMetadata = {
         _document_id: file.name,
+        _userId: userId,
         _metadata: {
           ...file.metadata,
           source: service,
@@ -157,7 +163,10 @@ const processFiles = async (filesContent: FileContent[], service: string, connec
           shouldCancel = true;
           break;
         }
-        await delay(1000)
+        if (process.env.NEXT_PUBLIC_APP_ENV === 'TEST') {
+          const delay = (ms: number) => new Promise(res => setTimeout(res, ms))
+          await delay(1000)
+        }
 
         const page = file.pages[pageIndex]
         if (limits <= 0 || shouldCancel) break;
@@ -197,7 +206,7 @@ const processFiles = async (filesContent: FileContent[], service: string, connec
     }
 
     if (allPoints.length > 0) {
-      await qdrantCLient.upsert(qdrant_collection_name, {
+      await qdrantClient.upsert(qdrant_collection_name, {
         points: allPoints,
         wait: true
       })
@@ -217,7 +226,6 @@ const processFiles = async (filesContent: FileContent[], service: string, connec
       .update(connections)
       .set({
         lastSynced: now,
-        isSyncing: false,
         jobId: null,
       })
       .where(eq(connections.id, connectionId))
@@ -258,26 +266,28 @@ const processingTextPage = async (pageText: string, pageIndex: number, baseMetad
       _hash: textHash,
     };
 
-    try {
-      const existingPoints = await qdrantCLient.scroll(qdrant_collection_name, {
-        filter: {
-          must: [{ key: "_hash", match: { value: textHash } }]
-        },
-        limit: 1,
-        with_payload: true,
-        with_vector: true,
-      });
-      if (existingPoints.points.length > 0) {
-        return {
-          id: existingPoints.points[0].id,
-          vector: existingPoints.points[0].vector as number[],
-          payload: {
-            ...existingPoints.points[0].payload,
-            _metadata: baseMetadata._metadata
-          }
+    const { data: existingPoints } = await tryAndCatch(qdrantClient.scroll(qdrant_collection_name, {
+      filter: {
+        must: [
+          { key: "_hash", match: { value: textHash } },
+          { key: "_userId", match: { value: baseMetadata._userId } }
+        ]
+      },
+      limit: 1,
+      with_payload: true,
+      with_vector: true,
+    }));
+
+    if (existingPoints && existingPoints.points.length > 0) {
+      return {
+        id: existingPoints.points[0].id,
+        vector: existingPoints.points[0].vector as number[],
+        payload: {
+          ...existingPoints.points[0].payload,
+          _metadata: baseMetadata._metadata
         }
       }
-    } catch { }
+    }
 
     const textVectors = await vectorizeText(chunk);
     const { title, summary } = await getTitleAndSummary(chunk, JSON.stringify(textMetadata))
@@ -306,27 +316,28 @@ const processingTablePage = async (tables: unknown[], pageIndex: number, baseMet
     _content: pageTables,
     _hash: tableHash,
   };
+  const { data: existingPoints } = await tryAndCatch(qdrantClient.scroll(qdrant_collection_name, {
+    filter: {
+      must: [
+        { key: "_hash", match: { value: tableHash } },
+        { key: "_userId", match: { value: baseMetadata._userId } }
+      ]
+    },
+    limit: 1,
+    with_payload: true,
+    with_vector: true,
+  }));
 
-  try {
-    const existingPoints = await qdrantCLient.scroll(qdrant_collection_name, {
-      filter: {
-        must: [{ key: "_hash", match: { value: tableHash } }]
-      },
-      limit: 1,
-      with_payload: true,
-      with_vector: true,
-    });
-    if (existingPoints.points.length > 0) {
-      return {
-        id: existingPoints.points[0].id,
-        vector: existingPoints.points[0].vector as number[],
-        payload: {
-          ...existingPoints.points[0].payload,
-          _metadata: baseMetadata._metadata
-        }
+  if (existingPoints && existingPoints.points.length > 0) {
+    return {
+      id: existingPoints.points[0].id,
+      vector: existingPoints.points[0].vector as number[],
+      payload: {
+        ...existingPoints.points[0].payload,
+        _metadata: baseMetadata._metadata
       }
     }
-  } catch { }
+  }
 
   const tableVectors = await vectorizeText(pageTables);
   const { title, summary } = await getTitleAndSummary(pageTables, JSON.stringify(tableMetadata))

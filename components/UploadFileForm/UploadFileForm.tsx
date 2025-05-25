@@ -161,7 +161,11 @@ export const DataInput = ({ files, setFiles, links, setLinks, currentFiles, remo
     const droppedFiles = Array.from(e.dataTransfer.files);
     const validFiles = droppedFiles.filter((f) => {
       if (f.type !== "application/pdf") {
-        setInvalidFile(f.name);
+         setInvalidFile(`${f.name} is not supported. Please upload PDFs only.`);
+        return false;
+      }
+      if (currentFiles.includes(f.name)) {
+          setInvalidFile(`${f.name} is already added`);
         return false;
       }
       return true;
@@ -174,7 +178,11 @@ export const DataInput = ({ files, setFiles, links, setLinks, currentFiles, remo
     const selectedFiles = Array.from(e.target.files || []);
     const validFiles = selectedFiles.filter((f) => {
       if (f.type !== "application/pdf") {
-        setInvalidFile(f.name);
+        setInvalidFile(`${f.name} is not supported. Please upload PDFs only.`);
+        return false;
+      }
+      if (currentFiles.includes(f.name)) {
+        setInvalidFile(`${f.name} is already added`);
         return false;
       }
       return true;
@@ -235,7 +243,7 @@ export const DataInput = ({ files, setFiles, links, setLinks, currentFiles, remo
               {invalidFile && (
                 <div className="mt-2 text-red-600 text-sm">
                   <AlertCircle className="h-4 w-4 inline-block mr-1" />
-                  {`${invalidFile} is not supported. Please upload PDFs only.`}
+                  {invalidFile}
                 </div>
               )}
             </CardHeader>

@@ -4,7 +4,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { APIError } from "@/lib/APIError";
 import { databaseDrizzle } from "@/db";
 import { arrayContains } from "drizzle-orm";
-import { qdrant_collection_name, qdrantCLient } from "@/qdrant";
+import { qdrant_collection_name, qdrantClient } from "@/qdrant";
 
 type Params = {
   params: Promise<{
@@ -62,7 +62,7 @@ export async function GET(request: NextRequest, { params }: Params) {
       )
     }
 
-    const { data: chunks, error: retrieveError } = await tryAndCatch(qdrantCLient.retrieve(qdrant_collection_name, {
+    const { data: chunks, error: retrieveError } = await tryAndCatch(qdrantClient.retrieve(qdrant_collection_name, {
       ids: chunksIds,
       with_payload: true,
     }))

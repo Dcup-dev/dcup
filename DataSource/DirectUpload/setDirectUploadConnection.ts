@@ -1,6 +1,7 @@
 import { databaseDrizzle } from "@/db";
 import { connections, processedFiles } from "@/db/schemas/connections";
-import { qdrant_collection_name, qdrantCLient } from "@/qdrant";
+import { tryAndCatch } from "@/lib/try-catch";
+import { qdrant_collection_name, qdrantClient } from "@/qdrant";
 import { and, eq } from "drizzle-orm";
 import { z } from "zod";
 
@@ -52,6 +53,7 @@ const directUploadConfig = z.object({
 })
 
 const updateDirectUploadConfig = z.object({
+  userId: z.string().min(5),
   connectionId: z.string().min(5),
   pageLimit: z.string().nullable().transform((str, ctx): number | null => {
     try {
@@ -91,6 +93,7 @@ const updateDirectUploadConfig = z.object({
 
 export const updateDirectUploadConnection = async (formData: FormData) => {
   const config = updateDirectUploadConfig.safeParse({
+    userId: formData.get("userId"),
     connectionId: formData.get("connectionId"),
     identifier: formData.get("identifier"),
     metadata: formData.get("metadata") || "{}",
@@ -110,7 +113,7 @@ export const updateDirectUploadConnection = async (formData: FormData) => {
     throw new Error(`Validation errors - ${errors}`)
   }
 
-  const connectionChunksIds: { chunksIds: string[] }[] = [];
+  const connectionChunksIds: { chunksIds: string[], name: string }[] = [];
 
   await databaseDrizzle
     .update(connections)
@@ -125,14 +128,18 @@ export const updateDirectUploadConnection = async (formData: FormData) => {
       .where(and(
         eq(processedFiles.connectionId, config.data.connectionId),
         eq(processedFiles.name, fileName)
-      )).returning({ chunksIds: processedFiles.chunksIds })
+      )).returning({ chunksIds: processedFiles.chunksIds, name: processedFiles.name })
     connectionChunksIds.push(...files)
   }
 
-  for (const { chunksIds } of connectionChunksIds) {
-    await qdrantCLient.delete(qdrant_collection_name, {
+  for (const { chunksIds, name } of connectionChunksIds) {
+    await tryAndCatch(qdrantClient.delete(qdrant_collection_name, {
       points: chunksIds,
-    })
+      filter: {
+        must: [{ "key": "_document_id", "match": { value: name } },
+        { key: "_userId", match: { value: config.data.userId } }]
+      }
+    }))
   }
 
   const files = config.data.files.map(async (file) => ({
@@ -188,7 +195,6 @@ export const setDirectUploadConnection = async (formData: FormData) => {
     service: 'DIRECT_UPLOAD',
     metadata: metadata,
     isConfigSet: true,
-    isSyncing: true,
     limitPages: pageLimit,
     limitFiles: fileLimit,
   }).returning({ id: connections.id })

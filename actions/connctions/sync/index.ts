@@ -77,7 +77,6 @@ export const syncConnectionConfig = async (_: FormState, formData: FormData) => 
       links: []
     })
     await databaseDrizzle.update(connections).set({
-      isSyncing: true,
       jobId: jobId
     }).where(eq(connections.id, connectionId));
 

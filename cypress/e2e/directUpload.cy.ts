@@ -206,11 +206,13 @@ describe("Direct Upload UI", () => {
         expect(conn.limitPages).eq(2)
         expect(conn.limitFiles).to.be.null
         cy.checkIndexedFiles({ conn, files: [{ name: "invo.pdf", totalPages: 2 }] })
+
+        cy.task("getPointsNumberByFileName", { fileName: "invo.pdf", userId: conn.userId })
+          .then(points => {
+            expect(points).to.be.greaterThan(0)
+          })
       })
-    cy.task("getPointsNumberByFileName", { fileName: "invo.pdf" })
-      .then(points => {
-        expect(points).to.be.greaterThan(0)
-      })
+
     cy.wait(1000)
 
     // check the UI
@@ -235,14 +237,14 @@ describe("Direct Upload UI", () => {
         expect(conn.limitPages).eq(2)
         expect(conn.limitFiles).to.be.null
         cy.checkIndexedFiles({ conn, files: [{ name: "invo.pdf", totalPages: 2 }] })
-      })
-    cy.task("getPointsNumberByFileName", { fileName: "invo.pdf" })
-      .then(points => {
-        expect(points).to.be.greaterThan(0)
-      })
-    cy.task("getPointsNumberByFileName", { fileName: "sample.pdf" })
-      .then(points => {
-        expect(points).eq(0)
+        cy.task("getPointsNumberByFileName", { fileName: "invo.pdf", userId: conn.userId })
+          .then(points => {
+            expect(points).to.be.greaterThan(0)
+          })
+        cy.task("getPointsNumberByFileName", { fileName: "sample.pdf", userId: conn.userId })
+          .then(points => {
+            expect(points).eq(0)
+          })
       })
     cy.wait(1000)
 
@@ -271,14 +273,15 @@ describe("Direct Upload UI", () => {
         expect(conn.limitPages).eq(2)
         expect(conn.limitFiles).to.be.null
         expect(conn.files.length).eq(0)
-      })
-    cy.task("getPointsNumberByFileName", { fileName: "invo.pdf" })
-      .then(points => {
-        expect(points).eq(0)
-      })
-    cy.task("getPointsNumberByFileName", { fileName: "sample.pdf" })
-      .then(points => {
-        expect(points).eq(0)
+
+        cy.task("getPointsNumberByFileName", { fileName: "invo.pdf", userId: conn.userId })
+          .then(points => {
+            expect(points).eq(0)
+          })
+        cy.task("getPointsNumberByFileName", { fileName: "sample.pdf", userId: conn.userId })
+          .then(points => {
+            expect(points).eq(0)
+          })
       })
     cy.wait(1000)
 
@@ -305,10 +308,10 @@ describe("Direct Upload UI", () => {
         expect(conn.limitPages).eq(2)
         expect(conn.limitFiles).to.be.null
         cy.checkIndexedFiles({ conn, files: [{ name: "sample.pdf", totalPages: 1 }] })
-      })
-    cy.task("getPointsNumberByFileName", { fileName: "sample.pdf" })
-      .then(points => {
-        expect(points).to.be.greaterThan(0)
+        cy.task("getPointsNumberByFileName", { fileName: "sample.pdf", userId: conn.userId })
+          .then(points => {
+            expect(points).to.be.greaterThan(0)
+          })
       })
     cy.wait(1000)
 
@@ -334,14 +337,14 @@ describe("Direct Upload UI", () => {
         expect(conn.limitPages).eq(2)
         expect(conn.limitFiles).to.be.null
         cy.checkIndexedFiles({ conn, files: [{ name: "invo.pdf", totalPages: 1 }, { name: "sample.pdf", totalPages: 1 }] })
-      })
-    cy.task("getPointsNumberByFileName", { fileName: "invo.pdf" })
-      .then(points => {
-        expect(points).to.be.greaterThan(0)
-      })
-    cy.task("getPointsNumberByFileName", { fileName: "sample.pdf" })
-      .then(points => {
-        expect(points).to.be.greaterThan(0)
+        cy.task("getPointsNumberByFileName", { fileName: "invo.pdf", userId: conn.userId })
+          .then(points => {
+            expect(points).to.be.greaterThan(0)
+          })
+        cy.task("getPointsNumberByFileName", { fileName: "sample.pdf", userId: conn.userId })
+          .then(points => {
+            expect(points).to.be.greaterThan(0)
+          })
       })
     cy.wait(1000)
 
@@ -372,13 +375,16 @@ describe("Direct Upload UI", () => {
         const { conns } = res as { conns: ConnectionTable[] }
         expect(conns).to.have.length(0);
       })
-    cy.task("getPointsNumberByFileName", { fileName: "invo.pdf" })
-      .then(points => {
-        expect(points).eq(0)
-      })
-    cy.task("getPointsNumberByFileName", { fileName: "sample.pdf" })
-      .then(points => {
-        expect(points).eq(0)
+    cy.task("getUserId", { email: fakeUser.email })
+      .then(userId => {
+        cy.task("getPointsNumberByFileName", { fileName: "invo.pdf", userId })
+          .then(points => {
+            expect(points).eq(0)
+          })
+        cy.task("getPointsNumberByFileName", { fileName: "sample.pdf", userId })
+          .then(points => {
+            expect(points).eq(0)
+          })
       })
   })
 
@@ -403,15 +409,17 @@ describe("Direct Upload UI", () => {
       .then(({ conns }: any) => {
         const conn = (conns as FileConnectionQuery[])[0]
         expect(conn.files.length).eq(2)
+
+        cy.task("getPointsNumberByFileName", { fileName: "invo.pdf", userId: conn.userId })
+          .then(points => {
+            expect(points).greaterThan(0)
+          })
+        cy.task("getPointsNumberByFileName", { fileName: "sample.pdf", userId: conn.userId })
+          .then(points => {
+            expect(points).greaterThan(0)
+          })
       })
-    cy.task("getPointsNumberByFileName", { fileName: "invo.pdf" })
-      .then(points => {
-        expect(points).greaterThan(0)
-      })
-    cy.task("getPointsNumberByFileName", { fileName: "sample.pdf" })
-      .then(points => {
-        expect(points).greaterThan(0)
-      })
+
 
     // Delete connection
     cy.task('getConnections', { email: fakeUser.email })
@@ -435,13 +443,16 @@ describe("Direct Upload UI", () => {
         const { conns } = res as { conns: ConnectionTable[] }
         expect(conns).to.have.length(0);
       })
-    cy.task("getPointsNumberByFileName", { fileName: "invo.pdf" })
-      .then(points => {
-        expect(points).eq(0)
-      })
-    cy.task("getPointsNumberByFileName", { fileName: "sample.pdf" })
-      .then(points => {
-        expect(points).eq(0)
+    cy.task("getUserId", { email: fakeUser.email })
+      .then(userId => {
+        cy.task("getPointsNumberByFileName", { fileName: "invo.pdf", userId })
+          .then(points => {
+            expect(points).eq(0)
+          })
+        cy.task("getPointsNumberByFileName", { fileName: "sample.pdf", userId })
+          .then(points => {
+            expect(points).eq(0)
+          })
       })
   })
 
@@ -491,14 +502,317 @@ describe("Direct Upload UI", () => {
 })
 
 describe("Direct Upload API", () => {
+  const otherUser = {
+    name: "test man2",
+    email: "tester2x@dcup.dev",
+    provider: "google",
+    image: `https://via.placeholder.com/200/7732bb/c0392b.png?text=tester`,
+    plan: "OS"
+  }
   beforeEach(() => {
     cy.visit('/')
-    cy.wait(1000)
     cy.task("createCollection")
+    cy.wait(1000)
   })
   afterEach(() => {
     cy.task('deleteUser', { email: fakeUser.email })
+    cy.task('deleteUser', { email: otherUser.email })
     cy.task("deleteCollection")
+  })
+
+  it("should not remove the same file from user, when Deleting a file from other user", () => {
+    cy.task('addNewUser', fakeUser).then(user => {
+      const u = user as typeof users.$inferSelect
+      cy.task('createApiKey', { id: u.id }).then(key => {
+        // upload pdf
+        cy.uploadFileWithApi({
+          apiKey: key as string,
+          fileName: "invo.pdf",
+          response: {
+            code: "ok",
+            message: 'Your file was successfully uploaded and processed.'
+          }
+        })
+        cy.wait(5000)
+        // // Check 
+        cy.task("getConnection", { email: fakeUser.email })
+          .then(({ conns }: any) => {
+            const conn = (conns as FileConnectionQuery[])[0]
+            expect(conn.service).eq("DIRECT_UPLOAD")
+            expect(conn.metadata).eq("{}")
+            expect(conn.limitPages).to.be.null
+            expect(conn.limitFiles).to.be.null
+            cy.checkIndexedFiles({ conn, files: [{ name: "invo.pdf", totalPages: 3 }] })
+
+            cy.task("getPointsNumberByFileName", { fileName: "invo.pdf", userId: conn.userId })
+              .then(points => {
+                expect(points).to.be.greaterThan(0)
+              })
+          })
+      })
+    })
+    cy.task('addNewUser', otherUser).then(user => {
+      const u = user as typeof users.$inferSelect
+      cy.task('createApiKey', { id: u.id }).then(key => {
+        // upload pdf
+        cy.uploadFileWithApi({
+          apiKey: key as string,
+          fileName: "invo.pdf",
+          response: {
+            code: "ok",
+            message: 'Your file was successfully uploaded and processed.'
+          }
+        })
+        cy.wait(5000)
+        // // Check 
+        cy.task("getConnection", { email: otherUser.email })
+          .then(({ conns }: any) => {
+            const conn = (conns as FileConnectionQuery[])[0]
+            expect(conn.service).eq("DIRECT_UPLOAD")
+            expect(conn.metadata).eq("{}")
+            expect(conn.limitPages).to.be.null
+            expect(conn.limitFiles).to.be.null
+            cy.checkIndexedFiles({ conn, files: [{ name: "invo.pdf", totalPages: 3 }] })
+
+            cy.task("getPointsNumberByFileName", { fileName: "invo.pdf", userId: conn.userId })
+              .then(points => {
+                expect(points).to.be.greaterThan(0)
+              })
+
+            cy.request({
+              method: "DELETE",
+              url: `/api/connections/${conn.id}/files`,
+              headers: {
+                "Authorization": `Bearer ${key}`
+              },
+              body: {
+                file: "invo.pdf"
+              }
+            }).then(res => {
+              expect(res.status).eq(200)
+              expect(res.body.code).eq("ok")
+              expect(res.body.message).eq("Deleted 'invo.pdf' successfully")
+            })
+          })
+      })
+    })
+    cy.wait(1000)
+    cy.task("getConnection", { email: fakeUser.email })
+      .then(({ conns }: any) => {
+        const conn = (conns as FileConnectionQuery[])[0]
+        expect(conn.service).eq("DIRECT_UPLOAD")
+        expect(conn.metadata).eq("{}")
+        expect(conn.limitPages).to.be.null
+        expect(conn.limitFiles).to.be.null
+        cy.checkIndexedFiles({ conn, files: [{ name: "invo.pdf", totalPages: 3 }] })
+
+        cy.task("getPointsNumberByFileName", { fileName: "invo.pdf", userId: conn.userId })
+          .then(points => {
+            expect(points).to.be.greaterThan(0)
+          })
+      })
+
+    cy.task("getConnection", { email: otherUser.email })
+      .then(({ conns }: any) => {
+        const conn = (conns as FileConnectionQuery[])[0]
+        expect(conn.service).eq("DIRECT_UPLOAD")
+        expect(conn.metadata).eq("{}")
+        expect(conn.limitPages).to.be.null
+        expect(conn.limitFiles).to.be.null
+        cy.checkIndexedFiles({ conn, files: [] })
+
+        cy.task("getPointsNumberByFileName", { fileName: "invo.pdf", userId: conn.userId })
+          .then(points => {
+            expect(points).eq(0)
+          })
+      })
+  })
+
+  it("should not affect another user's connection, when Deleting a connection from one user", () => {
+    cy.task('addNewUser', fakeUser).then(user => {
+      const u = user as typeof users.$inferSelect
+      cy.task('createApiKey', { id: u.id }).then(key => {
+        // upload pdf
+        cy.uploadFileWithApi({
+          apiKey: key as string,
+          fileName: "invo.pdf",
+          response: {
+            code: "ok",
+            message: 'Your file was successfully uploaded and processed.'
+          }
+        })
+        cy.wait(1000)
+        // // Check 
+        cy.task("getConnection", { email: fakeUser.email })
+          .then(({ conns }: any) => {
+            const conn = (conns as FileConnectionQuery[])[0]
+            expect(conn.service).eq("DIRECT_UPLOAD")
+            expect(conn.metadata).eq("{}")
+            expect(conn.limitPages).to.be.null
+            expect(conn.limitFiles).to.be.null
+            cy.checkIndexedFiles({ conn, files: [{ name: "invo.pdf", totalPages: 3 }] })
+
+            cy.task("getPointsNumberByFileName", { fileName: "invo.pdf", userId: conn.userId })
+              .then(points => {
+                expect(points).to.be.greaterThan(0)
+              })
+          })
+      })
+    })
+
+    cy.task('addNewUser', otherUser).then(user => {
+      const u = user as typeof users.$inferSelect
+      cy.task('createApiKey', { id: u.id }).then(key => {
+        // upload pdf
+        cy.uploadFileWithApi({
+          apiKey: key as string,
+          fileName: "invo.pdf",
+          response: {
+            code: "ok",
+            message: 'Your file was successfully uploaded and processed.'
+          }
+        })
+        cy.wait(1000)
+        // // Check 
+        cy.task("getConnection", { email: otherUser.email })
+          .then(({ conns }: any) => {
+            const conn = (conns as FileConnectionQuery[])[0]
+            expect(conn.service).eq("DIRECT_UPLOAD")
+            expect(conn.metadata).eq("{}")
+            expect(conn.limitPages).to.be.null
+            expect(conn.limitFiles).to.be.null
+            cy.checkIndexedFiles({ conn, files: [{ name: "invo.pdf", totalPages: 3 }] })
+
+            cy.task("getPointsNumberByFileName", { fileName: "invo.pdf", userId: conn.userId })
+              .then(points => {
+                expect(points).to.be.greaterThan(0)
+              })
+
+            cy.request({
+              method: "DELETE",
+              url: `/api/connections/${conn.id}`,
+              headers: {
+                "Authorization": `Bearer ${key}`
+              },
+            }).then(res => {
+              expect(res.status).eq(200)
+              expect(res.body.code).eq("ok")
+              expect(res.body.message).eq("Connection has been successfully deleted")
+            })
+          })
+      })
+    })
+    cy.wait(1000)
+    cy.task("getConnection", { email: fakeUser.email })
+      .then(({ conns }: any) => {
+        const conn = (conns as FileConnectionQuery[])[0]
+        expect(conn.service).eq("DIRECT_UPLOAD")
+        expect(conn.metadata).eq("{}")
+        expect(conn.limitPages).to.be.null
+        expect(conn.limitFiles).to.be.null
+        cy.checkIndexedFiles({ conn, files: [{ name: "invo.pdf", totalPages: 3 }] })
+
+        cy.task("getPointsNumberByFileName", { fileName: "invo.pdf", userId: conn.userId })
+          .then(points => {
+            expect(points).to.be.greaterThan(0)
+          })
+      })
+
+    cy.task("getUserId", { email: otherUser.email })
+      .then(userId => {
+        cy.task("getPointsNumberByFileName", { fileName: "invo.pdf", userId })
+          .then(points => {
+            expect(points).eq(0)
+          })
+      })
+  })
+
+  it("should not share files between users", () => {
+    cy.task('addNewUser', fakeUser).then(user => {
+      const u = user as typeof users.$inferSelect
+      cy.task('createApiKey', { id: u.id }).then(key => {
+        // upload pdf
+        cy.uploadFileWithApi({
+          apiKey: key as string,
+          fileName: "invo.pdf",
+          response: {
+            code: "ok",
+            message: 'Your file was successfully uploaded and processed.'
+          }
+        })
+        cy.wait(1000)
+        // // Check 
+        cy.task("getConnection", { email: fakeUser.email })
+          .then(({ conns }: any) => {
+            const conn = (conns as FileConnectionQuery[])[0]
+            expect(conn.service).eq("DIRECT_UPLOAD")
+            expect(conn.metadata).eq("{}")
+            expect(conn.limitPages).to.be.null
+            expect(conn.limitFiles).to.be.null
+            cy.checkIndexedFiles({ conn, files: [{ name: "invo.pdf", totalPages: 3 }] })
+
+            cy.task("getPointsNumberByFileName", { fileName: "invo.pdf", userId: conn.userId })
+              .then(points => {
+                expect(points).to.be.greaterThan(0)
+              })
+          })
+      })
+    })
+
+    cy.task('addNewUser', otherUser).then(user => {
+      const u = user as typeof users.$inferSelect
+      cy.task('createApiKey', { id: u.id }).then(key => {
+        // upload pdf
+        cy.uploadFileWithApi({
+          apiKey: key as string,
+          fileName: "sample.pdf",
+          response: {
+            code: "ok",
+            message: 'Your file was successfully uploaded and processed.'
+          }
+        })
+        cy.wait(1000)
+        // // Check 
+        cy.task("getConnection", { email: otherUser.email })
+          .then(({ conns }: any) => {
+            const conn = (conns as FileConnectionQuery[])[0]
+            expect(conn.service).eq("DIRECT_UPLOAD")
+            expect(conn.metadata).eq("{}")
+            expect(conn.limitPages).to.be.null
+            expect(conn.limitFiles).to.be.null
+            cy.checkIndexedFiles({ conn, files: [{ name: "sample.pdf", totalPages: 1 }] })
+
+            cy.task("getPointsNumberByFileName", { fileName: "sample.pdf", userId: conn.userId })
+              .then(points => {
+                expect(points).to.be.greaterThan(0)
+              })
+          })
+      })
+    })
+    cy.wait(1000)
+    cy.task("getUserId", { email: fakeUser.email })
+      .then(userId => {
+        cy.task("getPointsNumberByFileName", { fileName: "invo.pdf", userId })
+          .then(points => {
+            expect(points).to.be.greaterThan(0)
+          })
+        cy.task("getPointsNumberByFileName", { fileName: "sample.pdf", userId })
+          .then(points => {
+            expect(points).to.eq(0)
+          })
+      })
+
+    cy.task("getUserId", { email: otherUser.email })
+      .then(userId => {
+        cy.task("getPointsNumberByFileName", { fileName: "sample.pdf", userId })
+          .then(points => {
+            expect(points).to.be.greaterThan(0)
+          })
+        cy.task("getPointsNumberByFileName", { fileName: "invo.pdf", userId })
+          .then(points => {
+            expect(points).to.eq(0)
+          })
+      })
   })
 
   it('should handle file upload, addition, and removal with database synchronization', () => {
@@ -678,7 +992,7 @@ describe("Direct Upload API", () => {
             expect(conn.limitFiles).to.be.null
             cy.checkIndexedFiles({ conn, files: [{ name: "invo.pdf", totalPages: 2 }] })
 
-            cy.task("getPointsNumberByFileName", { fileName: "invo.pdf" })
+            cy.task("getPointsNumberByFileName", { fileName: "invo.pdf", userId: conn.userId })
               .then(points => {
                 expect(points).to.be.greaterThan(0)
               })
@@ -704,11 +1018,11 @@ describe("Direct Upload API", () => {
             expect(conn.limitPages).eq(2)
             expect(conn.limitFiles).to.be.null
             cy.checkIndexedFiles({ conn, files: [{ name: "invo.pdf", totalPages: 2 }] })
-            cy.task("getPointsNumberByFileName", { fileName: "invo.pdf" })
+            cy.task("getPointsNumberByFileName", { fileName: "invo.pdf", userId: conn.userId })
               .then(points => {
                 expect(points).to.be.greaterThan(0)
               })
-            cy.task("getPointsNumberByFileName", { fileName: "sample.pdf" })
+            cy.task("getPointsNumberByFileName", { fileName: "sample.pdf", userId: conn.userId })
               .then(points => {
                 expect(points).eq(0)
               })
@@ -741,14 +1055,14 @@ describe("Direct Upload API", () => {
         expect(conn.limitPages).eq(2)
         expect(conn.limitFiles).to.be.null
         expect(conn.files.length).eq(0)
-      })
-    cy.task("getPointsNumberByFileName", { fileName: "invo.pdf" })
-      .then(points => {
-        expect(points).eq(0)
-      })
-    cy.task("getPointsNumberByFileName", { fileName: "sample.pdf" })
-      .then(points => {
-        expect(points).eq(0)
+        cy.task("getPointsNumberByFileName", { fileName: "invo.pdf", userId: conn.userId })
+          .then(points => {
+            expect(points).eq(0)
+          })
+        cy.task("getPointsNumberByFileName", { fileName: "sample.pdf", userId: conn.userId })
+          .then(points => {
+            expect(points).eq(0)
+          })
       })
   })
 
@@ -777,7 +1091,7 @@ describe("Direct Upload API", () => {
             expect(conn.limitPages).eq(2)
             expect(conn.limitFiles).to.be.null
             cy.checkIndexedFiles({ conn, files: [{ name: "sample.pdf", totalPages: 1 }] })
-            cy.task("getPointsNumberByFileName", { fileName: "sample.pdf" })
+            cy.task("getPointsNumberByFileName", { fileName: "sample.pdf", userId: conn.userId })
               .then(points => {
                 expect(points).to.be.greaterThan(0)
               })
@@ -804,11 +1118,11 @@ describe("Direct Upload API", () => {
             expect(conn.limitFiles).to.be.null
             cy.checkIndexedFiles({ conn, files: [{ name: "invo.pdf", totalPages: 1 }, { name: "sample.pdf", totalPages: 1 }] })
 
-            cy.task("getPointsNumberByFileName", { fileName: "invo.pdf" })
+            cy.task("getPointsNumberByFileName", { fileName: "invo.pdf", userId: conn.userId })
               .then(points => {
                 expect(points).to.be.greaterThan(0)
               })
-            cy.task("getPointsNumberByFileName", { fileName: "sample.pdf" })
+            cy.task("getPointsNumberByFileName", { fileName: "sample.pdf", userId: conn.userId })
               .then(points => {
                 expect(points).to.be.greaterThan(0)
               })
@@ -834,13 +1148,17 @@ describe("Direct Upload API", () => {
             const { conns } = res as { conns: ConnectionTable[] }
             expect(conns).to.have.length(0);
           })
-        cy.task("getPointsNumberByFileName", { fileName: "invo.pdf" })
-          .then(points => {
-            expect(points).eq(0)
-          })
-        cy.task("getPointsNumberByFileName", { fileName: "sample.pdf" })
-          .then(points => {
-            expect(points).eq(0)
+
+        cy.task("getUserId", { email: fakeUser.email })
+          .then(userId => {
+            cy.task("getPointsNumberByFileName", { fileName: "invo.pdf", userId })
+              .then(points => {
+                expect(points).eq(0)
+              })
+            cy.task("getPointsNumberByFileName", { fileName: "sample.pdf", userId })
+              .then(points => {
+                expect(points).eq(0)
+              })
           })
       })
     })
