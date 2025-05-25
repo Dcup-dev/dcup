@@ -29,7 +29,7 @@ export async function GET(request: NextRequest, { params }: Params) {
       where: (conn, ops) => ops.and(ops.eq(conn.userId, userId!), ops.eq(conn.id, id)),
       columns: {
         isConfigSet: true,
-        isSyncing: true,
+        jobId:true,
       },
     }))
     if (queryError) {
@@ -53,7 +53,7 @@ export async function GET(request: NextRequest, { params }: Params) {
 
     const response = {
       status: conn.isConfigSet ? 'ready' : 'config_missing',
-      isSyncing: conn.isSyncing
+      isSyncing: !!conn.jobId
     }
 
     return NextResponse.json(response, { status: 200 });

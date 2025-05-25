@@ -25,7 +25,6 @@ export async function POST(request: NextRequest) {
       code: "bad_request",
       message: errorForm.message,
     }, { status: 400 })
-
     formData.set("userId", userId)
     formData.set("service", "DIRECT_UPLOAD")
     const {

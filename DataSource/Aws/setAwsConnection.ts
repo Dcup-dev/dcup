@@ -33,7 +33,6 @@ export const setAWSConnection = async (formData: FormData) => {
     } : undefined,
     metadata: config.data.metadata,
     isConfigSet: true,
-    isSyncing: true,
     limitPages:config.data.pageLimit,
     limitFiles: config.data.fileLimit,
   }).where(eq(connections.id, config.data.connectionId))

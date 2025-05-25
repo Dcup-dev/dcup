@@ -2,8 +2,9 @@
 import { authOptions } from "@/auth";
 import { databaseDrizzle } from "@/db";
 import { connections, processedFiles } from "@/db/schemas/connections";
+import { tryAndCatch } from "@/lib/try-catch";
 import { fromErrorToFormState, toFormState } from "@/lib/zodErrorHandle";
-import { qdrant_collection_name, qdrantCLient } from "@/qdrant";
+import { qdrant_collection_name, qdrantClient } from "@/qdrant";
 import { eq } from "drizzle-orm";
 import { getServerSession } from "next-auth";
 import { revalidatePath } from "next/cache";
@@ -26,14 +27,19 @@ export async function deleteConnectionConfig(_: FormState, formData: FormData) {
     })
 
     const connectionChunksIds = await databaseDrizzle
-      .select({ chunksIds: processedFiles.chunksIds })
+      .select({ chunksIds: processedFiles.chunksIds, name: processedFiles.name })
       .from(processedFiles)
       .where(eq(processedFiles.connectionId, id))
 
-    for (const { chunksIds } of connectionChunksIds) {
-      await qdrantCLient.delete(qdrant_collection_name, {
+    for (const { chunksIds, name } of connectionChunksIds) {
+      await tryAndCatch(qdrantClient.delete(qdrant_collection_name, {
         points: chunksIds,
-      })
+        filter: {
+          must: [
+            { key: "_document_id", "match": { value: name } },
+            { key: "_userId", match: { value: session.user.id } }]
+        }
+      }))
     }
 
     await databaseDrizzle

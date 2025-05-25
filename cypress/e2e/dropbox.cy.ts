@@ -249,7 +249,7 @@ describe("Dropbox connection UI Testing", () => {
         expect(conn.limitFiles).to.be.null
         cy.checkIndexedFiles({ conn, source: "DROPBOX", files: [{ name: "invo.pdf", totalPages: 2 }] })
 
-        cy.task("getPointsNumberByFileName", { fileName: "invo.pdf" })
+        cy.task("getPointsNumberByFileName", { fileName: "invo.pdf", userId: conn.userId })
           .then(points => {
             expect(points).to.be.greaterThan(0)
           })
@@ -280,11 +280,11 @@ describe("Dropbox connection UI Testing", () => {
         expect(conn.limitFiles).to.be.null
         cy.checkIndexedFiles({ conn, source: "DROPBOX", files: [{ name: "invo.pdf", totalPages: 2 }] })
 
-        cy.task("getPointsNumberByFileName", { fileName: "invo.pdf" })
+        cy.task("getPointsNumberByFileName", { fileName: "invo.pdf", userId: conn.userId })
           .then(points => {
             expect(points).to.be.greaterThan(0)
           })
-        cy.task("getPointsNumberByFileName", { fileName: "sample.pdf" })
+        cy.task("getPointsNumberByFileName", { fileName: "sample.pdf", userId: conn.userId })
           .then(points => {
             expect(points).eq(0)
           })
@@ -315,11 +315,11 @@ describe("Dropbox connection UI Testing", () => {
         expect(conn.limitFiles).to.be.null
         expect(conn.files.length).eq(1)
 
-        cy.task("getPointsNumberByFileName", { fileName: "invo.pdf" })
+        cy.task("getPointsNumberByFileName", { fileName: "invo.pdf", userId: conn.userId })
           .then(points => {
             expect(points).eq(0)
           })
-        cy.task("getPointsNumberByFileName", { fileName: "sample.pdf" })
+        cy.task("getPointsNumberByFileName", { fileName: "sample.pdf", userId: conn.userId })
           .then(points => {
             expect(points).greaterThan(0)
           })
@@ -357,7 +357,7 @@ describe("Dropbox connection UI Testing", () => {
         expect(conn.limitFiles).to.be.null
         cy.checkIndexedFiles({ conn, source: "DROPBOX", files: [{ name: "sample.pdf", totalPages: 1 }] })
 
-        cy.task("getPointsNumberByFileName", { fileName: "sample.pdf" })
+        cy.task("getPointsNumberByFileName", { fileName: "sample.pdf", userId: conn.userId })
           .then(points => {
             expect(points).to.be.greaterThan(0)
           })
@@ -388,19 +388,17 @@ describe("Dropbox connection UI Testing", () => {
         expect(conn.limitPages).eq(2)
         expect(conn.limitFiles).to.be.null
         cy.checkIndexedFiles({ conn, source: "DROPBOX", files: [{ name: "invo.pdf", totalPages: 1 }, { name: "sample.pdf", totalPages: 1 }] })
-      })
-    cy.task("getPointsNumberByFileName", { fileName: "invo.pdf" })
-      .then(points => {
-        expect(points).to.be.greaterThan(0)
-      })
-    cy.task("getPointsNumberByFileName", { fileName: "sample.pdf" })
-      .then(points => {
-        expect(points).to.be.greaterThan(0)
+        cy.task("getPointsNumberByFileName", { fileName: "invo.pdf", userId: conn.userId })
+          .then(points => {
+            expect(points).to.be.greaterThan(0)
+          })
+        cy.task("getPointsNumberByFileName", { fileName: "sample.pdf", userId: conn.userId })
+          .then(points => {
+            expect(points).to.be.greaterThan(0)
+          })
       })
     cy.wait(1000)
-
     // check the UI
-
     cy.get('[data-test="folderName"]').should('contain.text', "_TEST_/sample.pdf")
     cy.get('[data-test="processedFile"]').should('contain.text', 2)
     cy.get('[data-test="processedPage"]').should('contain.text', 2)
@@ -427,13 +425,16 @@ describe("Dropbox connection UI Testing", () => {
         const { conns } = res as { conns: ConnectionTable[] }
         expect(conns).to.have.length(0);
       })
-    cy.task("getPointsNumberByFileName", { fileName: "invo.pdf" })
-      .then(points => {
-        expect(points).eq(0)
-      })
-    cy.task("getPointsNumberByFileName", { fileName: "sample.pdf" })
-      .then(points => {
-        expect(points).eq(0)
+    cy.task("getUserId", { email: fakeUser.email })
+      .then(userId => {
+        cy.task("getPointsNumberByFileName", { fileName: "invo.pdf", userId })
+          .then(points => {
+            expect(points).eq(0)
+          })
+        cy.task("getPointsNumberByFileName", { fileName: "sample.pdf", userId })
+          .then(points => {
+            expect(points).eq(0)
+          })
       })
   })
 
@@ -455,27 +456,24 @@ describe("Dropbox connection UI Testing", () => {
     cy.task("getConnection", { email: fakeUser.email })
       .then(({ conns }: any) => {
         const conn = (conns as FileConnectionQuery[])[0]
+        expect(conn.files.length).eq(2)
         expect(conn.service).eq("DROPBOX")
         expect(conn.metadata).eq("{}")
         expect(conn.limitPages).to.be.null
         expect(conn.limitFiles).to.be.null
         cy.checkIndexedFiles({ conn, source: "DROPBOX", files: [{ name: "invo.pdf", totalPages: 3 }, { name: "sample.pdf", totalPages: 1 }] })
       })
-    cy.wait(1000)
 
-    // check
-    cy.task("getConnection", { email: fakeUser.email })
-      .then(({ conns }: any) => {
-        const conn = (conns as FileConnectionQuery[])[0]
-        expect(conn.files.length).eq(2)
-      })
-    cy.task("getPointsNumberByFileName", { fileName: "invo.pdf" })
-      .then(points => {
-        expect(points).greaterThan(0)
-      })
-    cy.task("getPointsNumberByFileName", { fileName: "sample.pdf" })
-      .then(points => {
-        expect(points).greaterThan(0)
+    cy.task("getUserId", { email: fakeUser.email })
+      .then(userId => {
+        cy.task("getPointsNumberByFileName", { fileName: "invo.pdf", userId })
+          .then(points => {
+            expect(points).greaterThan(0)
+          })
+        cy.task("getPointsNumberByFileName", { fileName: "sample.pdf", userId })
+          .then(points => {
+            expect(points).greaterThan(0)
+          })
       })
 
     // Delete connection
@@ -492,7 +490,6 @@ describe("Dropbox connection UI Testing", () => {
         cy.get(`[data-test="btn-delete-${conns[0].identifier}"]`, { timeout: 15000 })
           .should('not.exist')
       })
-    cy.wait(1000)
 
     // check
     cy.task('getConnections', { email: fakeUser.email })
@@ -500,13 +497,17 @@ describe("Dropbox connection UI Testing", () => {
         const { conns } = res as { conns: ConnectionTable[] }
         expect(conns).to.have.length(0);
       })
-    cy.task("getPointsNumberByFileName", { fileName: "invo.pdf" })
-      .then(points => {
-        expect(points).eq(0)
-      })
-    cy.task("getPointsNumberByFileName", { fileName: "sample.pdf" })
-      .then(points => {
-        expect(points).eq(0)
+
+    cy.task("getUserId", { email: fakeUser.email })
+      .then(userId => {
+        cy.task("getPointsNumberByFileName", { fileName: "invo.pdf", userId })
+          .then(points => {
+            expect(points).eq(0)
+          })
+        cy.task("getPointsNumberByFileName", { fileName: "sample.pdf", userId })
+          .then(points => {
+            expect(points).eq(0)
+          })
       })
   })
 

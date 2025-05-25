@@ -38,7 +38,7 @@ export const StopConnection = ({ connection, status }: {
   }
 
   return (
-    <Button data-test={`stop-connection`} onClick={handleStopConnection} size='sm' variant={'ghost'} disabled={isPending || status === 'FINISHED' || (!status && !connection.isSyncing)}>
+    <Button data-test={`stop-connection`} onClick={handleStopConnection} size='sm' variant={'ghost'} disabled={isPending || status === 'FINISHED' || (!status && !connection.jobId)}>
       <Pause/>
       Stop
     </Button>

@@ -8,7 +8,7 @@ import { QdrantClient } from "@qdrant/js-client-rest";
 dotenv.config({ path: ".env" });
 
 const qdrant_collection_name = "documents"
-const qdrantCLient = new QdrantClient({ url: process.env.QDRANT_DB_URL!, apiKey: process.env.QDRANT_DB_KEY });
+const qdrantClient = new QdrantClient({ url: process.env.QDRANT_DB_URL!, apiKey: process.env.QDRANT_DB_KEY });
 
 export default defineConfig({
   retries: {
@@ -18,13 +18,23 @@ export default defineConfig({
   chromeWebSecurity: false,
   watchForFileChanges: false,
   e2e: {
+    defaultCommandTimeout: 10_000,
     setupNodeEvents(on) {
       on("task", {
+        async getUserId({ email }: { email: string }) {
+          const user = await databaseDrizzle.query.users.findFirst({
+            where: (u, ops) => ops.eq(u.email, email),
+            columns: {
+              id: true,
+            }
+          })
+          return user?.id || null
+        },
         async createCollection() {
           try {
-            const { collections } = await qdrantCLient.getCollections();
+            const { collections } = await qdrantClient.getCollections();
             if (!collections.find(col => col.name === qdrant_collection_name)) {
-              await qdrantCLient.createCollection(qdrant_collection_name, {
+              await qdrantClient.createCollection(qdrant_collection_name, {
                 vectors: { size: 1536, distance: 'Cosine' },
               });
             }
@@ -32,18 +42,21 @@ export default defineConfig({
           return null
         },
         async deleteCollection() {
-          return await qdrantCLient.deleteCollection(qdrant_collection_name)
+          return await qdrantClient.deleteCollection(qdrant_collection_name)
         },
         async getPointsById({ chunkIds }: { chunkIds: string[] }) {
-          return await qdrantCLient.retrieve(qdrant_collection_name, {
+          return await qdrantClient.retrieve(qdrant_collection_name, {
             ids: chunkIds,
             with_payload: true,
           })
         },
-        async getPointsNumberByFileName({ fileName }: { fileName: string }) {
-          const existingPoints = await qdrantCLient.scroll(qdrant_collection_name, {
+        async getPointsNumberByFileName({ fileName, userId }: { fileName: string, userId: string }) {
+          const existingPoints = await qdrantClient.scroll(qdrant_collection_name, {
             filter: {
-              must: [{ key: "_document_id", match: { value: fileName } }]
+              must: [
+                { key: "_document_id", match: { value: fileName } },
+                { key: "_userId", match: { value: userId } }
+              ]
             },
           });
           return existingPoints.points.length
@@ -54,7 +67,7 @@ export default defineConfig({
 
           await databaseDrizzle.insert(apiKeys).values({
             userId: id,
-            name: "test_API",
+            name: id.slice(0, 5),
             generatedTime: new Date(),
             apiKey: hashedKey,
           });
@@ -93,7 +106,7 @@ export default defineConfig({
             where: (u, ops) => ops.eq(u.email, email),
             with: {
               connections: {
-                where: (c, ops) => ops.eq(c.isSyncing, false),
+                where: (c, ops) => ops.isNull(c.jobId),
                 with: {
                   files: true,
                 }
@@ -109,7 +122,7 @@ export default defineConfig({
               where: (u, ops) => ops.eq(u.email, email),
               with: {
                 connections: {
-                  where: (c, ops) => ops.eq(c.isSyncing, false),
+                  where: (c, ops) => ops.isNull(c.jobId),
                   with: {
                     files: true,
                   }

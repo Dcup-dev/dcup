@@ -34,7 +34,6 @@ export const setGoogleDriveConnection = async (formData: FormData) => {
     limitPages: config.data.pageLimit,
     limitFiles: config.data.fileLimit,
     isConfigSet: true,
-    isSyncing: true,
   }).where(eq(connections.id, config.data.connectionId))
 
   return {
