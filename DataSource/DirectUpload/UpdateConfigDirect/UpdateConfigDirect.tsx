@@ -19,7 +19,7 @@ export const UpdateConfigDirect = ({ connection, status }: { connection: Connect
 
   return (<Dialog open={open} onOpenChange={setOpen} >
     <DialogTrigger asChild>
-      <Button data-test="btn-config" size='sm' variant={connection.isConfigSet ? 'ghost' : 'default'} disabled={status === 'PROCESSING' || (!status && connection.isSyncing)}>
+      <Button data-test="btn-config" size='sm' variant={connection.isConfigSet ? 'ghost' : 'default'} disabled={status === 'PROCESSING' || (!status && !!connection.jobId)}>
         <Settings2 />
         Configure
       </Button>

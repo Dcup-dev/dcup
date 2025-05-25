@@ -50,7 +50,7 @@ export const SyncConnection = ({ connection, status }: {
   return (<Dialog open={open} onOpenChange={e => setOpen(e)} >
     <DialogTrigger asChild>
       <DialogTrigger asChild>
-        <Button size='sm' variant={'ghost'} disabled={status === 'PROCESSING' ||(!status && connection.isSyncing)}>
+        <Button size='sm' variant={'ghost'} disabled={status === 'PROCESSING' ||(!status && !!connection.jobId)}>
           <FolderSync />
           Sync
         </Button>

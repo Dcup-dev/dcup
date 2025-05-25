@@ -32,7 +32,6 @@ export const setDropboxConnection = async (formData: FormData) => {
     } : undefined,
     metadata: config.data.metadata,
     isConfigSet: true,
-    isSyncing: true,
     limitFiles: config.data.fileLimit,
     limitPages: config.data.pageLimit,
   }).where(eq(connections.id, config.data.connectionId))
