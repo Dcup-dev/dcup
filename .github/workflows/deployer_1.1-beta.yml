@@ -53,13 +53,13 @@ jobs:
       - name: Build and Push Docker image
         run: |
           # Build Docker image and tag it with the current commit SHA
-          docker build -t ghcr.io/dcup-dev/dcup:v1.1.2-beta .
+          docker build -t ghcr.io/dcup-dev/dcup:v1.1.3-beta .
         
           # Push the image to GitHub Container Registry
-          docker push ghcr.io/dcup-dev/dcup:v1.1.2-beta
+          docker push ghcr.io/dcup-dev/dcup:v1.1.3-beta
         
           # Optionally, tag the image with the "latest" tag for easy access
-          docker tag ghcr.io/dcup-dev/dcup:v1.1.2-beta ghcr.io/dcup-dev/dcup:latest
+          docker tag ghcr.io/dcup-dev/dcup:v1.1.3-beta ghcr.io/dcup-dev/dcup:latest
           docker push ghcr.io/dcup-dev/dcup:latest
     
       - name: Logout from Docker
