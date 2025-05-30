@@ -47,7 +47,7 @@ export default function Connections({ connections, tokens }: { connections: Conn
     if (connProgress?.status === 'FINISHED') {
       route.refresh();
     }
-  }, [connProgress]);
+  }, [connProgress, route]);
 
   return connections.map(connection => {
     const progress = connection.id === connProgress?.connectionId ? connProgress : null;

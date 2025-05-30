@@ -50,6 +50,7 @@ const directUploadConfig = z.object({
     })
   ),
   links: z.array(z.string().min(5)),
+  texts: z.array(z.string().min(5)),
 })
 
 const updateDirectUploadConfig = z.object({
@@ -88,6 +89,7 @@ const updateDirectUploadConfig = z.object({
     })
   ),
   links: z.array(z.string().min(5)),
+  texts: z.array(z.string().min(5)),
   removedFiles: z.array(z.string().min(5))
 })
 
@@ -99,6 +101,7 @@ export const updateDirectUploadConnection = async (formData: FormData) => {
     metadata: formData.get("metadata") || "{}",
     files: formData.getAll("files") || [],
     links: formData.getAll("links") || [],
+    texts: formData.getAll("texts") || [],
     removedFiles: formData.getAll("removedFiles") || [],
     pageLimit: formData.get("pageLimit")
   })
@@ -156,13 +159,13 @@ export const updateDirectUploadConnection = async (formData: FormData) => {
     metadata: config.data.metadata ?? "{}",
     files: await Promise.all(files),
     links: config.data.links,
+    texts: config.data.texts,
     pageLimit: config.data.pageLimit,
     fileLimit: null
   }
 }
 
 export const setDirectUploadConnection = async (formData: FormData) => {
-
   const config = directUploadConfig.safeParse({
     userId: formData.get("userId"),
     identifier: formData.get("identifier"),
@@ -171,6 +174,7 @@ export const setDirectUploadConnection = async (formData: FormData) => {
     fileLimit: formData.get("fileLimit"),
     files: formData.getAll("files"),
     links: formData.getAll("links"),
+    texts: formData.getAll("texts")
   })
 
   if (!config.success) {
@@ -183,9 +187,9 @@ export const setDirectUploadConnection = async (formData: FormData) => {
     throw new Error(`Validation errors - ${errors}`)
   }
 
-  const { files, links, userId, identifier, metadata, fileLimit, pageLimit } = config.data;
+  const { files, links, userId, identifier, metadata, fileLimit, pageLimit, texts } = config.data;
 
-  if (files.length === 0 && links.length === 0) {
+  if (files.length === 0 && links.length === 0 && texts.length === 0) {
     throw new Error('Please provide at least one file or link to proceed.')
   }
 
@@ -213,6 +217,7 @@ export const setDirectUploadConnection = async (formData: FormData) => {
     metadata: metadata,
     files: await Promise.all(allFiles),
     links: links,
+    texts: texts,
     pageLimit: config.data.pageLimit,
     fileLimit: fileLimit
   }

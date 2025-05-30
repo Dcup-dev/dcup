@@ -1,0 +1,71 @@
+How It Works
+In this section, we'll explain the inner workings of Dcup, from its overall architecture to the key modules that enable its powerful RAG capabilities.
+
+Overview of Dcup's Architecture
+Dcup is designed to be modular and scalable, breaking down the RAG pipeline into clear, manageable stages. The core components of the system include:
+
+Data Ingestion: The entry point where data from various sources (e.g., Google Drive) is imported.
+Data Processing: Raw data is automatically processed, chunked, and transformed into embeddings.
+Storage & Indexing: Processed data is stored and indexed in Qdrant, a robust vector database.
+Retrieval Module: Advanced search capabilities are applied to quickly and accurately retrieve the most relevant data.
+Detailed Breakdown
+Data Ingestion
+Purpose: Gather data from multiple sources.
+How It Works: Dcup connects to data sources (like Google Drive) via simple APIs. The platform continuously syncs data to ensure it remains current.
+Data Processing (Chunking & Embedding)
+Chunking: Data is broken down into manageable pieces. This ensures that even large documents can be efficiently processed.
+Embedding: Each chunk is converted into a high-dimensional vector using OpenAI's embedding models. These vectors capture the semantic meaning of the text.
+Storage & Indexing with Qdrant
+Qdrant Integration: Once data is processed, the resulting embeddings are stored in Qdrant.
+Indexing: Qdrant's efficient indexing allows for quick similarity searches, making it possible to retrieve the most relevant chunks based on user queries.
+Advanced Retrieval
+RAG Module: The Retrieval-Augmented Generation module combines the stored embeddings with large language models (LLMs) to produce context-aware responses.
+Features:
+Re-ranking: Fine-tuning the results to ensure the most accurate and relevant responses.
+Hybrid Search: Combines both semantic (vector-based) and keyword-based search to cover a wide range of query types.
+Putting It All Together
+When a query is made:
+Data is Ingested: New data is pulled into the system.
+Processing Happens: The data is chunked and converted into embeddings.
+Storage & Indexing: These embeddings are stored in Qdrant, ready for quick retrieval.
+Query Execution: The retrieval module leverages Qdrant to find the best matches, which are then enhanced by LLMs to generate comprehensive responses.
+This seamless integration of components not only simplifies the process of building RAG pipelines but also ensures that the system is both user-friendly and highly efficient.
+
+Here's what happens under the hood:
+Dcup’s backend is designed to work seamlessly in the background, making the whole process of turning raw data into useful information smooth and automated.
+
+When you connect your Google Drive, new data is fetched into the system. You can attach metadata and specify how many files and pages to process. A background job—powered by BullMQ—then starts working on each file.
+
+File Processing & Chunking: Each file is read, and its content is split into manageable chunks using a recursive text splitter. This ensures even large documents are broken down into digestible parts.
+
+Enrichment via OpenAI: Every chunk is sent to OpenAI to extract a title, summary, and generate embeddings. This helps to capture the semantic meaning of the content.
+
+Storage & Indexing: The generated vectors and associated metadata are stored in Qdrant for robust indexing. Redis is used for caching to speed up repeated lookups.
+
+Progress Tracking & Error Handling: The system continuously updates the processing progress. It logs any errors that occur, ensuring you’re always informed of the status.
+
+This design not only makes advanced retrieval (like re-ranking and hybrid search) possible but also keeps the entire pipeline efficient and scalable.
+
+Retrievals and Query Processing
+Query Expansion & Vectorization: The submitted query is then expanded to capture its semantic nuances. The expanded query is converted into a high-dimensional vector using OpenAI’s embedding models.
+
+Searching in Qdrant: Using the generated vector, the system searches the Qdrant vector database. A filter (if provided) is applied so that only relevant chunks (e.g., based on metadata) are returned. Initially, it retrieves a set number of chunks, optionally doubling that number if re-ranking is needed.
+
+Scoring and Re-ranking: The retrieved chunks are filtered based on a minimum score threshold. If re-ranking is enabled, the system goes a step further:
+
+It generates a hypothetical answer to the user’s query.
+It computes an embedding for that answer.
+Then, it calculates the cosine similarity between the hypothetical embedding and each retrieved chunk's vector.
+Finally, it sorts and selects the top chunks based on similarity, ensuring that the most contextually relevant chunks are returned.
+Returning Results: The final output is a list of scored chunks that include details such as document name, page number, chunk number, title, summary, content, and metadata. This information is then sent back as the response to the user's query.
+
+References:
+Query Expansion by Prompting Large Language Models : This paper explores enriching user queries by generating hypothetical answers using large language models, which enhances retrieval accuracy. link
+
+Precise Zero-Shot Dense Retrieval without Relevance Labels This work outlines effective techniques for zero-shot dense retrieval, enabling the system to retrieve relevant documents without needing labeled data. link
+
+Retrieval-Augmented Generation for Large Language Models : This paper provides a comprehensive overview of RAG strategies, which inform the integration of retrieval and generation processes in Dcup. link
+
+Hybrid Search and Re-ranking Methods : Various industry resources and recent studies have guided our hybrid search approach—combining semantic and keyword-based retrieval to optimize result relevance. link
+
+Enrichment via OpenAI : Techniques for extracting titles, summaries, and generating embeddings from text chunks are inspired by research and community discussions around leveraging OpenAI’s models. link

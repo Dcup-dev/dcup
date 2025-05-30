@@ -43,6 +43,7 @@ export const setDropboxConnection = async (formData: FormData) => {
     fileLimit: config.data.fileLimit,
     metadata: config.data.metadata,
     files: [],
-    links: []
+    links: [],
+    texts: [],
   }
 }

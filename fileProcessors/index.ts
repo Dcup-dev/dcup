@@ -11,6 +11,7 @@ import { getFileContent } from "./connectors";
 import { processPdfLink, processPdfBuffer } from "./Files/pdf";
 import { TQueue } from "@/workers/queues/jobs/processFiles.job";
 import { tryAndCatch } from "@/lib/try-catch";
+import { processDirectText } from "./Files/text";
 
 export type FileContent = {
   name: string,
@@ -24,11 +25,22 @@ export type PageContent = {
   tables: unknown[]
 }
 
-export const directProcessFiles = async ({ files, metadata, service, connectionId, links, pageLimit, fileLimit }: TQueue, checkCancel?: () => Promise<boolean>) => {
+export const directProcessFiles = async ({ files, metadata, service, connectionId, links, pageLimit, fileLimit, texts }: TQueue, checkCancel?: () => Promise<boolean>) => {
   // Create promises for processing file URLs
   const filePromises = files.map(async (file) => {
-    const arrayBuffer = Buffer.from(file.content, 'base64').buffer;
-    const content = await processPdfBuffer(new Blob([arrayBuffer]));
+    let content: PageContent[] = [];
+    switch (file.type) {
+      case "application/pdf":
+        const arrayBuffer = Buffer.from(file.content, 'base64').buffer;
+        content = await processPdfBuffer(new Blob([arrayBuffer]));
+        break;
+      case "text/plain":
+        const text = Buffer.from(file.content, "base64").toString("utf8");
+        content = processDirectText(text)
+        break;
+      default:
+        throw new Error(`${file.type} is not supported yet`)
+    }
     return {
       name: file.name || "",
       pages: content,
@@ -46,7 +58,16 @@ export const directProcessFiles = async ({ files, metadata, service, connectionI
     } as FileContent;
   });
 
-  const filesContent = await Promise.all([...filePromises, ...linkPromises]);
+  const textPromises = texts.map(txt => {
+    const content = processDirectText(txt)
+    return {
+      name: "TEXT",
+      pages: content,
+      metadata: metadata,
+    } as FileContent;
+  })
+
+  const filesContent = await Promise.all([...filePromises, ...linkPromises, ...textPromises]);
   const filesNames = filesContent.map(f => f.name)
   const connection = await databaseDrizzle.query.connections.findFirst({
     where: (c, ops) => ops.eq(c.id, connectionId),

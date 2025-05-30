@@ -18,6 +18,7 @@ export type TQueue = {
   fileLimit: number | null,
   files: SerializedFile[],
   links: string[],
+  texts: string[],
   service: string,
   metadata: string | null,
 };
@@ -42,7 +43,7 @@ new Worker(processFilesJobName, async (job: Job) => {
     await processWithCancellation(connectionProcessFiles, job, isCancelled);
   }
 
-   await redisConnection.del(`cancel-job:${job.id}`);
+  await redisConnection.del(`cancel-job:${job.id}`);
 }, {
   connection: redisConnection
 });
