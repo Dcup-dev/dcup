@@ -2,8 +2,8 @@ import { databaseDrizzle } from "@/db";
 import { connections } from "@/db/schemas/connections";
 import { auth } from "@googleapis/oauth2";
 import { z } from "zod"
-import { FileContent } from "..";
-import { drive } from "@googleapis/drive";
+import { FileContent, PageContent } from "..";
+import { drive, drive_v3 } from "@googleapis/drive";
 import { Readable } from "stream";
 import { publishProgress } from "@/events";
 import { processPdfBuffer } from "../Files/pdf";
@@ -94,26 +94,18 @@ export const readGoogleDriveFiles = async (
       for (const file of filesInFolder) {
         if (file.mimeType === 'application/vnd.google-apps.folder' && file.id) {
           await traverseFolder(file.id);
-        }
-        else if (file.fileExtension === 'pdf' && file.id) {
+        } else if (file.id) {
           try {
-            const res = await storage.files.get({
-              fileId: file.id,
-              alt: "media",
-            }, { responseType: 'stream' });
+            if (file.fileExtension === 'pdf') {
+              const fileContent = await processBuffer(storage, metadata ?? "{}", file, processPdfBuffer)
+              pdfFileProcessing.push(fileContent);
+            }
+            // if (file.fileExtension === 'txt' || file.mimeType === 'text/plain') {
+            //   // add process text
+            //   const fileContent = await processBuffer(storage, metadata ?? "{}", file, processTextBuffer)
+            //   pdfFileProcessing.push(fileContent);
+            // }
 
-            const blob = await streamToBlob(res.data);
-            const content = await processPdfBuffer(blob);
-
-            const fileContent: FileContent = {
-              name: file.name || "",
-              pages: content,
-              metadata: {
-                ...(JSON.parse(metadata || "{}"))
-              }
-            };
-
-            pdfFileProcessing.push(fileContent);
           } catch (error) {
             console.error(`Error processing file ${file.name}:`, error);
           }
@@ -155,6 +147,30 @@ async function streamToBuffer(stream: Readable): Promise<Buffer> {
       reject(err);
     });
   });
+}
+
+async function processBuffer(
+  storage: drive_v3.Drive,
+  metadata: string,
+  file: drive_v3.Schema$File,
+  processor: (blob: Blob) => Promise<PageContent[]>
+) {
+  const res = await storage.files.get({
+    fileId: file.id!,
+    alt: "media",
+  }, { responseType: 'stream' });
+
+  const blob = await streamToBlob(res.data);
+  const content = await processor(blob);
+
+  const fileContent: FileContent = {
+    name: file.name || "",
+    pages: content,
+    metadata: {
+      ...(JSON.parse(metadata || "{}"))
+    }
+  };
+  return fileContent;
 }
 
 async function streamToBlob(stream: Readable): Promise<Blob> {

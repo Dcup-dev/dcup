@@ -1,0 +1,21 @@
+Introduction
+Connect your app to user data in minutes with self-hostable RAG pipelines. Harness AI-powered retrieval with enterprise-grade scalability
+
+Welcome to Dcup, an open-source RAG-as-a-Service platform designed to simplify the process of building and deploying retrieval-augmented generation (RAG) pipelines.
+
+What is Dcup?
+Dcup connects your data with advanced AI systems by automating key steps:
+
+Data Ingestion: Easily connect to various data sources, like Google Drive, AWS ...etc .
+Data Processing: Automatically chunk your data and generate embeddings using OpenAI.
+Storage & Indexing: Efficiently store and index your embeddings with Qdrant's powerful vector database.
+Advanced Retrieval: Leverage features like re-ranking and hybrid search to quickly find the most relevant information.
+What Problem Does Dcup Solve?
+In today's data-driven world, extracting meaningful insights from vast amounts of unstructured data can be challenging. Traditional search methods often fall short when it comes to understanding context. RAG combines the strengths of large language models (LLMs) with effective information retrieval, enabling more accurate, context-aware responses. However, building a robust RAG pipeline from scratch is complex and time-consuming.
+
+Dcup addresses these challenges by:
+Simplifying the integration of data sources.
+Automating the conversion of raw data into useful embeddings.
+Providing a scalable, user-friendly solution for both technical and non-technical users.
+Who is Dcup For?
+Whether you're a developer eager to integrate cutting-edge AI into your projects or a non-technical user seeking an accessible solution for data retrieval and analysis, Dcup is built to empower you to make the most of your data.

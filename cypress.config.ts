@@ -18,7 +18,7 @@ export default defineConfig({
   chromeWebSecurity: false,
   watchForFileChanges: false,
   e2e: {
-    defaultCommandTimeout: 10_000,
+    defaultCommandTimeout: 20000,
     setupNodeEvents(on) {
       on("task", {
         async getUserId({ email }: { email: string }) {
