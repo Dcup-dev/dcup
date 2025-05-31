@@ -25,7 +25,8 @@ export function compareApiKey(originKey: string, apiKey: string): boolean {
 
 export async function checkAuth(request: NextRequest) {
   const auth = request.headers.get("Authorization");
-  if (!auth || !auth.split("Bearer ")[1]) {
+  const userKey = auth?.split("Bearer ")[1]
+  if (!auth || !userKey) {
     throw new APIError({
       code: "unauthorized",
       status: 401,
@@ -33,7 +34,7 @@ export async function checkAuth(request: NextRequest) {
     })
   }
 
-  const keyHashed = hashApiKey(auth.split("Bearer ")[1]);
+  const keyHashed = hashApiKey(userKey);
   const key = await databaseDrizzle
     .select({ userId: apiKeys.userId })
     .from(apiKeys)
@@ -48,6 +49,5 @@ export async function checkAuth(request: NextRequest) {
       },
     );
   }
-
   return key[0].userId;
 }

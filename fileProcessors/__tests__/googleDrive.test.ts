@@ -1,3 +1,4 @@
+import { expect } from "@jest/globals";
 import { databaseDrizzle } from "@/db";
 import { connections } from "@/db/schemas/connections";
 import { publishProgress } from "@/events";

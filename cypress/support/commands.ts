@@ -67,7 +67,7 @@ Cypress.Commands.add("checkIndexedFiles", ({ conn, files, source }) => {
       expect(ps.length).eq(conn.files[index].chunksIds.length)
       ps.map(p => {
         expect(p.payload._document_id).eq(file.name)
-        expect(p.payload._metadata.source).eq( source ?? 'DIRECT_UPLOAD')
+        expect(p.payload._metadata.source).eq(source ?? 'DIRECT_UPLOAD')
       })
     })
   })
@@ -79,24 +79,27 @@ type UploadRequest = {
   pageLimit?: string,
   metadata?: string,
   identifier?: string,
+  texts?: string[],
   apiKey: string,
   url?: string,
+  type?: string,
   method?: string,
   response: {
     code: string,
     message: string
   }
 }
-Cypress.Commands.add("uploadFileWithApi", ({ fileName, apiKey, url, method, links, response, metadata, identifier, pageLimit }) => {
+Cypress.Commands.add("uploadFileWithApi", ({ fileName, apiKey, url, method, links, response, metadata, type, identifier, pageLimit, texts }) => {
   cy.fixture(fileName ?? "sample.pdf", 'base64').then(base64pdf => {
     cy.window().then(win => {
       const buffer = Buffer.from(base64pdf, 'base64')
       const formData = new win.FormData()
-      fileName && formData.append('files', new Blob([buffer], { type: 'application/pdf' }), fileName)
+      fileName && formData.append('files', new Blob([buffer], { type: type ?? 'application/pdf' }), fileName)
       links?.map(link => formData.append("links", link))
       metadata && formData.set("metadata", metadata)
       identifier && formData.set("identifier", identifier)
       pageLimit && formData.set('pageLimit', pageLimit)
+      texts?.map(t => formData.append("texts",t))
       return win.fetch(url ?? '/api/upload', {
         method: method ?? 'POST',
         headers: {
@@ -148,7 +151,7 @@ declare global {
     interface Chainable {
       loginNextAuth({ name, email, image }: { name: string, email: string, image: string }): Chainable<Cookie>
       uploadFiles({ files }: { files: string[] }): Chainable<void>
-      checkIndexedFiles({ conn, files, source }: { conn: FileConnectionQuery, files: { name: string, totalPages: number }[], source?:string }): Chainable<void>
+      checkIndexedFiles({ conn, files, source }: { conn: FileConnectionQuery, files: { name: string, totalPages: number }[], source?: string }): Chainable<void>
       uploadFileWithApi({ fileName, apiKey, response, url }: UploadRequest): Chainable<void>
       // login(email: string, password: string): Chainable<void>
       // drag(subject: string, options?: Partial<TypeOptions>): Chainable<Element>

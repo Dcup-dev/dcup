@@ -109,7 +109,6 @@ export async function DELETE(request: NextRequest, { params }: Params) {
       ? [validation.data.file]
       : validation.data.files ?? [];
 
-
     for (const fileName of filesToDelete) {
       const { data, error } = await tryAndCatch(databaseDrizzle
         .delete(processedFiles)

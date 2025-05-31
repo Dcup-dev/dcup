@@ -32,6 +32,7 @@ type TFileForm = {
 
 export const UploadFileForm = ({ setOpen, connection }: TFileForm) => {
   const [links, setLinks] = useState<string[]>([]);
+  const [text, setText] = useState<string>("")
   const [files, setFiles] = useState<File[]>([]);
   const [removedFiles, setRemovedFiles] = useState<string[]>([]);
   const [pending, startTransition] = useTransition();
@@ -47,6 +48,7 @@ export const UploadFileForm = ({ setOpen, connection }: TFileForm) => {
           removedFiles.forEach((fileName) => data.append("removedFiles", fileName));
         } else {
           data.set("service", "DIRECT_UPLOAD");
+          if (text) data.append("texts", text)
         }
         const res = await setConnectionConfig(EMPTY_FORM_STATE, data)
         if (res.status === "SUCCESS") {
@@ -109,6 +111,7 @@ export const UploadFileForm = ({ setOpen, connection }: TFileForm) => {
         <DataInput
           files={files}
           setFiles={setFiles}
+          setText={setText}
           links={links}
           setLinks={setLinks}
           currentFiles={connection ? connection.files.map(f => f.name) : []}
@@ -139,12 +142,13 @@ type TDataInput = {
   setFiles: Dispatch<SetStateAction<File[]>>;
   links: string[];
   setLinks: Dispatch<SetStateAction<string[]>>;
+  setText: Dispatch<SetStateAction<string>>;
   currentFiles: string[];
   removedFiles: string[];
   setRemovedFiles: Dispatch<SetStateAction<string[]>>;
 };
 
-export const DataInput = ({ files, setFiles, links, setLinks, currentFiles, removedFiles, setRemovedFiles }: TDataInput) => {
+export const DataInput = ({ files, setFiles, links, setLinks, currentFiles, removedFiles, setRemovedFiles, setText }: TDataInput) => {
   const inputFile = useRef<HTMLInputElement>(null);
   const [invalidLinks, setInvalidLinks] = useState<string[]>([]);
   const [invalidFile, setInvalidFile] = useState("");
@@ -160,12 +164,12 @@ export const DataInput = ({ files, setFiles, links, setLinks, currentFiles, remo
     e.preventDefault();
     const droppedFiles = Array.from(e.dataTransfer.files);
     const validFiles = droppedFiles.filter((f) => {
-      if (f.type !== "application/pdf") {
-         setInvalidFile(`${f.name} is not supported. Please upload PDFs only.`);
+      if (f.type !== "application/pdf" && f.type !== "text/plain" && f.name.endsWith(".txt")) {
+        setInvalidFile(`${f.name} is not supported. Please upload PDFs only.`);
         return false;
       }
       if (currentFiles.includes(f.name)) {
-          setInvalidFile(`${f.name} is already added`);
+        setInvalidFile(`${f.name} is already added`);
         return false;
       }
       return true;
@@ -177,8 +181,8 @@ export const DataInput = ({ files, setFiles, links, setLinks, currentFiles, remo
     e.preventDefault();
     const selectedFiles = Array.from(e.target.files || []);
     const validFiles = selectedFiles.filter((f) => {
-      if (f.type !== "application/pdf") {
-        setInvalidFile(`${f.name} is not supported. Please upload PDFs only.`);
+      if (f.type !== "application/pdf" && f.type !== "text/plain" && f.name.endsWith(".txt")) {
+        setInvalidFile(`${f.name} is not supported. Please upload PDFs or .txt only.`);
         return false;
       }
       if (currentFiles.includes(f.name)) {
@@ -224,22 +228,25 @@ export const DataInput = ({ files, setFiles, links, setLinks, currentFiles, remo
   return (
     <div className="flex-1 flex flex-col h-full">
       <Tabs defaultValue="file" className="w-full h-full flex flex-col">
-        <TabsList className="grid w-full grid-cols-2">
+        <TabsList className="grid w-full grid-cols-3">
           <TabsTrigger value="file" className="gap-2">
             <UploadCloud className="h-5 w-5" />
-            Upload Files
+            Files
+          </TabsTrigger>
+          <TabsTrigger data-test={"btn-texts"} value="texts" className="gap-2">
+            <Link className="h-5 w-5" />
+            Texts
           </TabsTrigger>
           <TabsTrigger value="link" className="gap-2">
             <Link className="h-5 w-5" />
-            Paste Links
+            Links
           </TabsTrigger>
         </TabsList>
-
         <TabsContent value="file" className="flex-1">
           <Card className="flex flex-col">
             <CardHeader>
-              <CardTitle>Upload your PDFs</CardTitle>
-              <CardDescription>Only PDF files are supported.</CardDescription>
+              <CardTitle>Upload your Files</CardTitle>
+              <CardDescription>Only PDF,txt files are supported.</CardDescription>
               {invalidFile && (
                 <div className="mt-2 text-red-600 text-sm">
                   <AlertCircle className="h-4 w-4 inline-block mr-1" />
@@ -254,14 +261,13 @@ export const DataInput = ({ files, setFiles, links, setLinks, currentFiles, remo
                 className="border-2 border-dashed border-gray-300 rounded-xl p-5 text-center hover:border-teal-500 transition-colors flex flex-col justify-center"
               >
                 <UploadCloud className="h-12 w-12 mx-auto text-gray-400 mb-4" />
-                <p className="text-gray-600 mb-2">Drag & drop PDF files here</p>
+                <p className="text-gray-600 mb-2">Drag & drop PDF, txt files here</p>
                 <p className="text-sm text-gray-500 mb-4">or</p>
                 <input
                   type="file"
                   name="fileUpload"
                   ref={inputFile}
                   multiple
-                  accept="application/pdf"
                   onChange={addNewFile}
                   className={env === 'TEST' ? "block" : "hidden"}
                   id="file-upload"
@@ -295,8 +301,8 @@ export const DataInput = ({ files, setFiles, links, setLinks, currentFiles, remo
         <TabsContent value="link" className="flex-1">
           <Card className="flex flex-col">
             <CardHeader>
-              <CardTitle>Provide PDF URLs</CardTitle>
-              <CardDescription>Enter valid HTTP/HTTPS links to PDF files.</CardDescription>
+              <CardTitle>Provide PDF, txt URLs</CardTitle>
+              <CardDescription>Enter valid HTTP/HTTPS links to PDF, txt files.</CardDescription>
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
@@ -320,6 +326,25 @@ export const DataInput = ({ files, setFiles, links, setLinks, currentFiles, remo
                     </ul>
                   </div>
                 )}
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="texts" className="flex-1">
+          <Card className="flex flex-col">
+            <CardHeader>
+              <CardTitle>Provide Direcct Text</CardTitle>
+              <CardDescription>Enter Text</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-4">
+                <Textarea
+                  onChange={(e) => setText(e.target.value)}
+                  name="text"
+                  placeholder="Enter direct text"
+                  className={`w-full h-60 resize-none`}
+                />
               </div>
             </CardContent>
           </Card>

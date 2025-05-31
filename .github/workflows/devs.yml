@@ -33,7 +33,8 @@ jobs:
       # 2) generate a full .env before starting anything:
       - name: Generate Env File
         run: |
-         cat <<EOF > .env 
+         cat <<EOF > .env
+         DCUP_ENV=OS
          NEXT_PUBLIC_APP_ENV=TEST
          DCUP_PARSER=http://localhost:9000
          NEXTAUTH_URL=http://localhost:3000

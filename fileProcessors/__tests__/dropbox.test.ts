@@ -1,5 +1,6 @@
 import { DropboxAuth } from 'dropbox';
-import { authDropbox } from "../dropbox";
+import { authDropbox } from '../connectors/dropbox';
+import { expect } from "@jest/globals";
 
 jest.mock('dropbox');
 
