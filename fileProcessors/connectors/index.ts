@@ -74,7 +74,8 @@ export const setConnectionToProcess = async (formData: FormData): Promise<TQueue
   const plan = Plans[user.plan]
   if (service !== "DIRECT_UPLOAD" && service !== "DIRECT_UPLOAD_UPDATE") {
     const used = user.connections.length;
-    if (used >= plan.connections) {
+
+    if (used > plan.connections) {
       throw new Error(
         `You’ve reached your connection limit for the ${user.plan.toLowerCase()} plan (` +
         `${used}/${plan.connections}). ` +

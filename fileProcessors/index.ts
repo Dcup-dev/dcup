@@ -36,7 +36,7 @@ export const directProcessFiles = async ({ files, metadata, service, connectionI
         break;
       case "text/plain":
         const text = Buffer.from(file.content, "base64").toString("utf8");
-        content = processDirectText(text)
+        content = await processDirectText(text)
         break;
       default:
         throw new Error(`${file.type} is not supported yet`)
@@ -58,8 +58,8 @@ export const directProcessFiles = async ({ files, metadata, service, connectionI
     } as FileContent;
   });
 
-  const textPromises = texts.map(txt => {
-    const content = processDirectText(txt)
+  const textPromises = texts.map(async (txt) => {
+    const content = await processDirectText(txt)
     return {
       name: "TEXT",
       pages: content,
