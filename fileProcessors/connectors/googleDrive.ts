@@ -8,6 +8,7 @@ import { Readable } from "stream";
 import { publishProgress } from "@/events";
 import { processPdfBuffer } from "../Files/pdf";
 import { eq } from "drizzle-orm";
+import { processDirectText } from "../Files/text";
 
 const googleDriveCredentials = z.object({
   accessToken: z.string().min(5),
@@ -100,12 +101,10 @@ export const readGoogleDriveFiles = async (
               const fileContent = await processBuffer(storage, metadata ?? "{}", file, processPdfBuffer)
               pdfFileProcessing.push(fileContent);
             }
-            // if (file.fileExtension === 'txt' || file.mimeType === 'text/plain') {
-            //   // add process text
-            //   const fileContent = await processBuffer(storage, metadata ?? "{}", file, processTextBuffer)
-            //   pdfFileProcessing.push(fileContent);
-            // }
-
+            if (file.fileExtension === 'txt' || file.mimeType === 'text/plain') {
+              const fileContent = await processBuffer(storage, metadata ?? "{}", file, processTextBuffer)
+              pdfFileProcessing.push(fileContent);
+            }
           } catch (error) {
             console.error(`Error processing file ${file.name}:`, error);
           }
@@ -130,6 +129,11 @@ export const readGoogleDriveFiles = async (
     return [];
   }
 };
+
+async function processTextBuffer(blob: Blob) {
+  const text = await blob.text();
+  return processDirectText(text)
+}
 
 async function streamToBuffer(stream: Readable): Promise<Buffer> {
   const chunks: Buffer[] = [];

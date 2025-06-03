@@ -3,9 +3,10 @@ import { connections } from '@/db/schemas/connections';
 import { eq } from 'drizzle-orm';
 import { Dropbox, DropboxAuth, files } from 'dropbox';
 import { z } from 'zod'
-import { FileContent } from '..';
+import { FileContent, PageContent } from '..';
 import { processPdfBuffer } from '../Files/pdf';
 import { publishProgress } from '@/events';
+import { processDirectText } from '../Files/text';
 
 const dropboxCredentials = z.object({
   accessToken: z.string().min(5),
@@ -114,7 +115,8 @@ export const readDropboxFiles = async (
             await traverseFolder(entry.path_lower!);
           } else if (
             entry['.tag'] === 'file' &&
-            entry.name.toLowerCase().endsWith('.pdf')
+            entry.name.toLowerCase().endsWith('.pdf') ||
+            entry.name.toLowerCase().endsWith('.txt')
           ) {
             allFiles.push(entry as files.FileMetadataReference);
           }
@@ -135,9 +137,17 @@ export const readDropboxFiles = async (
           'Dropbox-API-Arg': JSON.stringify({ path: file.path_lower! }),
         },
       });
-
       const blob = await response.blob();
-      const content = await processPdfBuffer(blob);
+      let content: PageContent[] = []
+
+      if (file.name.endsWith(".pdf")) {
+        content = await processPdfBuffer(blob);
+      }
+      if (file.name.endsWith(".txt")) {
+        const text = await blob.text();
+        content = await processDirectText(text)
+      }
+
       const fileContent: FileContent = {
         name: file.name || "",
         pages: content,

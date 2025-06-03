@@ -1,11 +1,16 @@
 import { PageContent } from "@/fileProcessors";
-export const CHARS_PER_PAGE = 2000;
+import { RecursiveCharacterTextSplitter } from "@langchain/textsplitters";
 
-export const processDirectText = (content: string): PageContent[] => {
-  const regex = new RegExp(`.{1,${CHARS_PER_PAGE}}`, 'gs');
-  const rawPages = content.match(regex) || [];
+export const processDirectText = async (content: string): Promise<PageContent[]> => {
+  const splitter = new RecursiveCharacterTextSplitter({
+    chunkSize: 4096 * 2,
+    chunkOverlap: Math.floor(4096 * 2 * 0.15),
+    keepSeparator: true,
+    separators: ["\n\n## ", "\n\n# ", "\n\n", "\n", ". ", "! ", "? ", " "],
+  });
 
-  return rawPages.map(chunk => ({
+  const chunks = await splitter.splitText(content)
+  return chunks.map(chunk => ({
     title: "TEXT",
     text: chunk,
     tables: []

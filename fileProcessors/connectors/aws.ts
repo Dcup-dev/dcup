@@ -1,9 +1,10 @@
 import { publishProgress } from "@/events";
-import { FileContent } from "..";
+import { FileContent, PageContent } from "..";
 import { GetObjectCommand, ListObjectsV2Command, S3Client } from "@aws-sdk/client-s3";
 import { processPdfBuffer } from "../Files/pdf";
 import { Readable } from "stream";
 import { NodeJsClient } from "@smithy/types";
+import { processDirectText } from "../Files/text";
 
 
 export const readAWSFiles = async (
@@ -41,7 +42,9 @@ export const readAWSFiles = async (
       const response = await s3Client.send(listCommand);
 
       response.Contents?.forEach((object) => {
-        if (object.Key?.toLowerCase().endsWith('.pdf')) {
+        if (object.Key?.toLowerCase().endsWith('.pdf') ||
+          object.Key?.toLowerCase().endsWith('.txt')
+        ) {
           allPdfFiles.push(object.Key);
         }
       });
@@ -60,9 +63,17 @@ export const readAWSFiles = async (
 
       const response = await s3Client.send(getCommand);
       if (!response.Body) continue;
-      const buffer = await streamToBlob(response.Body)
-      const content = await processPdfBuffer(buffer);
+      const blob = await streamToBlob(response.Body)
       const fileName = fileKey.split('/').pop() || fileKey;
+      let content: PageContent[] = []
+
+      if (fileName.endsWith(".pdf")) {
+        content = await processPdfBuffer(blob);
+      }
+      if (fileName.endsWith(".txt")) {
+        const text = await blob.text()
+        content = await processDirectText(text)
+      }
 
       pdfFileProcessing.push({
         name: fileName,
@@ -94,7 +105,6 @@ async function streamToBuffer(stream: Readable): Promise<Buffer> {
     stream.on('data', (chunk) => {
       chunks.push(Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk));
     });
-
     stream.on('end', () => {
       const buffer = Buffer.concat(chunks);
       resolve(buffer);
