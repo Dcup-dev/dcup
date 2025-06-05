@@ -26,6 +26,16 @@ process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID = 'CID';
 process.env.GOOGLE_CLIENT_SECRET = 'SEC';
 process.env.NEXTAUTH_URL = 'https://app.test';
 
+jest.mock("@langchain/textsplitters", () => {
+  return {
+    RecursiveCharacterTextSplitter: jest.fn().mockImplementation(() => ({
+      splitText: jest.fn().mockResolvedValue([
+        "chunk 1", "chunk 2", "chunk 3"
+      ]),
+    })),
+  };
+});
+
 const mockGenerateAuthUrl = jest.fn().mockReturnValue('https://fake-url');
 (auth.OAuth2 as unknown as jest.Mock).mockImplementation(() => ({
   generateAuthUrl: mockGenerateAuthUrl,

@@ -191,11 +191,11 @@ describe("Direct Upload UI", () => {
           expect(conn.metadata).eq("{}")
           expect(conn.limitPages).to.be.null
           expect(conn.limitFiles).to.be.null
-          cy.checkIndexedFiles({ conn, files: [{ name: "dcup_Introduction.txt", totalPages: 1 }, { name: "dcup_how_it_works.txt", totalPages: 4 }] })
+          cy.checkIndexedFiles({ conn, files: [{ name: "dcup_Introduction.txt", totalPages: 1 }, { name: "dcup_how_it_works.txt", totalPages: 1 }] })
         })
       cy.get('[data-test="folderName"]').should('contain.text', "*")
       cy.get('[data-test="processedFile"]').should('contain.text', 2)
-      cy.get('[data-test="processedPage"]').should('contain.text', 5)
+      cy.get('[data-test="processedPage"]').should('contain.text', 2)
       // remove one file
       cy.get('[data-test="btn-config"]')
         .click()
@@ -212,11 +212,11 @@ describe("Direct Upload UI", () => {
           expect(conn.metadata).eq("{}")
           expect(conn.limitPages).to.be.null
           expect(conn.limitFiles).to.be.null
-          cy.checkIndexedFiles({ conn, files: [{ name: "dcup_how_it_works.txt", totalPages: 4 }] })
+          cy.checkIndexedFiles({ conn, files: [{ name: "dcup_how_it_works.txt", totalPages: 1 }] })
         })
       cy.get('[data-test="folderName"]').should('contain.text', "*")
       cy.get('[data-test="processedFile"]').should('contain.text', 1)
-      cy.get('[data-test="processedPage"]').should('contain.text', 4)
+      cy.get('[data-test="processedPage"]').should('contain.text', 1)
     })
     it("should remove all files that related to the connection when user delete the connection", () => {
       // Upload 2 pdf  
@@ -230,7 +230,7 @@ describe("Direct Upload UI", () => {
           expect(conn.metadata).eq("{}")
           expect(conn.limitPages).to.be.null
           expect(conn.limitFiles).to.be.null
-          cy.checkIndexedFiles({ conn, files: [{ name: "dcup_how_it_works.txt", totalPages: 4 }, { name: "dcup_Introduction.txt", totalPages: 1 }] })
+          cy.checkIndexedFiles({ conn, files: [{ name: "dcup_how_it_works.txt", totalPages: 1 }, { name: "dcup_Introduction.txt", totalPages: 1 }] })
         })
       // check
       cy.task("getConnection", { email: fakeUser.email })
@@ -327,6 +327,70 @@ describe("Direct Upload UI", () => {
               expect(points).eq(0)
             })
         })
+    })
+  })
+  context("max .pdf and .txt", ()=>{
+    it('should handle file upload, addition, and removal with database synchronization', () => {
+
+      // Upload 1 txt 
+      cy.uploadFiles({ files: ['dcup_Introduction.txt'] })
+      cy.wait(5000)
+
+      // Check 
+      cy.task("getConnection", { email: fakeUser.email })
+        .then(({ conns }: any) => {
+          const conn = (conns as FileConnectionQuery[])[0]
+          expect(conn.service).eq("DIRECT_UPLOAD")
+          expect(conn.metadata).eq("{}")
+          expect(conn.limitPages).to.be.null
+          expect(conn.limitFiles).to.be.null
+          cy.checkIndexedFiles({ conn, files: [{ name: "dcup_Introduction.txt", totalPages: 1 }] })
+        })
+      cy.get('[data-test="folderName"]').should('contain.text', "*")
+      cy.get('[data-test="processedFile"]').should('contain.text', 1)
+      cy.get('[data-test="processedPage"]').should('contain.text', 1)
+
+      // add new pdf file 
+      cy.get('[data-test="btn-config"]')
+        .click()
+
+      cy.uploadFiles({ files: ["sample.pdf"] })
+      cy.wait(5000)
+
+      //Check
+      cy.task("getConnection", { email: fakeUser.email })
+        .then(({ conns }: any) => {
+          const conn = (conns as FileConnectionQuery[])[0]
+          expect(conn.service).eq("DIRECT_UPLOAD")
+          expect(conn.metadata).eq("{}")
+          expect(conn.limitPages).to.be.null
+          expect(conn.limitFiles).to.be.null
+          cy.checkIndexedFiles({ conn, files: [{ name: "dcup_Introduction.txt", totalPages: 1 }, { name: "sample.pdf", totalPages: 1 }] })
+        })
+      cy.get('[data-test="folderName"]').should('contain.text', "*")
+      cy.get('[data-test="processedFile"]').should('contain.text', 2)
+      cy.get('[data-test="processedPage"]').should('contain.text', 2)
+      // remove one file
+      cy.get('[data-test="btn-config"]')
+        .click()
+      cy.get('[data-test="btn-remove-dcup_Introduction.txt"]')
+        .click()
+      cy.get('[data-test="btn-upload"]')
+        .click({ force: true })
+      cy.wait(5000)
+      // check
+      cy.task("getConnection", { email: fakeUser.email })
+        .then(({ conns }: any) => {
+          const conn = (conns as FileConnectionQuery[])[0]
+          expect(conn.service).eq("DIRECT_UPLOAD")
+          expect(conn.metadata).eq("{}")
+          expect(conn.limitPages).to.be.null
+          expect(conn.limitFiles).to.be.null
+          cy.checkIndexedFiles({ conn, files: [{ name: "sample.pdf", totalPages: 1 }] })
+        })
+      cy.get('[data-test="folderName"]').should('contain.text', "*")
+      cy.get('[data-test="processedFile"]').should('contain.text', 1)
+      cy.get('[data-test="processedPage"]').should('contain.text', 1)
     })
   })
   context("direct upload functionality", () => {
