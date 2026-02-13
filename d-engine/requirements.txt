@@ -1,0 +1,5 @@
+fastapi
+python-dotenv
+pydantic
+pdfplumber
+requests
