@@ -1,9 +1,8 @@
 import json
 from typing import List
 import uuid
-from src.layers.chunking.models import Chunk
 import tiktoken
-
+from src.layers.chunking_embedding.models import Chunk
 from src.layers.structure_analyzer.models import Section, StructuredDocument
 
 _encoder = tiktoken.get_encoding("cl100k_base")
