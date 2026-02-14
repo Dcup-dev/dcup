@@ -13,30 +13,37 @@ from src.layers.data_extractor.models import ImagePage, Line, Page, Word
 LINE_TOLERANCE = 3  # vertical tolerance for grouping words into lines
 TABLE_PADDING = 1.5  # small padding around table bbox to catch overlaps
 
+
 # ===============================
 # PUBLIC ENTRY
 # ===============================
-def pdf(pdf_bytes: bytes) -> list[Page]:
+def pdf(pdf_bytes: bytes) -> tuple[list[Page], dict]:
     pages_output: list[Page] = []
+    metadata = {}
 
     try:
         with pdfplumber.open(io.BytesIO(pdf_bytes)) as pdf_doc:
+            metadata["_document_id"] = str(uuid.uuid4())
+            metadata["_file_type"] = "pdf"
+            metadata["_page_count"] = len(pdf_doc.pages)
+            metadata["_file_metadata"] = pdf_doc.metadata
+
             for page_number, page in enumerate(pdf_doc.pages, start=1):
-                tables_output = extract_tables(page)
+                tables_output = _extract_tables(page)
                 table_bboxes = [
-                    expand_bbox(table.bbox, padding=TABLE_PADDING)
+                    _expand_bbox(table.bbox, padding=TABLE_PADDING)
                     for table in page.find_tables()
                 ]
 
-                words = extract_words(page)
-                words = filter_table_words(words, table_bboxes)
+                words = _extract_words(page)
+                words = _filter_table_words(words, table_bboxes)
 
-                lines_output = group_words_into_lines(words)
+                lines_output = _group_words_into_lines(words)
 
                 raw_text = "\n".join(line.text for line in lines_output)
-                text = normalize_text(raw_text)
+                text = _normalize_text(raw_text)
 
-                images_output = extract_images(page)
+                images_output = _extract_images(page)
 
                 pages_output.append(
                     Page(
@@ -50,19 +57,19 @@ def pdf(pdf_bytes: bytes) -> list[Page]:
                     )
                 )
 
-        return pages_output
+        return pages_output, metadata
 
     except Exception as e:
         raise ValueError(f"Error processing PDF: {e}")
 
 
-def normalize_text(text: str) -> str:
-    text = fix_hyphen_breaks(text)
-    text = remove_page_numbers(text)
-    text = remove_dot_lines(text)
-    text = remove_lonely_symbols(text)
-    text = fix_merged_words(text)
-    text = normalize_spaces(text)
+def _normalize_text(text: str) -> str:
+    text = _fix_hyphen_breaks(text)
+    text = _remove_page_numbers(text)
+    text = _remove_dot_lines(text)
+    text = _remove_lonely_symbols(text)
+    text = _fix_merged_words(text)
+    text = _normalize_spaces(text)
 
     text = "\n".join(line.rstrip() for line in text.splitlines())
     text = re.sub(r"\n{3,}", "\n\n", text)
@@ -70,7 +77,7 @@ def normalize_text(text: str) -> str:
     return text.strip()
 
 
-def extract_words(page) -> List[Word]:
+def _extract_words(page) -> List[Word]:
 
     raw_words = page.extract_words(
         x_tolerance=2,
@@ -97,7 +104,7 @@ def extract_words(page) -> List[Word]:
     return words
 
 
-def group_words_into_lines(words: List[Word]) -> List[Line]:
+def _group_words_into_lines(words: List[Word]) -> List[Line]:
 
     if not words:
         return []
@@ -152,7 +159,7 @@ def group_words_into_lines(words: List[Word]) -> List[Line]:
     return lines_output
 
 
-def extract_tables(page):
+def _extract_tables(page):
 
     tables_output = []
 
@@ -167,7 +174,7 @@ def extract_tables(page):
     return tables_output
 
 
-def extract_images(page):
+def _extract_images(page):
 
     images_output: list[ImagePage] = []
 
@@ -187,19 +194,19 @@ def extract_images(page):
     return images_output
 
 
-def fix_hyphen_breaks(text: str) -> str:
+def _fix_hyphen_breaks(text: str) -> str:
     return re.sub(r"-\n(\w)", r"\1", text)
 
 
-def remove_page_numbers(text: str) -> str:
+def _remove_page_numbers(text: str) -> str:
     return "\n".join(line for line in text.splitlines() if not line.strip().isdigit())
 
 
-def normalize_spaces(text: str) -> str:
+def _normalize_spaces(text: str) -> str:
     return re.sub(r"[ \t]+", " ", text)
 
 
-def remove_dot_lines(text: str) -> str:
+def _remove_dot_lines(text: str) -> str:
     return "\n".join(
         line
         for line in text.splitlines()
@@ -207,26 +214,27 @@ def remove_dot_lines(text: str) -> str:
     )
 
 
-def remove_lonely_symbols(text: str) -> str:
+def _remove_lonely_symbols(text: str) -> str:
     return "\n".join(line for line in text.splitlines() if len(line.strip()) > 2)
 
 
-def fix_merged_words(text: str) -> str:
+def _fix_merged_words(text: str) -> str:
     return re.sub(r"([a-z])([A-Z])", r"\1 \2", text)
 
-def expand_bbox(bbox, padding=1.0):
+
+def _expand_bbox(bbox, padding=1.0):
     x0, top, x1, bottom = bbox
     return (x0 - padding, top - padding, x1 + padding, bottom + padding)
 
-def filter_table_words(words: list[Word], table_bboxes: list[tuple]) -> list[Word]:
+
+def _filter_table_words(words: list[Word], table_bboxes: list[tuple]) -> list[Word]:
     filtered = []
     for word in words:
-        if not any(is_inside_bbox(word, bbox) for bbox in table_bboxes):
+        if not any(_is_inside_bbox(word, bbox) for bbox in table_bboxes):
             filtered.append(word)
     return filtered
 
-def is_inside_bbox(word: Word, bbox) -> bool:
+
+def _is_inside_bbox(word: Word, bbox) -> bool:
     x0, top, x1, bottom = bbox
-    return (
-        word.x0 >= x0 and word.x1 <= x1 and word.top >= top and word.bottom <= bottom
-    )
+    return word.x0 >= x0 and word.x1 <= x1 and word.top >= top and word.bottom <= bottom

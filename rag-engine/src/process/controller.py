@@ -1,10 +1,11 @@
+import os
 from fastapi.responses import JSONResponse
 from fastapi import APIRouter, File, Form, HTTPException, Path, UploadFile, status
 import requests
 import json
 from src.process.service import processFile
 from . import models
-
+from urllib.parse import urlparse
 
 router = APIRouter(prefix="/process", tags=["Process"])
 
@@ -44,7 +45,9 @@ async def process(
                     raise HTTPException(
                         status.HTTP_400_BAD_REQUEST, "URL does not point to a PDF file"
                     )
-
+            parsed = urlparse(url)
+            filename = os.path.basename(parsed.path) or "unkown"
+            meta["_source_file"] = filename
             data = processFile(models.FileType.pdf, resp.content, meta)
             return JSONResponse(content=data, status_code=status.HTTP_200_OK)
         if input_mode == models.InputMode.file:
@@ -53,6 +56,7 @@ async def process(
                     status.HTTP_422_UNPROCESSABLE_CONTENT,
                     "Must upload a file when input_mode is 'file'",
                 )
+            meta["_source_file"] = upload.filename
             data_bytes = await upload.read()
             data = processFile(models.FileType.pdf, data_bytes, meta)
             return JSONResponse(content=data, status_code=status.HTTP_200_OK)
