@@ -3,3 +3,4 @@ python-dotenv
 pydantic
 pdfplumber
 requests
+tiktoken
