@@ -9,9 +9,11 @@ from . import models
 def processFile(fileType: models.FileType, file_bytes: bytes, metadata: dict):
     if fileType == models.FileType.pdf:
         logging.info("start processing pdf files")
-        pages = extractor.pdf(file_bytes)
+        pages, extractor_meta = extractor.pdf(file_bytes)
         structured_document = analyze_layout(pages)
-        chunks = chunk_document(structured_document, metadata, max_tokens=400)
+        chunks = chunk_document(
+            structured_document, extractor_meta | metadata, max_tokens=400
+        )
         logging.info(f"pdf data extracted pages: {len(pages)}")
         return [chunk.model_dump() for chunk in chunks]
 
