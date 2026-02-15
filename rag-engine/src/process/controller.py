@@ -6,7 +6,7 @@ import json
 from src.process.service import processFile
 from . import models
 from urllib.parse import urlparse
-
+import hashlib
 router = APIRouter(prefix="/process", tags=["Process"])
 
 
@@ -48,6 +48,7 @@ async def process(
             parsed = urlparse(url)
             filename = os.path.basename(parsed.path) or "unkown"
             meta["_source_file"] = filename
+            meta["_file_hash"] = hashlib.sha256(resp.content).hexdigest()
             data = processFile(models.FileType.pdf, resp.content, meta)
             return JSONResponse(content=data, status_code=status.HTTP_200_OK)
         if input_mode == models.InputMode.file:
@@ -58,6 +59,7 @@ async def process(
                 )
             meta["_source_file"] = upload.filename
             data_bytes = await upload.read()
+            meta["_file_hash"] = hashlib.sha256(data_bytes).hexdigest()
             data = processFile(models.FileType.pdf, data_bytes, meta)
             return JSONResponse(content=data, status_code=status.HTTP_200_OK)
 
