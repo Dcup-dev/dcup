@@ -17,13 +17,12 @@ TABLE_PADDING = 1.5  # small padding around table bbox to catch overlaps
 # ===============================
 # PUBLIC ENTRY
 # ===============================
-def pdf(pdf_bytes: bytes) -> tuple[list[Page], dict]:
+def extract_data(pdf_bytes: bytes) -> tuple[list[Page], dict]:
     pages_output: list[Page] = []
     metadata = {}
 
     try:
         with pdfplumber.open(io.BytesIO(pdf_bytes)) as pdf_doc:
-            metadata["_document_id"] = str(uuid.uuid4())
             metadata["_file_type"] = "pdf"
             metadata["_page_count"] = len(pdf_doc.pages)
             metadata["_file_metadata"] = pdf_doc.metadata

@@ -51,6 +51,8 @@ def chunk_document(
 
     # ---- FINAL CLEANUP ----
     chunks = _deduplicate_chunks(chunks)
+    if len(chunks) == 0:
+        raise ValueError("No text found in your pdf!, make sure it is not image")
 
     return chunks
 
