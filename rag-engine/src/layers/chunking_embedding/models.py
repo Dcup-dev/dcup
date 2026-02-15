@@ -17,5 +17,6 @@ class Chunk(BaseModel):
 
     page_start: int | None
     page_end: int | None
+    embedding: Any
 
     metadata: Dict[str, Any] = {}

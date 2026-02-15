@@ -1,2 +1,4 @@
 .venv
+models_cache
+qdrant_storage
 __pycache__

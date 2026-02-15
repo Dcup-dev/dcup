@@ -211,6 +211,7 @@ def _build_chunk(
         page_start=page_start,
         page_end=page_end,
         metadata=metadata,
+        embedding=None,
     )
 
 
@@ -286,7 +287,7 @@ def _build_table_chunks_from_section(
         chunks.append(
             Chunk(
                 id=str(uuid.uuid4()),
-                text=table_json, 
+                text=table_json,
                 token_count=count_tokens(table_json),
                 section_title=section.title,
                 section_path=section_path,
@@ -294,6 +295,7 @@ def _build_table_chunks_from_section(
                 page_start=section.page_number,
                 page_end=section.page_number,
                 metadata=table_metadata,
+                embedding=None,
             )
         )
 
