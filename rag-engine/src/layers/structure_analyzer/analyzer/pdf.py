@@ -2,7 +2,7 @@ import re
 import uuid
 from typing import List
 
-from src.layers.data_extractor.models import Line, Page
+from src.layers.data_extractor.models import Line, Page, TablePage
 from src.layers.structure_analyzer.models import Paragraph, Section, StructuredDocument
 
 
@@ -26,13 +26,16 @@ def analyze_layout(pages: List[Page]) -> StructuredDocument:
         # ---- detect columns ----
         columns = _cluster_columns(page_lines)
 
+   
         for column_lines in columns:
-            blocks = _build_blocks(column_lines)
-
-            for block in blocks:
-                if _is_garbage_block(block):
+            text_blocks = _build_blocks(column_lines)
+            layout_stream = _merge_layout_blocks(text_blocks, page.tables)
+            for kind, item in layout_stream:
+                if kind == "table":
+                    if stack:
+                        stack[-1].content_stream.append(item.table)
                     continue
-
+                block = item
                 heading_level, confidence = _detect_heading(block, font_tiers)
 
                 # -------------------------------
@@ -45,6 +48,7 @@ def analyze_layout(pages: List[Page]) -> StructuredDocument:
                         level=heading_level,
                         page_number=page.page_number,
                         confidence=confidence,
+                        content_stream=[]
                     )
 
                     while stack and stack[-1].level >= heading_level:
@@ -52,6 +56,7 @@ def analyze_layout(pages: List[Page]) -> StructuredDocument:
 
                     if stack:
                         stack[-1].children.append(section)
+                        stack[-1].content_stream.append(section)
                     else:
                         document.sections.append(section)
 
@@ -67,14 +72,9 @@ def analyze_layout(pages: List[Page]) -> StructuredDocument:
                 )
 
                 if stack:
-                    stack[-1].paragraphs.append(paragraph)
+                    stack[-1].content_stream.append(paragraph)
                 else:
                     document.preamble.append(paragraph)
-
-        # ---- attach assets ----
-        if stack:
-            stack[-1].tables.extend(page.tables)
-            stack[-1].images.extend(page.images)
 
     return document
 
@@ -199,24 +199,6 @@ def _detect_heading(block, font_tiers):
     return 0, round(score, 3)
 
 
-def _is_garbage_block(block):
-
-    text = block.text.strip()
-
-    if not text:
-        return True
-
-    # pure symbols
-    if len(text) <= 2 and not text.isalpha():
-        return True
-
-    # extremely tiny font
-    if block.avg_size < 5:
-        return True
-
-    return False
-
-
 def _clean_title(text: str) -> str:
     return re.sub(r"^\d+(\.\d+)*\s*", "", text).strip()
 
@@ -290,3 +272,25 @@ def _looks_like_toc_block(block) -> bool:
         return True
 
     return False
+
+
+class TableBlock:
+    def __init__(self, table: TablePage):
+        self.table = table
+        self.top = table.top
+        self.x0 = table.x0    
+
+def _merge_layout_blocks(
+    text_blocks: List[Block],
+    tables: List[TablePage]
+):
+
+    layout_items = []
+
+    for b in text_blocks:
+        layout_items.append(("text", b))
+
+    for t in tables:
+        layout_items.append(("table", TableBlock(t)))
+
+    return sorted(layout_items, key=lambda x: (round(x[1].top, 1), x[1].x0))             

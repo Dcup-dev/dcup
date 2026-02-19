@@ -4,7 +4,7 @@ from fastapi import File, Form, HTTPException, UploadFile, status
 from qdrant_client.models import Optional
 import requests
 from src.common.utils import document_exists
-from src.store.controllers.utils import parse_metadata
+from src.common.utils import parse_metadata
 from src.store.services import pdf
 from urllib.parse import urlparse
 
@@ -33,7 +33,7 @@ async def upload(
 
 
 
-async def with_url(
+def with_url(
     url: str  = Form(..., description="Link to fetch"),
     metadata: Optional[str] = Form(..., description="Metadata for chunks (JSON)"),
 ):

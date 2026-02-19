@@ -1,7 +1,7 @@
+from __future__ import annotations
 from pydantic import BaseModel, Field
 from typing import List
-
-from src.layers.data_extractor.models import ImagePage
+from src.layers.data_extractor.models import ImagePage, TablePage
 
 
 class Paragraph(BaseModel):
@@ -14,12 +14,8 @@ class Section(BaseModel):
     title: str
     level: int
     page_number: int
-
-    paragraphs: List[Paragraph] = Field(default_factory=list)
+    content_stream: List[Paragraph | TablePage | ImagePage | Section]
     children: List["Section"] = Field(default_factory=list)
-
-    tables: list[list[list[str | None]]] = Field(default_factory=list)
-    images: List[ImagePage] = Field(default_factory=list)
     confidence: float
 
 
