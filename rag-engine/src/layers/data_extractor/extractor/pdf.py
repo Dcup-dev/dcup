@@ -4,7 +4,7 @@ from typing import List
 import uuid
 import pdfplumber
 
-from src.layers.data_extractor.models import ImagePage, Line, Page, Word
+from src.layers.data_extractor.models import ImagePage, Line, Page, TablePage, Word
 
 
 # ===============================
@@ -28,14 +28,9 @@ def extract_data(pdf_bytes: bytes) -> tuple[list[Page], dict]:
             metadata["_file_metadata"] = pdf_doc.metadata
 
             for page_number, page in enumerate(pdf_doc.pages, start=1):
-                tables_output = _extract_tables(page)
-                table_bboxes = [
-                    _expand_bbox(table.bbox, padding=TABLE_PADDING)
-                    for table in page.find_tables()
-                ]
-
+                tables_output = _extract_tables(page, page_number)
                 words = _extract_words(page)
-                words = _filter_table_words(words, table_bboxes)
+                words = _filter_table_words(words, tables_output)
 
                 lines_output = _group_words_into_lines(words)
 
@@ -139,6 +134,7 @@ def _group_words_into_lines(words: List[Word]) -> List[Line]:
         x1 = max(w.x1 for w in cluster)
 
         top = min(w.top for w in cluster)
+        bottom = max(w.bottom for w in cluster)
 
         lines_output.append(
             Line(
@@ -149,6 +145,7 @@ def _group_words_into_lines(words: List[Word]) -> List[Line]:
                 is_bold=is_bold,
                 x0=x0,
                 x1=x1,
+                bottom=bottom,
             )
         )
 
@@ -158,17 +155,31 @@ def _group_words_into_lines(words: List[Word]) -> List[Line]:
     return lines_output
 
 
-def _extract_tables(page):
-
-    tables_output = []
-
+def _extract_tables(page, page_number):
+    tables_output: list[TablePage] = []
     tables = page.find_tables()
 
     for table in tables:
         data = table.extract()
 
-        if data and any(any(cell for cell in row) for row in data):
-            tables_output.append(data)
+        if not data or not any(any(cell for cell in row) for row in data):
+            continue
+
+        bbox = table.bbox
+        x0, top, x1, bottom = bbox
+
+        tables_output.append(
+            TablePage(
+                id=str(uuid.uuid4()),
+                bbox=bbox,
+                data=data,
+                top=top,
+                x0=x0,
+                x1=x1,
+                bottom=bottom,
+                page_number=page_number,
+            )
+        )
 
     return tables_output
 
@@ -221,15 +232,10 @@ def _fix_merged_words(text: str) -> str:
     return re.sub(r"([a-z])([A-Z])", r"\1 \2", text)
 
 
-def _expand_bbox(bbox, padding=1.0):
-    x0, top, x1, bottom = bbox
-    return (x0 - padding, top - padding, x1 + padding, bottom + padding)
-
-
-def _filter_table_words(words: list[Word], table_bboxes: list[tuple]) -> list[Word]:
+def _filter_table_words(words: list[Word], tables: list[TablePage]) -> list[Word]:
     filtered = []
     for word in words:
-        if not any(_is_inside_bbox(word, bbox) for bbox in table_bboxes):
+        if not any(_is_inside_bbox(word, table.bbox) for table in tables):
             filtered.append(word)
     return filtered
 

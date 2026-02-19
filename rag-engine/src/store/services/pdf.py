@@ -19,11 +19,12 @@ def _handleFile(file_bytes: bytes, metadata: dict):
     chunks = chunk_document(
         structured_document,
         metadata | extractor_meta,
-        max_tokens=400,
+        max_tokens=450,
+        min_tokens=80,
     )
     logging.info(f"chunked pdf to : {len(chunks)} chunks")
     chunks = embed_chunks(chunks)
-    logging.info(f"embedding chunks: {len(chunks[0].embedding)}")
+    logging.info("embedding chunks")
     store_chunks(chunks)
     logging.info("stored chunked")
     return makeResponse(metadata | extractor_meta, chunks)

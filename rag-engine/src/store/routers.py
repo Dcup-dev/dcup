@@ -17,7 +17,7 @@ async def store_pdf_upload(
     upload: UploadFile = File(..., description="The file to upload"),
     metadata: Optional[str] = Form(..., description="Metadata for chunks (JSON)"),
 ):
-    return pdf.upload(upload, metadata)
+    return await pdf.upload(upload, metadata)
 
 
 @store_url_router.post(
@@ -26,8 +26,8 @@ async def store_pdf_upload(
     response_model=StoreResponse,
     status_code=status.HTTP_200_OK,
 )
-async def store_pdf_with_url(
-    url: str  = Form(..., description="Link to fetch"),
+def store_pdf_with_url(
+    url: str = Form(..., description="Link to fetch"),
     metadata: Optional[str] = Form(..., description="Metadata for chunks (JSON)"),
 ):
     return pdf.with_url(url, metadata)
