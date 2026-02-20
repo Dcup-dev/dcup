@@ -8,12 +8,25 @@ from src.common.utils import dense_embedding, sparse_embedding
 
 _executor = ThreadPoolExecutor(max_workers=os.cpu_count() or 4)
 
+
 def embed_chunks(chunks: List[Chunk], batch_size: int = 64) -> List[Chunk]:
-
     for i in range(0, len(chunks), batch_size):
-
         batch = chunks[i : i + batch_size]
-        texts = [f"passage: {c.text.strip()}" for c in batch]
+
+        texts = []
+        for c in batch:
+            path = " > ".join(c.section_path) if c.section_path else ""
+            title = c.section_title or ""
+
+            text = f"""passage:
+Title: {title}
+Path: {path}
+File Name : {c.metadata["_source_file"]}
+page: {c.page_start} - {c.page_end}
+
+{c.text.strip()}
+"""
+            texts.append(text)
 
         def dense_task():
             return list(dense_embedding.embed(texts))
@@ -28,9 +41,7 @@ def embed_chunks(chunks: List[Chunk], batch_size: int = 64) -> List[Chunk]:
         sparse_vectors = future_sparse.result()
 
         for chunk, dv, sv in zip(batch, dense_vectors, sparse_vectors):
-
             chunk.dense_vectors = dv.tolist()
-
             chunk.sparse_vectors = models.SparseVector(
                 indices=sv.indices.tolist(),
                 values=sv.values.tolist(),
