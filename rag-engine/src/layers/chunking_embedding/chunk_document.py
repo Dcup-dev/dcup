@@ -261,7 +261,9 @@ def _merge_small_chunks(
 
         # Merge if either side is small
         if prev.token_count < min_tokens or chunk.token_count < min_tokens:
-            combined_text = prev.text + "\n" + chunk.text
+            combined_text = (
+                prev.text + "." + "\n" + chunk.section_path[-1] + ":\n" + chunk.text
+            )
             combined_tokens = count_tokens(combined_text)
 
             if combined_tokens <= max_tokens:

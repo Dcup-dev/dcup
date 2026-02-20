@@ -59,7 +59,7 @@ def query(
     hits = _normalize_scores(hits)
     logging.info(f"hits after normalized scores : {len(hits)}")
 
-    hits = _rerank(expanded_queries[0], hits, math.floor(final_top_k / 2) + 1)
+    hits = _rerank(expanded_queries[0], hits, final_top_k)
     logging.info(
         f"hits after reranking : {len(hits)} with final_top: {math.floor(final_top_k / 2) + 1}"
     )
