@@ -2,8 +2,8 @@ import crypto from "crypto";
 import { NextRequest } from "next/server";
 import { APIError } from "./APIError";
 import { databaseDrizzle } from "@/db";
-import { apiKeys } from "@/db/schemas/users";
 import { eq } from "drizzle-orm";
+import { apiKeys } from "@/db/schema";
 
 // Create hash using email + secret
 export function hashApiKey(apiKey: string) {
@@ -40,6 +40,7 @@ export async function checkAuth(request: NextRequest) {
     .from(apiKeys)
     .where(eq(apiKeys.apiKey, keyHashed))
     .limit(1);
+
   if (!key[0]?.userId) {
     throw new APIError(
       {

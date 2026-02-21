@@ -1,11 +1,14 @@
-import { authOptions } from "@/auth";
-import { getServerSession } from "next-auth";
+import { auth } from "@/lib/auth";
+import { headers } from "next/headers";
 import { notFound } from "next/navigation";
 import { ReactNode } from "react";
 
 
 export default async function Layout({ children }: { children: ReactNode }) {
-  const session = await getServerSession(authOptions)
+  const session = await auth.api.getSession({
+    headers: await headers(),
+  })
+
   if (!session?.user.id) return notFound()
 
   return (<main>

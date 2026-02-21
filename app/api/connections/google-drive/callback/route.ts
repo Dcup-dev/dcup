@@ -1,12 +1,11 @@
 import { NextResponse } from 'next/server';
 import { auth, oauth2 } from '@googleapis/oauth2';
 import { databaseDrizzle } from '@/db';
-import { connections } from '@/db/schemas/connections';
-import { getServerSession } from 'next-auth';
-import { authOptions } from '@/auth';
 import { shortId } from '@/lib/utils';
 import { tryAndCatch } from '@/lib/try-catch';
-
+import { auth as authReq } from "@/lib/auth";
+import { headers } from "next/headers";
+import { connections } from '@/db/schema';
 const oauth2Client = new auth.OAuth2(
   process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID,
   process.env.GOOGLE_CLIENT_SECRET,
@@ -15,15 +14,9 @@ const oauth2Client = new auth.OAuth2(
 
 export async function GET(request: Request) {
   try {
-    const sessRes = await tryAndCatch(getServerSession(authOptions));
-    if (sessRes.error) {
-      return NextResponse.json(
-        { code: 'Unauthorized', message: sessRes.error.message },
-        { status: 500 },
-      );
-    }
-
-    const session = sessRes.data;
+    const session = await authReq.api.getSession({
+      headers: await headers(),
+    })
     if (!session?.user.id) {
       return new Response('Unauthorized', { status: 401 });
     }

@@ -1,16 +1,15 @@
-import { authOptions } from '@/auth';
 import { databaseDrizzle } from '@/db';
-import { apiKeys, users } from '@/db/schemas/users';
 import { hashApiKey } from '@/lib/api_key';
 import { Plans } from '@/lib/Plans';
 import { expandQuery, generateHypotheticalAnswer, vectorizeText } from '@/openAi';
 import { qdrant_collection_name, qdrantClient } from '@/qdrant';
 import { RetrievalFilter } from '@/validations/retrievalsFilteringSchema'
 import { and, eq, sql } from 'drizzle-orm';
-import { getServerSession } from 'next-auth';
 import { NextRequest, NextResponse } from 'next/server'
 import { z } from 'zod'
-
+import { auth } from "@/lib/auth";
+import { headers } from "next/headers";
+import { apiKeys, users } from '@/db/schema';
 
 const UserQuery = z.object({
   query: z.string().min(2),
@@ -34,9 +33,9 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const auth = request.headers.get("Authorization");
-    const bearer = auth?.split("Bearer ")[1]
-    if (!auth || !bearer) {
+    const apiKey = request.headers.get("Authorization");
+    const bearer = apiKey?.split("Bearer ")[1]
+    if (!apiKey || !bearer) {
       return NextResponse.json(
         {
           code: "unauthorized",
@@ -49,10 +48,12 @@ export async function POST(request: NextRequest) {
     let userId: string | undefined;
 
     if (bearer === "Dcup_Client") {
-      const session = await getServerSession(authOptions)
+      const session = await auth.api.getSession({
+        headers: await headers(),
+      })
       userId = session?.user.id
     } else {
-      const keyHashed = hashApiKey(auth.split("Bearer ")[1]);
+      const keyHashed = hashApiKey(apiKey.split("Bearer ")[1]);
       const key = await databaseDrizzle
         .select({ userId: apiKeys.userId })
         .from(apiKeys)
@@ -75,6 +76,7 @@ export async function POST(request: NextRequest) {
       columns: {
         plan: true,
         apiCalls: true,
+        id:true,
       }
     })
 
@@ -88,14 +90,14 @@ export async function POST(request: NextRequest) {
     const retrievalLimit = Plans[user.plan].retrievals;
     const updated = await databaseDrizzle
       .update(users)
-      .set({ apiCalls: sql`${users.apiCalls} + 1` })
+      .set({ apiCalls: sql`${user.apiCalls} + 1` })
       .where(
         and(
-          eq(users.id, userId),
-          sql`${users.apiCalls} < ${retrievalLimit}`
+          eq(user.id, userId),
+          sql`${user.apiCalls} < ${retrievalLimit}`
         )
       )
-      .returning({ apiCalls: users.apiCalls })
+      .returning({ apiCalls: user.apiCalls })
       .then(rows => rows[0]);
 
     if (!updated) {

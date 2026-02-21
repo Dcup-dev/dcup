@@ -1,15 +1,17 @@
 import React from 'react'
-import { authOptions } from '@/auth';
 import { GenerateKeyForm } from '@/components/GeneratekeyForm/GeneratekeyForm';
 import { KeysList } from '@/components/keysList/KeysList';
 import { CardHeader, Card, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
-import { getServerSession } from 'next-auth';
 import { redirect } from 'next/navigation';
+import { auth } from '@/lib/auth';
+import { headers } from 'next/headers';
 
 
 export default async function IntegrationPage() {
-  const session = await getServerSession(authOptions);
-    if (!session?.user.id) return redirect("/login")
+  const session = await auth.api.getSession({
+    headers: await headers(),
+  })
+  if (!session?.user.id) return redirect("/login")
 
   return (<main className="container mx-auto p-6 space-y-8">
     <section className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">

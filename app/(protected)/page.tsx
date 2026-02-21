@@ -1,10 +1,7 @@
 import PipelineFlow from "@/components/PipelineFlow/PipelineFlow";
 import { formatDistanceToNow } from 'date-fns'
 import { databaseDrizzle } from "@/db";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/auth";
 import { redirect } from 'next/navigation';
-import { ConnectionTable, ProcessedFilesTable } from "@/db/schemas/connections";
 import { getServiceIcon } from "@/lib/helepers";
 import { FaFilePdf } from "react-icons/fa";
 import { TooltipContent, TooltipTrigger, Tooltip } from "@/components/ui/tooltip";
@@ -17,13 +14,19 @@ import {
   TableRow,
 } from "@/components/ui/table"
 import { SubscriptionCard } from "@/components/SubscriptionCard/SubscriptionCard";
+import { auth } from "@/lib/auth";
+import { headers } from "next/headers";
+import { ConnectionTable, ProcessedFilesTable } from "@/db/schema";
 
 interface FileConnectionQuery extends ConnectionTable {
   files: ProcessedFilesTable[]
 }
 
 export default async function page() {
-  const session = await getServerSession(authOptions)
+  const session = await auth.api.getSession({
+    headers: await headers(),
+  })
+
   if (!session?.user.id) return redirect("/login")
 
   const user = await databaseDrizzle.query.users.findFirst({
@@ -47,38 +50,37 @@ export default async function page() {
     .flatMap(conn => conn.files || [])
     .reduce((sum, file) => sum + (file.totalPages || 0), 0);
 
-  return (
-    <div className="w-full flex flex-col p-4">
-      <h1 className="text-3xl font-bold text-gray-900 dark:text-gray-100 mb-4">
-        RAG Pipeline Dashboard
-      </h1>
+  return (<div className="w-full flex flex-col p-4">
+    <h1 className="text-3xl font-bold text-gray-900 dark:text-gray-100 mb-4">
+      RAG Pipeline Dashboard
+    </h1>
 
-      {/* Visualization Section */}
-      <PipelineFlow connections={user.connections} />
+    {/* Visualization Section */}
+    <PipelineFlow connections={user.connections} />
 
-      {/* Data Section */}
-      <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
-        {/* Files Table */}
-        <div className="w-full xl:w-auto">
-          <div className="rounded-lg border shadow-sm h-full">
-            <FilesTable connections={user.connections} />
-          </div>
-        </div>
-
-        {/* API Usage */}
-        <div className="w-full xl:w-auto">
-          <SubscriptionCard
-            userId={session.user.id!}
-            plan={user.plan}
-            usage={{
-              connections: user.connections.length,
-              pages: totalPages,
-              retrievals: user.apiCalls,
-            }}
-          />
+    {/* Data Section */}
+    <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
+      {/* Files Table */}
+      <div className="w-full xl:w-auto">
+        <div className="rounded-lg border shadow-sm h-full">
+          <FilesTable connections={user.connections} />
         </div>
       </div>
+
+      {/* API Usage */}
+      <div className="w-full xl:w-auto">
+        <SubscriptionCard
+          userId={session.user.id!}
+          plan={user.plan}
+          usage={{
+            connections: user.connections.length,
+            pages: totalPages,
+            retrievals: user.apiCalls,
+          }}
+        />
+      </div>
     </div>
+  </div>
   )
 }
 

@@ -1,5 +1,5 @@
 import { databaseDrizzle } from "@/db"
-import { processedFiles } from "@/db/schemas/connections"
+import { processedFiles } from "@/db/schema"
 import { checkAuth } from "@/lib/api_key"
 import { tryAndCatch } from "@/lib/try-catch"
 import { qdrant_collection_name, qdrantClient } from "@/qdrant"

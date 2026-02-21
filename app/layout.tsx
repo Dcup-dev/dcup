@@ -3,8 +3,10 @@ import { ThemeProvider } from "@/components/theme-provider"
 import { Inter } from 'next/font/google';
 import type { ReactNode } from 'react';
 import type { Metadata } from "next";
-import { Toaster } from '@/components/ui/toaster';
 import { mockServer } from '@/mocks/server';
+import { TooltipProvider } from "@/components/ui/tooltip"
+import { Toaster } from "@/components/ui/sonner"
+
 
 const inter = Inter({
   subsets: ['latin'],
@@ -46,9 +48,18 @@ export default async function Layout({ children }: { children: ReactNode }) {
           defaultTheme="dark"
           enableSystem
           disableTransitionOnChange
-        >
-          {children}
-          <Toaster />
+        ><TooltipProvider>
+            {/* Background gradient */}
+            <div className="absolute inset-0 bg-linear-to-br from-stone-50 via-stone-100 to-stone-200 dark:from-stone-950 dark:via-stone-900 dark:to-stone-800" />
+
+            {/* Animated abstract shapes */}
+            <div className="absolute inset-0 overflow-hidden">
+              <div className="absolute -top-40 -right-40 h-80 w-80 rounded-full bg-amber-500/10 blur-3xl" />
+              <div className="absolute -bottom-40 -left-40 h-80 w-80 rounded-full bg-amber-500/10 blur-3xl" />
+            </div>
+            {children}
+            <Toaster />
+          </TooltipProvider>
         </ThemeProvider>
       </body>
     </html>

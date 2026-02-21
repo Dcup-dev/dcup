@@ -15,18 +15,20 @@ import {
 } from "@/components/ui/table";
 import { notFound } from "next/navigation";
 import { format } from "date-fns";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/auth";
 import { databaseDrizzle } from "@/db";
 import { DeleteKey } from "../deleteKey/DeleteKey";
+import { auth } from "@/lib/auth";
+import { headers } from "next/headers";
 
 
 export const KeysList = async () => {
-  const sesstion = await getServerSession(authOptions);
-  if (!sesstion?.user.id) return notFound();
-  
+  const session = await auth.api.getSession({
+    headers: await headers(),
+  })
+  if (!session?.user.id) return notFound();
+
   const keys = await databaseDrizzle.query.apiKeys.findMany({
-    where: (key, opt) => opt.eq(key.userId, sesstion.user.id!),
+    where: (key, opt) => opt.eq(key.userId, session.user.id!),
   });
 
   return (

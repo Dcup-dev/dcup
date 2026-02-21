@@ -1,11 +1,9 @@
 "use server"
-import { authOptions } from "@/auth";
 import { databaseDrizzle } from "@/db";
 import { authDropbox } from "@/fileProcessors/connectors/dropbox";
 import { authGoogleDrive } from "@/fileProcessors/connectors/googleDrive";
 import { Plans } from "@/lib/Plans";
 import { fromErrorToFormState, toFormState } from "@/lib/zodErrorHandle";
-import { getServerSession } from "next-auth";
 import { revalidatePath } from "next/cache";
 
 type FormState = {

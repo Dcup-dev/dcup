@@ -5,11 +5,11 @@ import { revalidatePath } from "next/cache";
 import { tryAndCatch } from "@/lib/try-catch";
 import { redirect } from 'next/navigation';
 import { databaseDrizzle } from "@/db";
-import { connections } from "@/db/schemas/connections";
 import { shortId } from "@/lib/utils";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/auth";
 import { z } from 'zod'
+import { auth } from "@/lib/auth";
+import { headers } from "next/headers";
+import { connections } from "@/db/schema";
 
 const awsConnectionSchema = z.object({
   accessKeyId: z.string().min(16, 'Invalid Access Key ID'),
@@ -24,7 +24,9 @@ type FormState = {
 
 export async function authorizeAWS(_: FormState, formData: FormData) {
   try {
-    const session = await getServerSession(authOptions)
+    const session = await auth.api.getSession({
+      headers: await headers(),
+    })
     if (!session?.user?.id) throw new Error("forbidden");
 
     const validated = awsConnectionSchema.safeParse({

@@ -1,16 +1,16 @@
 import Link from "next/link"
 import dynamic from 'next/dynamic'
-import { authOptions } from "@/auth";
 import { Button } from "@/components/ui/button";
 import { databaseDrizzle } from "@/db";
-import { getServerSession } from "next-auth";
 import { redirect } from 'next/navigation';
-import { ConnectionTable } from "@/db/schemas/connections";
 import { Table, TableBody, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { getConnectionToken } from "@/fileProcessors/connectors";
 import { FiDatabase } from "react-icons/fi";
 import { SetNewConfigDirect } from "@/DataSource/DirectUpload/SetNewConfigDirect/SetNewConfigDirect";
 import { tryAndCatch } from "@/lib/try-catch";
+import { ConnectionTable } from "@/db/schema";
+import { auth } from "@/lib/auth";
+import { headers } from "next/headers";
 
 const Connections = dynamic(() => import('@/components/Connections/Connections'))
 
@@ -23,7 +23,9 @@ export interface ConnectionQuery extends ConnectionTable {
 export type ConnectionToken = Map<string, string | null>;
 
 export default async function ConnectionsPage() {
-  const session = await getServerSession(authOptions)
+  const session = await auth.api.getSession({
+    headers: await headers(),
+  })
   if (!session?.user.id) return redirect("/login")
 
   const connections: ConnectionQuery[] = await databaseDrizzle.query.connections.findMany({

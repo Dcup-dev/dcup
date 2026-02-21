@@ -1,6 +1,6 @@
 {
-  "name": "MyWebSite",
-  "short_name": "MySite",
+  "name": "Dcup",
+  "short_name": "Dcup",
   "icons": [
     {
       "src": "/web-app-manifest-192x192.png",
