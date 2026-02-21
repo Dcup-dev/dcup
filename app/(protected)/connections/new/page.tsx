@@ -1,12 +1,14 @@
 import Link from 'next/link'
-import { authOptions } from '@/auth'
 import { Connectors } from '@/components/Connectors/Connectors';
 import { Button } from '@/components/ui/button';
-import { getServerSession } from 'next-auth'
 import { redirect } from 'next/navigation';
+import { auth } from '@/lib/auth';
+import { headers } from 'next/headers';
 
 export default async function page() {
-  const session = await getServerSession(authOptions)
+  const session = await auth.api.getSession({
+    headers: await headers(),
+  })
   if (!session?.user.id) return redirect("/login")
 
   return (<div className="container mx-auto p-5">

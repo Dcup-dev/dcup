@@ -5,13 +5,13 @@ import { v4 as uuidv4 } from 'uuid';
 import { getTitleAndSummary, vectorizeText } from "@/openAi";
 import { qdrant_collection_name, qdrantClient } from "@/qdrant";
 import { publishProgress } from "@/events";
-import { connections, processedFiles } from "@/db/schemas/connections";
 import { and, eq } from "drizzle-orm";
 import { getFileContent } from "./connectors";
 import { processPdfLink, processPdfBuffer } from "./Files/pdf";
 import { TQueue } from "@/workers/queues/jobs/processFiles.job";
 import { tryAndCatch } from "@/lib/try-catch";
 import { processDirectText } from "./Files/text";
+import { connections, processedFiles } from "@/db/schema";
 
 export type FileContent = {
   name: string,

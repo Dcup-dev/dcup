@@ -4,11 +4,11 @@ import { NextRequest, NextResponse } from "next/server";
 import { APIError } from "@/lib/APIError";
 import { databaseDrizzle } from "@/db";
 import { eq } from "drizzle-orm";
-import { connections } from "@/db/schemas/connections";
 import { qdrant_collection_name, qdrantClient } from "@/qdrant";
 import { setConnectionToProcess } from "@/fileProcessors/connectors";
 import { connectionProcessFiles, directProcessFiles } from "@/fileProcessors";
 import { addToProcessFilesQueue } from "@/workers/queues/jobs/processFiles.job";
+import { connections } from "@/db/schema";
 
 type Params = {
   params: Promise<{

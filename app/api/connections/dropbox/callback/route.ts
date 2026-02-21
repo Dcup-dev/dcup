@@ -1,11 +1,11 @@
 import { NextResponse } from 'next/server';
 import { Dropbox, DropboxAuth } from 'dropbox';
-import { getServerSession } from 'next-auth';
-import { authOptions } from '@/auth';
 import { tryAndCatch } from '@/lib/try-catch';
 import { databaseDrizzle } from '@/db';
-import { connections } from '@/db/schemas/connections';
 import { shortId } from '@/lib/utils';
+import { auth } from '@/lib/auth';
+import { headers } from 'next/headers';
+import { connections } from '@/db/schema';
 
 type DropboxResponse = {
   access_token: string,
@@ -20,7 +20,9 @@ type DropboxResponse = {
 
 export async function GET(request: Request) {
   try {
-    const session = await getServerSession(authOptions);
+    const session = await auth.api.getSession({
+      headers: await headers(),
+    })
     if (!session?.user.id) {
       return NextResponse.json(
         { code: 'Unauthorized', message: "Unauthorized Request" },

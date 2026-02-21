@@ -29,8 +29,8 @@ import {
   useSidebar,
 } from "@/components/ui/sidebar"
 import { useTheme } from "next-themes"
-import { signOut } from "next-auth/react"
 import { useRouter } from 'next/navigation'
+import { authClient } from "@/lib/auth-client"
 
 export function NavUser({
   user,
@@ -43,8 +43,16 @@ export function NavUser({
 }) {
   const { isMobile } = useSidebar()
   const { setTheme } = useTheme()
-  const { push } = useRouter()
+  const { push, replace } = useRouter()
   const customerPortal = process.env.NEXT_PUBLIC_PADDLE_CUSTOMER_PORTAL_URL
+
+  const signOut = async () => {
+    const { error } = await authClient.signOut()
+    if (error) {
+      //todo:- toster .. 
+    }
+    replace("/")
+  }
 
   return (
     <SidebarMenu>
@@ -96,7 +104,7 @@ export function NavUser({
               </DropdownMenuItem>
             </DropdownMenuGroup>
             <DropdownMenuSeparator />
-            <DropdownMenuItem onClick={() => signOut({ redirect: true })} className="cursor-pointer" >
+            <DropdownMenuItem onClick={signOut} className="cursor-pointer" >
               <LogOut />
               Log out
             </DropdownMenuItem>

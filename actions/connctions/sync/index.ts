@@ -1,13 +1,14 @@
 "use server"
-import { authOptions } from "@/auth";
 import { databaseDrizzle } from "@/db";
-import { connections } from "@/db/schemas/connections";
 import { Plans } from "@/lib/Plans";
 import { fromErrorToFormState, toFormState } from "@/lib/zodErrorHandle";
 import { addToProcessFilesQueue } from "@/workers/queues/jobs/processFiles.job";
 import { eq } from "drizzle-orm";
-import { getServerSession } from "next-auth";
 import { revalidatePath } from "next/cache";
+import { auth } from "@/lib/auth";
+import { headers } from "next/headers";
+import { connections } from "@/db/schema";
+
 
 type FormState = {
   message: string;
@@ -26,7 +27,9 @@ type Conn = {
 
 
 export const syncConnectionConfig = async (_: FormState, formData: FormData) => {
-  const session = await getServerSession(authOptions)
+  const session = await auth.api.getSession({
+    headers: await headers(),
+  })
   const connectionId = formData.get("connectionId")?.toString();
   try {
     if (!session?.user?.id || !connectionId) throw new Error("forbidden");

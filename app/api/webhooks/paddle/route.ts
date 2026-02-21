@@ -1,5 +1,5 @@
 import { databaseDrizzle } from '@/db';
-import { users } from '@/db/schemas/users';
+import { users } from '@/db/schema';
 import { Plans } from '@/lib/Plans';
 import { Paddle, EventName, EventEntity } from '@paddle/paddle-node-sdk'
 import { eq } from 'drizzle-orm';

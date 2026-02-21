@@ -15,15 +15,14 @@ import {
   SidebarFooter,
   SidebarHeader,
   SidebarMenu,
-  SidebarMenuButton,
   SidebarMenuItem,
 } from "@/components/ui/sidebar"
 import { Logo } from "./Logo/logo"
-import { getServerSession } from "next-auth"
-import { authOptions } from "@/auth"
 import { FaGithub, FaSearch } from "react-icons/fa"
 import { RiBillLine } from "react-icons/ri"
 import { env } from "process"
+import { auth } from "@/lib/auth"
+import { headers } from "next/headers"
 
 const isCloud = env.DCUP_ENV === 'CLOUD';
 const data = {
@@ -79,16 +78,16 @@ const data = {
 }
 
 export async function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
-  const session = await getServerSession(authOptions)
+  const session = await auth.api.getSession({
+    headers: await headers(),
+  })
 
   return (
     <Sidebar variant="inset" {...props}>
       <SidebarHeader>
         <SidebarMenu>
           <SidebarMenuItem>
-            <SidebarMenuButton size="lg" asChild>
-              <Logo />
-            </SidebarMenuButton>
+            <Logo size={50} withName />
           </SidebarMenuItem>
         </SidebarMenu>
       </SidebarHeader>

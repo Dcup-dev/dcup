@@ -1,14 +1,14 @@
 "use server"
-import { authOptions } from "@/auth";
 import { databaseDrizzle } from "@/db";
-import { connections, processedFiles } from "@/db/schemas/connections";
 import { tryAndCatch } from "@/lib/try-catch";
 import { fromErrorToFormState, toFormState } from "@/lib/zodErrorHandle";
 import { qdrant_collection_name, qdrantClient } from "@/qdrant";
+import { auth } from "@/lib/auth";
 import { eq } from "drizzle-orm";
-import { getServerSession } from "next-auth";
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
+import { headers } from "next/headers";
+import { connections, processedFiles } from "@/db/schema";
 
 const deleteConnectionSchema = z.object({
   id: z.string().min(2),
@@ -19,7 +19,9 @@ type FormState = {
 };
 
 export async function deleteConnectionConfig(_: FormState, formData: FormData) {
-  const session = await getServerSession(authOptions);
+  const session = await auth.api.getSession({
+    headers: await headers(),
+  })
   try {
     if (!session?.user?.id) throw new Error("forbidden");
     const { id } = deleteConnectionSchema.parse({

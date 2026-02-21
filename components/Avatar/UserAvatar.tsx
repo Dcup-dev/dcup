@@ -11,17 +11,17 @@ import {
   AvatarFallback,
   AvatarImage
 } from "@/components/ui/avatar"
-import { Session } from "next-auth"
 import Link from "next/link";
+import { User } from "better-auth";
 
 
-export const UserAvatar = ({ session }: { session: Session }) => {
+export const UserAvatar = ({ session }: { session: User }) => {
   return (
     <DropdownMenu>
       <DropdownMenuTrigger>
         <Avatar>
-          <AvatarImage src={session.user?.image ?? ""} alt="@shadcn" />
-          <AvatarFallback>{session.user?.name?.charAt(0)}</AvatarFallback>
+          <AvatarImage src={session?.image ?? ""} alt="@shadcn" />
+          <AvatarFallback>{session?.name?.charAt(0)}</AvatarFallback>
         </Avatar>
       </DropdownMenuTrigger>
       <DropdownMenuContent>
